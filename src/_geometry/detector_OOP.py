@@ -5,6 +5,7 @@ import json
 from scipy.spatial import ConvexHull
 from sympy import Point3D, Plane
 
+
 class Detector:
     """_summary_"""
 
