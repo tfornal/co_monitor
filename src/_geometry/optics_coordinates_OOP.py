@@ -17,7 +17,6 @@ class Methods:
         line_perpendicular_to_plane = plane.perpendicular_line(Point3D(D))
         point_E = list(*plane.intersection(line_perpendicular_to_plane))
         point_E = np.array(point_E)
-        """  sdasda """
         return point_E
 
     def distance_between_poinst(self, p1, p2):
