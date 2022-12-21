@@ -63,7 +63,6 @@ class Simulation:
             self.element, self.crystal_height_step, self.crystal_length_step
         ).make_curved_crystal()
         """TODO - poprawic odczytywanie info z plikow optics coordinates i dispersive element, odczytywanie reflectivity"""
-
         ### DISPERSIVE ELEMENT
         (
             self.vertices_coordinates,
