@@ -133,6 +133,11 @@ class Simulation:
         """
         Calculates cross section points of line and plane.
         """
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         ndotu = np.tensordot(planeNormal, rayDirection, axes=(0, 2))
         ndotu[np.abs(ndotu) < epsilon] = np.nan
         w = rayPoint - planePoint
