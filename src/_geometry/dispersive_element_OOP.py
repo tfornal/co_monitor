@@ -8,6 +8,7 @@ import json
 
 
 class DispersiveElement:
+    
     def __init__(self, element, crystal_height_step=10, crystal_length_step=20):
         """
         This class creates the curved surface of the selected dispersive element
@@ -23,6 +24,7 @@ class DispersiveElement:
             Accuracy of the crystals length mesh (by default 20 points).
         TODO test!!!!
         ALE CHUJNIA! POPRAWIC TODO
+        TODO - zmiana promienia krzywizny krysztalu na dowolna wartoć - zahardkodowanie pozycji krysztalu w konkretnej pozycji 
         """
 
         self.crystal_height_step = crystal_height_step
@@ -47,8 +49,9 @@ class DispersiveElement:
         self.alpha = self.angle_between_lines(self.radius_central_point, self.A, self.B)
 
         self.shift_angle = self.calculate_shift_angle()
-
-    def get_coordinates(self, element):
+    
+    @staticmethod
+    def get_coordinates(element):
         """_summary_
 
         Args:
@@ -58,13 +61,14 @@ class DispersiveElement:
             _type_: _description_
         """
         with open(
-            pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json"
+            pathlib.Path.cwd() / "coordinates.json"
         ) as file:
             json_file = json.load(file)
             disp_elem_coord = json_file["dispersive element"]["element"][f"{element}"]
         return disp_elem_coord
-
-    def distance_between_poinst(self, p1, p2):
+    
+    @staticmethod
+    def distance_between_poinst(p1, p2):
         """Accepts only np.array containing 3 int/float
 
         Args:
@@ -181,8 +185,8 @@ class DispersiveElement:
         shift_angle = self.angle_between_lines(
             self.shifted_radius_central_point, self.A, cylinders_first_coordinate
         )
-
-        return shift_angle
+        print(float("{:.2f}".format(shift_angle)))
+        return float("{:.2f}".format(shift_angle))
 
     def make_curved_crystal(self):
         """TODO!!!!!!!!!!!!!!!!"""
@@ -288,9 +292,6 @@ class DispersiveElement:
 
 
 if __name__ == "__main__":
-
-    disp = DispersiveElement("C", 20, 80)
-
     disp_elem = ["B", "C", "N", "O"]
     fig = pv.Plotter()
     fig.set_background("black")
