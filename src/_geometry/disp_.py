@@ -43,7 +43,6 @@ class DispersiveElement:
         )
         self.crystal_orientation_vector = self.B - self.C
 
-        self.crys_ax = self.radius_central_point + self.crystal_orientation_vector
         #############
         self.srodek = (self.A + self.B) / 2  # - (self.C + self.D) / 2
         ##########
@@ -189,25 +188,8 @@ class DispersiveElement:
         rot_matrix = self.rotation_matrix_3D(rot, oaxis)
         points = points.dot(rot_matrix)
 
-        shift = np.array(
-            self.radius_central_point - self.crystal_orientation_vector / 2
-        )  # - np.mean(points, axis=0)
+        shift = np.array(self.radius_central_point) - np.mean(points, axis=0)
         points += shift
-
-        from scipy.linalg import expm, norm
-
-        # theta = 1.2
-        def M(axis, theta):
-            return expm(np.cross(np.eye(3), axis / np.norm(axis) * theta))
-
-        v, axis, theta = points, self.crys_ax, 1.2
-        # M0 = M(axis, theta)
-
-        # print(dot(M0, v))
-
-        ### obrot o
-
-        # crysta_axis_vector = self.radius_central_point + self.crystal_orientation_vector
 
         ## kolejne przesuniecie
 
@@ -232,7 +214,6 @@ if __name__ == "__main__":
         fig.add_mesh(disp.B, color="red", point_size=10)
         fig.add_mesh(disp.C, color="red", point_size=10)
         fig.add_mesh(disp.D, color="red", point_size=10)
-        fig.add_mesh(disp.crys_ax, color="purple", point_size=15)
         fig.add_mesh(crys, color="orange", render_points_as_spheres=True)
         # fig.add_mesh(
         #     crys[-1], color="red", render_points_as_spheres=True, point_size=20
