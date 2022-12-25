@@ -43,7 +43,9 @@ class DispersiveElement:
         )
         self.crystal_orientation_vector = self.B - self.C
 
-        self.crys_ax = self.radius_central_point + self.crystal_orientation_vector
+        self.crys_ax = (
+            np.array(self.radius_central_point) + self.crystal_orientation_vector
+        )
         #############
         self.srodek = (self.A + self.B) / 2  # - (self.C + self.D) / 2
         ##########
@@ -155,7 +157,7 @@ class DispersiveElement:
             np.linspace(
                 0,
                 # self.alpha,
-                359,
+                270,
                 num=self.length_step,
             )
             / 180
@@ -194,16 +196,10 @@ class DispersiveElement:
         )  # - np.mean(points, axis=0)
         points += shift
 
-        from scipy.linalg import expm, norm
-
-        # theta = 1.2
-        def M(axis, theta):
-            return expm(np.cross(np.eye(3), axis / np.norm(axis) * theta))
-
-        v, axis, theta = points, self.crys_ax, 1.2
-        # M0 = M(axis, theta)
-
-        # print(dot(M0, v))
+        x = self.rotation_matrix_3D(0, self.crystal_orientation_vector)
+        print(x)
+        points = points.dot(x)
+        # print(np.dot(M0, v))
 
         ### obrot o
 
@@ -218,7 +214,7 @@ class DispersiveElement:
 
 
 if __name__ == "__main__":
-    disp_elem = ["B", "C", "N", "O"]
+    disp_elem = ["B"]  # , "C", "N", "O"]
     fig = pv.Plotter()
     fig.set_background("black")
     for element in disp_elem:
@@ -227,7 +223,7 @@ if __name__ == "__main__":
 
         # fig.add_mesh(np.array(disp.crystal_central_point), color="blue", point_size=10)
         fig.add_mesh(disp.srodek, color="green", point_size=20)
-        fig.add_mesh(np.array([0, 0, 0]), color="green", render_points_as_spheres=True)
+        # fig.add_mesh(np.array([0, 0, 0]), color="green", render_points_as_spheres=True)
         fig.add_mesh(disp.A, color="red", point_size=20)
         fig.add_mesh(disp.B, color="red", point_size=10)
         fig.add_mesh(disp.C, color="red", point_size=10)
