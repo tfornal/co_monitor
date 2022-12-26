@@ -156,8 +156,8 @@ class DispersiveElement:
         crys_lenght = (
             np.linspace(
                 0,
-                # self.alpha,
-                270,
+                self.alpha,
+                # 270,
                 num=self.length_step,
             )
             / 180
@@ -190,15 +190,17 @@ class DispersiveElement:
 
         rot_matrix = self.rotation_matrix_3D(rot, oaxis)
         points = points.dot(rot_matrix)
-
+        ### pozostalo zdefiniowac kąt obrotu/?
+        ang = self.angle_between_lines(self.crys_ax, points[0], self.A)
+        print(ang)
+        ang = np.deg2rad(ang)
+        x = self.rotation_matrix_3D(ang, self.crystal_orientation_vector)
+        print(x)
+        points = points.dot(x)
         shift = np.array(
             self.radius_central_point - self.crystal_orientation_vector / 2
         )  # - np.mean(points, axis=0)
         points += shift
-
-        x = self.rotation_matrix_3D(0, self.crystal_orientation_vector)
-        print(x)
-        points = points.dot(x)
         # print(np.dot(M0, v))
 
         ### obrot o
