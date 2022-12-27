@@ -128,7 +128,7 @@ class DispersiveElement:
         """
         Rotation matrix based on the Euler-Rodrigues formula for matrix conversion of 3d object.
 
-        Input - angle, axis in carthesian coordinates [x,y,z].
+        Input - angle (in radians), axis in carthesian coordinates [x,y,z].
         Return - rotated  matrix.
         """
         axis = np.asarray(axis) / np.sqrt(np.dot(axis, axis))
