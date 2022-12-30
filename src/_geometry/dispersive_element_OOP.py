@@ -193,25 +193,17 @@ class DispersiveElement:
         ### pozostalo zdefiniowac kąt obrotu/?
         ang = self.angle_between_lines(self.crys_ax, points[0], self.A)
         print(ang)
-        ang = np.deg2rad(ang)
-        x = self.rotation_matrix_3D(ang, self.crystal_orientation_vector)
+        ang2 = np.deg2rad(ang)
+
+        #### przesuniecie
+        x = self.rotation_matrix_3D(np.deg2rad(27.5), self.crystal_orientation_vector)
         print(x)
         points = points.dot(x)
         shift = np.array(
             self.radius_central_point - self.crystal_orientation_vector / 2
-        )  # - np.mean(points, axis=0)
+        )
         points += shift
-        # print(np.dot(M0, v))
-
-        ### obrot o
-
-        # crysta_axis_vector = self.radius_central_point + self.crystal_orientation_vector
-
-        ## kolejne przesuniecie
-
-        # rot_matrix2 = self.rotation_matrix_3D(rot, self.srodek)
-        # points = points.dot(rot_matrix2)
-
+        ### koniec przesuniecia
         return points
 
 
