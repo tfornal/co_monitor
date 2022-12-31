@@ -194,7 +194,7 @@ class DispersiveElement:
         ang = self.angle_between_lines(self.crys_ax, points[0], self.A)
         print(ang)
         ang2 = np.deg2rad(ang)
-
+        ### ustawic odpowiedni kąt...
         #### przesuniecie
         x = self.rotation_matrix_3D(np.deg2rad(27.5), self.crystal_orientation_vector)
         print(x)
