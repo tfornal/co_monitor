@@ -201,25 +201,40 @@ class DispersiveElement:
         shift = np.array(
             self.radius_central_point - self.crystal_orientation_vector / 2
         )
-        shifted_crys_ax = self.crys_ax + shift
 
-        angle = self.angle_between_lines(shifted_crys_ax, self.A, points[0])
-        print(angle)
-        points += shift
+        angle = self.angle_between_lines(self.crys_ax, self.C, points[-1])
+        print(angle)  #### nieprawidlowo liczy kąt!!!!!!!!!
 
-        ### koniec przesuniecia
+        ### kolejne przesuniecie
+        # angle = self.angle_between_lines(self.crys_ax, self.C, points[0])
+        # x = self.rotation_matrix_3D(np.deg2rad(angle), self.crystal_orientation_vector)
+        # print(angle)
+        # points = points.dot(x)
 
-        # fig = pv.Plotter()
-        # fig.set_background("black")
+        # points += shift
+
+        fig = pv.Plotter()
+        fig.set_background("black")
+        fig.add_mesh(
+            self.crys_ax, color="red", render_points_as_spheres=True, point_size=10
+        )
         # fig.add_mesh(
-        #     np.array([0, 0, 0]),
-        #     color="green",
-        #     render_points_as_spheres=True,
-        #     point_size=10,
+        #     self.A, color="yellow", render_points_as_spheres=True, point_size=10
         # )
-        # fig.add_mesh(www, color="red", render_points_as_spheres=True, point_size=10)
-        # fig.add_mesh(points, color="green", render_points_as_spheres=True)
-
+        # fig.add_mesh(
+        #     self.B, color="yellow", render_points_as_spheres=True, point_size=10
+        # # )
+        fig.add_mesh(
+            self.C, color="yellow", render_points_as_spheres=True, point_size=10
+        )
+        # fig.add_mesh(
+        #     self.D, color="yellow", render_points_as_spheres=True, point_size=10
+        # )
+        fig.add_mesh(points, color="green", render_points_as_spheres=True)
+        fig.add_mesh(
+            points[0], color="purple", render_points_as_spheres=True, point_size=10
+        )
+        points += shift
         # fig.add_mesh(np.array(disp.crystal_central_point), color="blue", point_size=10)
         # fig.add_mesh(disp.srodek, color="green", point_size=20)
         # # fig.add_mesh(np.array([0, 0, 0]), color="green", render_points_as_spheres=True)
@@ -230,36 +245,36 @@ class DispersiveElement:
         # fig.add_mesh(self.crys_ax, color="purple", point_size=15)
         # fig.add_mesh(points, color="orange", render_points_as_spheres=True)
 
-        # fig.show()
+        fig.show()
 
         return points
 
 
 if __name__ == "__main__":
-    # disp = DispersiveElement("B", 20, 8000)
-    # disp.make_curved_crystal()
+    disp = DispersiveElement("B", 20, 8000)
+    disp.make_curved_crystal()
 
-    fig = pv.Plotter()
-    fig.set_background("black")
-    disp_elem = ["B"]
-    for element in disp_elem:
-        disp = DispersiveElement(element, 20, 8000)
-        crys = disp.make_curved_crystal()
+    # fig = pv.Plotter()
+    # fig.set_background("black")
+    # disp_elem = ["B"]
+    # for element in disp_elem:
+    #     disp = DispersiveElement(element, 20, 8000)
+    #     crys = disp.make_curved_crystal()
 
-        # fig.add_mesh(np.array(disp.crystal_central_point), color="blue", point_size=10)
-        fig.add_mesh(disp.srodek, color="green", point_size=20)
-        # fig.add_mesh(np.array([0, 0, 0]), color="green", render_points_as_spheres=True)
-        fig.add_mesh(disp.A, color="red", point_size=20)
-        fig.add_mesh(disp.B, color="red", point_size=10)
-        fig.add_mesh(disp.C, color="red", point_size=10)
-        fig.add_mesh(disp.D, color="red", point_size=10)
-        fig.add_mesh(disp.crys_ax, color="purple", point_size=15)
-        fig.add_mesh(crys, color="orange", render_points_as_spheres=True)
-        # fig.add_mesh(
-        #     crys[-1], color="red", render_points_as_spheres=True, point_size=20
-        # )
+    #     # fig.add_mesh(np.array(disp.crystal_central_point), color="blue", point_size=10)
+    #     fig.add_mesh(disp.srodek, color="green", point_size=20)
+    #     # fig.add_mesh(np.array([0, 0, 0]), color="green", render_points_as_spheres=True)
+    #     fig.add_mesh(disp.A, color="red", point_size=20)
+    #     fig.add_mesh(disp.B, color="red", point_size=10)
+    #     fig.add_mesh(disp.C, color="red", point_size=10)
+    #     fig.add_mesh(disp.D, color="red", point_size=10)
+    #     fig.add_mesh(disp.crys_ax, color="purple", point_size=15)
+    #     fig.add_mesh(crys, color="orange", render_points_as_spheres=True)
+    #     # fig.add_mesh(
+    #     #     crys[-1], color="red", render_points_as_spheres=True, point_size=20
+    #     # )
 
-    fig.show()
+    # fig.show()
 
 
 ###########BACKUP
