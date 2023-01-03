@@ -190,19 +190,8 @@ class DispersiveElement:
 
         rot_matrix = self.rotation_matrix_3D(rot, oaxis)
         points = points.dot(rot_matrix)
-        ### pozostalo zdefiniowac kąt obrotu/?
         ### ustawic odpowiedni kąt...
-        #### przesuniecie
-        x = self.rotation_matrix_3D(np.deg2rad(27.5), self.crystal_orientation_vector)
-        points = points.dot(x)
-
-        ## pnowny obrot
-
-        shift = np.array(
-            self.radius_central_point - self.crystal_orientation_vector / 2
-        )
-
-        angle = self.angle_between_lines(self.crys_ax, self.C, points[-1])
+        #### przesunieciePygount is a command line tool nts[-1])
         print(angle)  #### nieprawidlowo liczy kąt!!!!!!!!!???????
 
         ### poprawic
