@@ -8,6 +8,7 @@ The code was created to perform various calculations of potential C/O monitor si
 - sprawdzic wspolrzedne ecrh shields - mozliwe przesuniecie w gornym albo dolnejj komorze
 - move predefined profiles, twogauss sum etc to external module - so called helper; 
 - YAML!!!!!!!!! or TOML??? jako config ini?
+- zmienic sposob odczytu plikow PEC oraz plikow zawierajacych dane eksperymentalne -  w ogole przyjac jeden format i w razie potrzeby stosowac odpowiednią "przejściówkę"
 - improve documentation
 - external file with all settings (.dat or something else;)
 - optimalization; - multithreading, multiprocessing;

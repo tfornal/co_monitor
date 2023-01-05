@@ -9,8 +9,6 @@ import aiohttp
 
 
 class ReaderReffVMEC:
-    """
-    """
     def __init__(
         self,
         distance_between_points: int = 250,
@@ -36,6 +34,7 @@ class ReaderReffVMEC:
         self.reff_array = self.read_reff_calculated()
         if savetxt:
             self.savetxt()
+
     def read_reff_calculated(self):
 
         """
@@ -115,7 +114,6 @@ class ReaderReffVMEC:
                 header=f"Coordinates X[mm], Y[mm], Z[mm], Reff, Intensity; \nSingle block size: {self.distance_between_points} x {self.distance_between_points} mm",
             )
         print("Reff successfully saved!")
-
 
 
 t1 = time.time()
