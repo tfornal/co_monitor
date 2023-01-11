@@ -4,6 +4,7 @@ The code was created to perform various calculations of potential C/O monitor si
 
 ## Things TODO:
 - setup i automatyczne uruchamianie;
+- 
 - zaimplementowac w simulations protection shields - aby moc wyliczac transmisje; 
 - sprawdzic wspolrzedne ecrh shields - mozliwe przesuniecie w gornym albo dolnejj komorze
 - move predefined profiles, twogauss sum etc to external module - so called helper; 
