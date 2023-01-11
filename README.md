@@ -3,7 +3,7 @@
 The code was created to perform various calculations of potential C/O monitor signals and validate experimental data of the Lyman-alpha lines measurements of hydrogen like ions of B, C, N and O. The code calculates only the line intensities of the given transitions but does not calculate the background radiation (at least not for now).
 
 ## Things TODO:
-- setup!!! i caly szajs do automatycznego uruchamiania
+- setup i automatyczne uruchamianie;
 - zaimplementowac w simulations protection shields - aby moc wyliczac transmisje; 
 - sprawdzic wspolrzedne ecrh shields - mozliwe przesuniecie w gornym albo dolnejj komorze
 - move predefined profiles, twogauss sum etc to external module - so called helper; 
