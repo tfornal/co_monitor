@@ -32,7 +32,9 @@ class DispersiveElement:
         self.crystal_central_point = np.array(
             self.disp_elem_coord["crystal central point"]
         )
-        self.radius_central_point = self.disp_elem_coord["radius central point"]
+        self.radius_central_point = np.array(
+            self.disp_elem_coord["radius central point"]
+        )
         self.A = np.array(self.disp_elem_coord["vertex"]["A"])
         self.B = np.array(self.disp_elem_coord["vertex"]["B"])
         self.C = np.array(self.disp_elem_coord["vertex"]["C"])
@@ -182,9 +184,10 @@ class DispersiveElement:
         points = points.dot(rot_matrix)
         ### pozostalo zdefiniowac kąt obrotu/?
         ### ustawic odpowiedni kąt...
-        #### przesuniecie
-        x = self.rotation_matrix_3D(np.deg2rad(27.5), self.crystal_orientation_vector)
-        points = points.dot(x)
+        #### przesuniecie\
+
+        # x = self.rotation_matrix_3D(np.deg2rad(0), self.crystal_orientation_vector)
+        # points = points.dot(x)
 
         ## pnowny obrot
 
@@ -192,7 +195,7 @@ class DispersiveElement:
             self.radius_central_point - self.crystal_orientation_vector / 2
         )
 
-        angle = self.angle_between_lines(self.crys_ax, self.C, points[-1])
+        angle = self.angle_between_lines(self.radius_central_point, self.C, points[-1])
         print(angle)  #### nieprawidlowo liczy kąt!!!!!!!!!
 
         ### kolejne przesuniecie
@@ -200,49 +203,92 @@ class DispersiveElement:
         # x = self.rotation_matrix_3D(np.deg2rad(angle), self.crystal_orientation_vector)
         # print(angle)
         # points = points.dot(x)
-
-        # points += shift
-
-        fig = pv.Plotter()
-        fig.set_background("black")
-        fig.add_mesh(
-            self.crys_ax, color="red", render_points_as_spheres=True, point_size=10
-        )
-        # fig.add_mesh(
-        #     self.A, color="yellow", render_points_as_spheres=True, point_size=10
-        # )
-        # fig.add_mesh(
-        #     self.B, color="yellow", render_points_as_spheres=True, point_size=10
-        # # )
-        fig.add_mesh(
-            self.C, color="yellow", render_points_as_spheres=True, point_size=10
-        )
-        # fig.add_mesh(
-        #     self.D, color="yellow", render_points_as_spheres=True, point_size=10
-        # )
-        # fig.add_mesh(points, color="green", render_points_as_spheres=True)
-        fig.add_mesh(
-            points[0], color="purple", render_points_as_spheres=True, point_size=10
-        )
+        # radius_central_point = self.radius_central_point + shift
         points += shift
-        # fig.add_mesh(np.array(disp.crystal_central_point), color="blue", point_size=10)
-        # fig.add_mesh(disp.srodek, color="green", point_size=20)
-        # # fig.add_mesh(np.array([0, 0, 0]), color="green", render_points_as_spheres=True)
-        # fig.add_mesh(self.A, color="red", point_size=20)
-        # fig.add_mesh(self.B, color="red", point_size=10)
-        # fig.add_mesh(self.C, color="red", point_size=10)
-        # fig.add_mesh(self.D, color="red", point_size=10)
-        # fig.add_mesh(self.crys_ax, color="purple", point_size=15)
-        # fig.add_mesh(points, color="orange", render_points_as_spheres=True)
 
-        fig.show()
+        angle = self.angle_between_lines(self.radius_central_point, self.C, points[0])
+        print(angle)
+        # rot_matrix = self.rotation_matrix_3D(rot, oaxis)
+        # points = points.dot(rot_matrix)
+        points -= shift
+        x = self.rotation_matrix_3D(np.deg2rad(angle), self.crystal_orientation_vector)
+        points = points.dot(x)
+        points += shift
 
+        def ppp():
+
+            fig = pv.Plotter()
+            fig.set_background("black")
+            fig.add_mesh(
+                self.crys_ax, color="red", render_points_as_spheres=True, point_size=10
+            )
+            fig.add_mesh(
+                self.radius_central_point,
+                # np.array([0, 0, 0]),
+                color="red",
+                render_points_as_spheres=True,
+                point_size=30,
+            )
+            fig.add_mesh(
+                self.C, color="yellow", render_points_as_spheres=True, point_size=10
+            )
+            fig.add_mesh(
+                points[0], color="purple", render_points_as_spheres=True, point_size=10
+            )
+            fig.add_mesh(
+                points,
+                color="orange",
+                render_points_as_spheres=True,
+                point_size=3,
+                opacity=0.05,
+            )
+            fig.show()
+
+        # ppp()
         return points
 
 
 if __name__ == "__main__":
-    disp = DispersiveElement("B", 20, 8000)
-    disp.make_curved_crystal()
+    els = ["B"]
+    for element in els:
+        disp = DispersiveElement(element, 20, 8000)
+        crys = disp.make_curved_crystal()
+
+    def plot():
+        disp_elem = ["B"]
+        for element in disp_elem:
+            disp = DispersiveElement(element, 20, 8000)
+            crys = disp.make_curved_crystal()
+            fig = pv.Plotter()
+            fig.set_background("black")
+            fig.add_mesh(
+                disp.crys_ax, color="red", render_points_as_spheres=True, point_size=10
+            )
+            fig.add_mesh(
+                disp.radius_central_point,
+                color="red",
+                render_points_as_spheres=True,
+                point_size=30,
+            )
+            fig.add_mesh(
+                disp.C, color="yellow", render_points_as_spheres=True, point_size=10
+            )
+            fig.add_mesh(
+                crys[0],
+                color="purple",
+                render_points_as_spheres=True,
+                point_size=10,
+            )
+            fig.add_mesh(
+                crys,
+                color="orange",
+                render_points_as_spheres=True,
+                point_size=3,
+                opacity=0.05,
+            )
+        fig.show()
+
+    # plot()
 
     # fig = pv.Plotter()
     # fig.set_background("black")
