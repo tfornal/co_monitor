@@ -65,7 +65,7 @@ class DispersiveElement:
             _type_: _description_
         """
         with open(
-            pathlib.Path.cwd()  / "coordinates.json"
+            pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json"
         ) as file:
             json_file = json.load(file)
             disp_elem_coord = json_file["dispersive element"]["element"][f"{element}"]
