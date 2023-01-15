@@ -12,7 +12,6 @@ class DispersiveElement:
         """
         This class creates the curved surface of the selected dispersive element
         with given coordinates.
-
         Parameters
         ----------
             Elements symbol like B, C, N or O in order to select proper coordinates
@@ -60,15 +59,13 @@ class DispersiveElement:
     @staticmethod
     def get_coordinates(element):
         """_summary_
-
         Args:
             element (_type_): _description_
-
         Returns:
             _type_: _description_
         """
         with open(
-            pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json"
+            pathlib.Path.cwd()  / "coordinates.json"
         ) as file:
             json_file = json.load(file)
             disp_elem_coord = json_file["dispersive element"]["element"][f"{element}"]
@@ -77,11 +74,9 @@ class DispersiveElement:
     @staticmethod
     def distance_between_poinst(p1, p2):
         """Accepts only np.array containing 3 int/float
-
         Args:
             p1 (_type_): _description_
             p2 (_type_): _description_
-
         Returns:
             _type_: _description_
         """
@@ -100,7 +95,6 @@ class DispersiveElement:
     def shift_cylinder(self, object_coordinates, crystal_orientation_vector):
         """
         Adds vector to 2D array (N, 3) of 3D object row by row.
-
         Input - 2d array of interest, vector to add.
         Return - 2d array with included vector.
         """
@@ -111,12 +105,10 @@ class DispersiveElement:
     def angle_between_lines(self, central_point, p1, p2):
         """
         Returns angle between two lines in 3D carthesian coordinate system.
-
         Returns
         -------
         angle : float
             angle in degrees.
-
         """
         central_point, p1, p2 = Point3D(central_point), Point3D(p1), Point3D(p2)
         l1, l2 = Line3D(central_point, p1), Line3D(central_point, p2)
@@ -127,7 +119,6 @@ class DispersiveElement:
     def rotation_matrix_3D(self, theta, axis):
         """
         Rotation matrix based on the Euler-Rodrigues formula for matrix conversion of 3d object.
-
         Input - angle (in radians), axis in carthesian coordinates [x,y,z].
         Return - rotated  matrix.
         """
@@ -147,7 +138,6 @@ class DispersiveElement:
 
     def make_curved_crystal(self):
         """_summary_
-
         Returns:
             _type_: _description_
         """
@@ -156,8 +146,8 @@ class DispersiveElement:
         crys_lenght = (
             np.linspace(
                 0,
-                self.alpha,
-                # 270,
+                # self.alpha,
+                270,
                 num=self.length_step,
             )
             / 180
@@ -190,26 +180,60 @@ class DispersiveElement:
 
         rot_matrix = self.rotation_matrix_3D(rot, oaxis)
         points = points.dot(rot_matrix)
+        ### pozostalo zdefiniowac kąt obrotu/?
         ### ustawic odpowiedni kąt...
-        #### przesunieciePygount is a command line tool nts[-1])
-        print(angle)  #### nieprawidlowo liczy kąt!!!!!!!!!???????
+        #### przesuniecie
+        x = self.rotation_matrix_3D(np.deg2rad(27.5), self.crystal_orientation_vector)
+        points = points.dot(x)
 
-        ### poprawic
+        ## pnowny obrot
 
-        points += shift
+        shift = np.array(
+            self.radius_central_point - self.crystal_orientation_vector / 2
+        )
+
+        angle = self.angle_between_lines(self.crys_ax, self.C, points[-1])
+        print(angle)  #### nieprawidlowo liczy kąt!!!!!!!!!
+
+        ### kolejne przesuniecie
+        # angle = self.angle_between_lines(self.crys_ax, self.C, points[0])
+        # x = self.rotation_matrix_3D(np.deg2rad(angle), self.crystal_orientation_vector)
+        # print(angle)
+        # points = points.dot(x)
+
+        # points += shift
 
         fig = pv.Plotter()
         fig.set_background("black")
         fig.add_mesh(
             self.crys_ax, color="red", render_points_as_spheres=True, point_size=10
         )
+        # fig.add_mesh(
+        #     self.A, color="yellow", render_points_as_spheres=True, point_size=10
+        # )
+        # fig.add_mesh(
+        #     self.B, color="yellow", render_points_as_spheres=True, point_size=10
+        # # )
         fig.add_mesh(
             self.C, color="yellow", render_points_as_spheres=True, point_size=10
         )
-        fig.add_mesh(points, color="green", render_points_as_spheres=True)
+        # fig.add_mesh(
+        #     self.D, color="yellow", render_points_as_spheres=True, point_size=10
+        # )
+        # fig.add_mesh(points, color="green", render_points_as_spheres=True)
         fig.add_mesh(
             points[0], color="purple", render_points_as_spheres=True, point_size=10
         )
+        points += shift
+        # fig.add_mesh(np.array(disp.crystal_central_point), color="blue", point_size=10)
+        # fig.add_mesh(disp.srodek, color="green", point_size=20)
+        # # fig.add_mesh(np.array([0, 0, 0]), color="green", render_points_as_spheres=True)
+        # fig.add_mesh(self.A, color="red", point_size=20)
+        # fig.add_mesh(self.B, color="red", point_size=10)
+        # fig.add_mesh(self.C, color="red", point_size=10)
+        # fig.add_mesh(self.D, color="red", point_size=10)
+        # fig.add_mesh(self.crys_ax, color="purple", point_size=15)
+        # fig.add_mesh(points, color="orange", render_points_as_spheres=True)
 
         fig.show()
 

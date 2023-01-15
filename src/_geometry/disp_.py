@@ -200,7 +200,7 @@ class DispersiveElement:
 
 
 if __name__ == "__main__":
-    disp_elem = ["B", "C", "N", "O"]
+    disp_elem = ["B"]#, "C", "N", "O"]
     fig = pv.Plotter()
     fig.set_background("black")
     for element in disp_elem:
