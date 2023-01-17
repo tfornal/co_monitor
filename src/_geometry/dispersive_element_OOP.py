@@ -43,13 +43,7 @@ class DispersiveElement:
             self.crystal_central_point, self.radius_central_point
         )
         self.crystal_orientation_vector = self.B - self.C
-
-        self.crys_ax = (
-            np.array(self.radius_central_point) + self.crystal_orientation_vector
-        )
-        self.srodek = (self.A + self.B) / 2  # - (self.C + self.D) / 2
         self.shifted_radius_central_point = self.define_radius_central_point()
-
         self.alpha = self.angle_between_lines(self.radius_central_point, self.A, self.B)
 
     @staticmethod
@@ -62,7 +56,8 @@ class DispersiveElement:
         """
 
         with open(
-            pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json"
+            # pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json" ### linux path
+            pathlib.Path.cwd() / "coordinates.json" ### windows path
         ) as file:
             json_file = json.load(file)
             disp_elem_coord = json_file["dispersive element"]["element"][f"{element}"]
@@ -177,10 +172,13 @@ class DispersiveElement:
 
         angle = self.angle_between_lines(self.radius_central_point, self.C, points[-1])
         points += shift
+        
         ### angle checkout
         angle = self.angle_between_lines(self.radius_central_point, self.C, points[0])
+        
         ### move to the starging place
         points -= shift
+        
         ### rotate by the angle and shift again to the destination place
         x = self.rotation_matrix_3D(np.deg2rad(angle), self.crystal_orientation_vector)
         points = points.dot(x)
@@ -190,22 +188,12 @@ class DispersiveElement:
 
 
 if __name__ == "__main__":
-
-    disp_elem = ["C"]  # , "N"]
+    fig = pv.Plotter()
+    fig.set_background("black")
+    disp_elem = ["C", "N", "B", "O"]
     for element in disp_elem:
-        disp = DispersiveElement(element, 20, 8000)
+        disp = DispersiveElement(element, 20, 80)
         crys = disp.make_curved_crystal()
-        fig = pv.Plotter()
-        fig.set_background("black")
-        fig.add_mesh(
-            disp.crys_ax, color="red", render_points_as_spheres=True, point_size=10
-        )
-        fig.add_mesh(
-            disp.radius_central_point,
-            color="red",
-            render_points_as_spheres=True,
-            point_size=30,
-        )
         fig.add_mesh(
             np.array([disp.A, disp.B, disp.C, disp.D]),
             color="red",
@@ -227,6 +215,5 @@ if __name__ == "__main__":
             color="orange",
             render_points_as_spheres=True,
             point_size=3,
-            opacity=0.05,
         )
     fig.show()
