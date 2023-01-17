@@ -133,6 +133,7 @@ class DispersiveElement:
         Returns:
             _type_: _description_
         """
+        
         crys_height = np.linspace(0, 20, self.height_step)  # crystal height range
 
         crys_lenght = (
