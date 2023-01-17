@@ -150,7 +150,7 @@ class DispersiveElement:
         px = np.repeat(X, self.height_step)
         py = np.repeat(Y, self.height_step)
         pz = np.tile(crys_height, self.length_step)
-        points = np.vstack((pz, px, py)).T
+        crstal_points = np.vstack((pz, px, py)).T
 
         ovec = self.crystal_orientation_vector / (
             np.linalg.norm(self.crystal_orientation_vector)
@@ -158,33 +158,33 @@ class DispersiveElement:
         cylvec = np.array([1, 0, 0])
 
         if np.allclose(cylvec, ovec):
-            return points
+            return crstal_points
 
         oaxis = np.cross(ovec, cylvec)
         rot = np.arccos(np.dot(ovec, cylvec))
 
         rot_matrix = self.rotation_matrix_3D(rot, oaxis)
-        points = points.dot(rot_matrix)
+        crstal_points = crstal_points.dot(rot_matrix)
 
         shift = np.array(
             self.radius_central_point - self.crystal_orientation_vector / 2
         )
 
-        angle = self.angle_between_lines(self.radius_central_point, self.C, points[-1])
-        points += shift
+        angle = self.angle_between_lines(self.radius_central_point, self.C, crstal_points[0])
+        crstal_points += shift
         
         ### angle checkout
-        angle = self.angle_between_lines(self.radius_central_point, self.C, points[0])
+        angle = self.angle_between_lines(self.radius_central_point, self.C, crstal_points[0])
         
         ### move to the starging place
-        points -= shift
+        crstal_points -= shift
         
         ### rotate by the angle and shift again to the destination place
-        x = self.rotation_matrix_3D(np.deg2rad(angle), self.crystal_orientation_vector)
-        points = points.dot(x)
-        points += shift
+        rot_matrix = self.rotation_matrix_3D(np.deg2rad(angle), self.crystal_orientation_vector)
+        crstal_points = crstal_points.dot(rot_matrix)
+        crstal_points += shift
 
-        return points
+        return crstal_points
 
 
 if __name__ == "__main__":
