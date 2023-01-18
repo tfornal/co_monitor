@@ -53,7 +53,7 @@ class Simulation:
             self.plasma_coordinates = self.load_plasma()
 
         ### COLLIMATOR
-        self.colim = Collimator(self.element, "top", self.slits_number)
+        self.colim = Collimator(self.element, "top closing side", self.slits_number)
         (
             self.colimator_spatial,
             self.slit_coord_crys_side,

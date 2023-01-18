@@ -139,8 +139,6 @@ class Collimator:
                     + (self.vector_top_bottom * 2 * slit)
                 ),
             )  # TODOwprowadzilem sztuczna wartosc
-        breakpoint()
-        print(slit_coord_crys_side)
         slit_coord_crys_side = slit_coord_crys_side.reshape(self.slits_number, 4, 3)
         slit_coord_plasma_side = (
             slit_coord_crys_side + self.vector_front_back
