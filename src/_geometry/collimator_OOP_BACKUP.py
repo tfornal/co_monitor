@@ -3,7 +3,6 @@ import pyvista as pv
 import json
 from scipy.spatial import ConvexHull, Delaunay
 from optics_coordinates_OOP import CollimatorsCoordinates
-import pathlib
 
 
 class Collimator:
@@ -30,23 +29,22 @@ class Collimator:
         plot : bool, optional
             Plots the 3D graph of calculated collimator. The default is False.
         """
-        
-        
-        self.closing_side= closing_side
-        self.element = element
-        loaded_file = open(pathlib.Path.cwd() / "coordinates.json")
-        all_coordinates = json.load(loaded_file)
-        self.collimator = all_coordinates["collimator"]["element"][f"{element}"][f"{self.closing_side}"]
-        self.vector_front_back = np.array(all_coordinates["collimator"]["element"][f"{element}"]["vector front-back"])
-        
-        self.vector_top_bottom = np.array(self.collimator["vector_top_bottom"])
-        self.A1 = np.array(self.collimator["vertex"]["A1"])
-        self.A2 = np.array(self.collimator["vertex"]["A2"])
-        self.B1 = np.array(self.collimator["vertex"]["B1"])
-        self.B2 = np.array(self.collimator["vertex"]["B2"])
-        
-        
+
         self.cc = CollimatorsCoordinates()
+        print(self.cc)
+        self.element = element
+        # self.closing_side = closing_side
+        self.collimators_coordinates = self.choose_element(element, closing_side)
+        (
+            self.vertices_coordinates,
+            self.A1,
+            self.B1,
+            self.A2,
+            self.B2,
+            self.G,
+            self.vector_top_bottom,
+            self.vector_front_back,
+        ) = self.collimators_coordinates
         self.collim_depth_vector = self.check_depth_vector(element)
         # sprawdza tyko w colim vertices with depth A1-A1-B1-B2 bez
         # przesuniec!! poprawic
@@ -79,29 +77,6 @@ class Collimator:
         hull = Delaunay(collim_vertices_with_depth)
 
         return hull.find_simplex(points) >= 0
-
-
-    def get_coordinates(self, element, closing_side):
-        """_summary_
-
-        Returns:
-            _type_: _description_
-        """
-        ## TODO absolute path readout under Linux machine; - trzeba dodac /"src"/"_geometry" zeby poprawnie odczytal; 
-        ## w windowsie nie jest to potrzebne
-        print(pathlib.Path.cwd())
-        f = open(pathlib.Path.cwd() / "coordinates.json")
-        data = json.load(f)
-        print(data["collimator"]["element"][f"{element}"][f"{closing_side}"])
-        
-        # for nr, element in enumerate(data["collimator"]["element"]):
-        #     port_coordinates[nr] = data["collimator"]["element"][element]
-        # return port_coordinates
-
-
-
-
-
 
     def choose_element(self, element: str, closing_side: str) -> tuple:
 
@@ -143,7 +118,7 @@ class Collimator:
         slit_coord_crys_side = np.array([])
         # import time
         for slit in range(self.slits_number):
-
+            # time.sleep(1)
             slit_coord_crys_side = np.append(
                 slit_coord_crys_side, (self.A1 + (self.vector_top_bottom * 2 * slit))
             )
@@ -164,9 +139,8 @@ class Collimator:
                     + (self.vector_top_bottom * 2 * slit)
                 ),
             )  # TODOwprowadzilem sztuczna wartosc
-            
-       
-        
+        breakpoint()
+        print(slit_coord_crys_side)
         slit_coord_crys_side = slit_coord_crys_side.reshape(self.slits_number, 4, 3)
         slit_coord_plasma_side = (
             slit_coord_crys_side + self.vector_front_back
@@ -194,7 +168,7 @@ class Collimator:
         """
         Plots the results.
         """
-        if plot:
+        if plot == True:
             fig = pv.Plotter()
             fig.set_background("black")
             for slit in range(self.slits_number):
@@ -206,11 +180,13 @@ class Collimator:
                 x = self.make_collimator(colimator_spatial[slit])
                 fig.add_mesh(x, color="pink")
             fig.show()
+        else:
+            pass
 
 
 if __name__ == "__main__":
-    element = "B"
-    col = Collimator(element, "top closing side", 10, plot=True)
+    fig = pv.Plotter()
+    fig.set_background("black")
     elements = [
         # "B",
         "C",
@@ -218,28 +194,28 @@ if __name__ == "__main__":
         "O",
     ]
 
-    # for element in elements:
-    #     col = Collimator(element, "top closing side", 10, plot=False)
-    #     for slit in range(col.slits_number):
-    #         (
-    #             colimator_spatial,
-    #             slit_coord_crys_side,
-    #             slit_coord_plasma_side,
-    #         ) = col.read_colim_coord()
-    #         collimator = col.make_collimator(colimator_spatial[slit])
-    #         fig.add_mesh(collimator, color="yellow", opacity=0.9)
-    #         fig.add_mesh(col.A1, color="red", point_size=10)
-    #         fig.add_mesh(col.A2, color="blue", point_size=10)
+    for element in elements:
+        col = Collimator(element, "top", 10, plot=False)
+        for slit in range(col.slits_number):
+            (
+                colimator_spatial,
+                slit_coord_crys_side,
+                slit_coord_plasma_side,
+            ) = col.read_colim_coord()
+            collimator = col.make_collimator(colimator_spatial[slit])
+            fig.add_mesh(collimator, color="yellow", opacity=0.9)
+            fig.add_mesh(col.A1, color="red", point_size=10)
+            fig.add_mesh(col.A2, color="blue", point_size=10)
 
-    #     col = Collimator(element, "bottom closing side", 10, plot=False)
-    #     for slit in range(col.slits_number):
-    #         (
-    #             colimator_spatial,
-    #             slit_coord_crys_side,
-    #             slit_coord_plasma_side,
-    #         ) = col.read_colim_coord()
-    #         collimator = col.make_collimator(colimator_spatial[slit])
-    #         fig.add_mesh(collimator, color="red", opacity=0.9)
-    #         fig.add_mesh(col.A1, color="red", point_size=10)
-    #         fig.add_mesh(col.A2, color="blue", point_size=10)
-    # fig.show()
+        col = Collimator(element, "bottom", 10, plot=False)
+        for slit in range(col.slits_number):
+            (
+                colimator_spatial,
+                slit_coord_crys_side,
+                slit_coord_plasma_side,
+            ) = col.read_colim_coord()
+            collimator = col.make_collimator(colimator_spatial[slit])
+            fig.add_mesh(collimator, color="red", opacity=0.9)
+            fig.add_mesh(col.A1, color="red", point_size=10)
+            fig.add_mesh(col.A2, color="blue", point_size=10)
+    fig.show()

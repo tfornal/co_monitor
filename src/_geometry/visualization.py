@@ -333,7 +333,12 @@ if __name__ == "__main__":
 
     ###########################################################################
 
-    elements_list = {"B": "red", "C": "blue", "N": "green", "O": "orange"}
+    elements_list = {
+        "B": "red", 
+        "C": "blue", 
+        "N": "green", 
+        "O": "orange"
+        }
     Reff_VMEC_calculated = read_Reff_coordinates()
     plot_W7X()
     plot_cuboid()
@@ -346,7 +351,7 @@ if __name__ == "__main__":
             Reff_VMEC_calculated, element, color=elements_list[element], polydata=False
         )
         dispersive_elements(element, 10, 40)
-        collimators(element, closing_side="top")
+        collimators(element, closing_side="top closing side")
         detectors(element)
 
     ###########################################################################
