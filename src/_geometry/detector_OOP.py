@@ -31,7 +31,7 @@ class Detector:
         """
         det_coordinates = np.zeros([5, 3])
         with open(
-            pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json"
+            pathlib.Path.cwd() / "coordinates.json"
         ) as file:
             json_file = json.load(file)
 

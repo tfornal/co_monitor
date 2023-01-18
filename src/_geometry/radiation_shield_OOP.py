@@ -42,7 +42,7 @@ class RadiationShield:
             _type_: _description_
         """
         with open(
-            pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json"
+            pathlib.Path.cwd() / "coordinates.json"
         ) as file:
             json_file = json.load(file)
             shield_coordinates = json_file["ECRH shield"][f"{chamber_position}"][

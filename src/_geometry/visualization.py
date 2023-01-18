@@ -52,12 +52,12 @@ def read_Reff_coordinates():
         _type_: _description_
     """
     Reff = (
-        pathlib.Path.cwd()
-        / "src"
+        pathlib.Path.cwd().parents[0]
         / "_Input_files"
         / "Reff"
         / "Reff_coordinates-10_mm.txt"
     )
+    print(Reff)
     Reff_VMEC_calculated = np.loadtxt(Reff)  ### [mm]
 
     return Reff_VMEC_calculated
@@ -92,8 +92,8 @@ def make_observed_plasma_volume(Reff_VMEC_calculated, element):
         _type_: _description_
     """
     calculated_plasma_coordinates = (
-        pathlib.Path.cwd()
-        / "src"
+        pathlib.Path.cwd().parents[0]
+        # / "src"
         / "_Input_files"
         / "__Visualization"
         / f"{element}_plasma_coordinates.csv"
@@ -165,8 +165,8 @@ def calculate_plasma_surfaces(phi, surface_number):
     """
     plasma_surfaces = []
     W7X_surface = (
-        pathlib.Path.cwd()
-        / "src"
+        pathlib.Path.cwd().parents[0]
+        # / "src"
         / "_Input_files"
         / "__Visualization"
         / "W7-X_plasma_shape"

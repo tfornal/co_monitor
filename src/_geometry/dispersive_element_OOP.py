@@ -43,7 +43,7 @@ class DispersiveElement:
             self.crystal_central_point, self.radius_central_point
         )
         self.crystal_orientation_vector = self.B - self.C
-        self.shifted_radius_central_point = self.define_radius_central_point()
+        # self.shifted_radius_central_point = self.define_radius_central_point()
         self.alpha = self.angle_between_lines(self.radius_central_point, self.A, self.B)
 
     @staticmethod
@@ -77,20 +77,20 @@ class DispersiveElement:
 
         return int(R)
 
-    def define_radius_central_point(self):
-        shifted_radius_central_point = self.radius_central_point - (
-            self.crystal_orientation_vector / 2
-        )
+    # def define_radius_central_point(self):
+    #     shifted_radius_central_point = self.radius_central_point - (
+    #         self.crystal_orientation_vector / 2
+    #     )
 
-        return shifted_radius_central_point
+    #     return shifted_radius_central_point
 
-    def shift_cylinder(self, object_coordinates, crystal_orientation_vector):
+    def shift_cylinder(self, object_coordinates):
         """
         Adds vector to 2D array (N, 3) of 3D object row by row.
         Input - 2d array of interest, vector to add.
         Return - 2d array with included vector.
         """
-        coordinates_plus_vector = object_coordinates + crystal_orientation_vector
+        coordinates_plus_vector = object_coordinates + self.crystal_orientation_vector
 
         return coordinates_plus_vector
 
