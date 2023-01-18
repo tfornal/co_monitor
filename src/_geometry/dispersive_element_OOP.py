@@ -42,6 +42,7 @@ class DispersiveElement:
         self.R = self.distance_between_poinst(
             self.crystal_central_point, self.radius_central_point
         )
+        print(self.R)
         self.crystal_orientation_vector = self.B - self.C
         # self.shifted_radius_central_point = self.define_radius_central_point()
         self.alpha = self.angle_between_lines(self.radius_central_point, self.A, self.B)
