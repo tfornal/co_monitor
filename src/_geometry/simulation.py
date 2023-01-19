@@ -228,11 +228,15 @@ class Simulation:
         crystal_coordinates = self.crystal_coordinates.reshape(1, -1, 3)
 
         #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
-
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
         crystal_vector = self.B - self.C
         crys_axis1 = self.radius_central_point
         crys_axis2 = self.radius_central_point + crystal_vector
-
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
+        
         on_axis_crystal_normal_points = da.array([])
         """TODO zmapowac ta funkcje!!!!!!!!!!!!!!!"""
         for i in crystal_coordinates[0]:
