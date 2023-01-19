@@ -1,7 +1,7 @@
 import numpy as np
 
 import time
-from mesh_calculation_OOP import PlasmaMesh
+from mesh_calculation import PlasmaMesh
 from tqdm import tqdm
 import asyncio
 import nest_asyncio

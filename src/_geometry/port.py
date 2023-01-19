@@ -26,7 +26,6 @@ class Port:
         """
         ## TODO absolute path readout under Linux machine; - trzeba dodac /"src"/"_geometry" zeby poprawnie odczytal; 
         ## w windowsie nie jest to potrzebne
-        print(pathlib.Path.cwd())
         f = open(pathlib.Path.cwd() / "coordinates.json")
         data = json.load(f)
         port_coordinates = np.zeros([16, 3])

@@ -1,11 +1,11 @@
 import pyvista as pv
-from dispersive_element_OOP import DispersiveElement
-from collimator_OOP import Collimator
-from detector_OOP import Detector
+from dispersive_element import DispersiveElement
+from collimator import Collimator
+from detector import Detector
 from port import Port
 import numpy as np
-from mesh_calculation_OOP import PlasmaMesh
-from radiation_shield_OOP import RadiationShield
+from mesh_calculation import PlasmaMesh
+from radiation_shield import RadiationShield
 import pandas as pd
 import pathlib
 import math

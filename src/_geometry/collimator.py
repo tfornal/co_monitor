@@ -2,7 +2,7 @@ import numpy as np
 import pyvista as pv
 import json
 from scipy.spatial import ConvexHull, Delaunay
-from optics_coordinates_OOP import CollimatorsCoordinates
+# from optics_coordinates_OOP import CollimatorsCoordinates
 import pathlib
 
 
@@ -46,8 +46,8 @@ class Collimator:
         self.B2 = np.array(self.collimator["vertex"]["B2"])
         
         
-        self.cc = CollimatorsCoordinates()
-        self.collim_depth_vector = self.check_depth_vector(element)
+        # self.cc = CollimatorsCoordinates()
+        # self.collim_depth_vector = self.check_depth_vector(element)
         # sprawdza tyko w colim vertices with depth A1-A1-B1-B2 bez
         # przesuniec!! poprawic
         self.slits_number = slits_number
@@ -65,10 +65,12 @@ class Collimator:
         Returns:
             _type_: _description_
         """
+        #### TODO self.vector_front_back - > wczesniej byl depth vector cz cos takiego - sprawdzic ta funkcje!!!!!
+        
         collim_vertices_with_depth = np.concatenate(
             (
-                vertices_coordinates + self.collim_depth_vector,
-                vertices_coordinates - self.collim_depth_vector,
+                vertices_coordinates + self.vector_front_back,
+                vertices_coordinates - self.vector_front_back,
             )
         ).reshape(8, 3)
 
@@ -89,16 +91,12 @@ class Collimator:
         """
         ## TODO absolute path readout under Linux machine; - trzeba dodac /"src"/"_geometry" zeby poprawnie odczytal; 
         ## w windowsie nie jest to potrzebne
-        print(pathlib.Path.cwd())
         f = open(pathlib.Path.cwd() / "coordinates.json")
         data = json.load(f)
-        print(data["collimator"]["element"][f"{element}"][f"{closing_side}"])
         
         # for nr, element in enumerate(data["collimator"]["element"]):
         #     port_coordinates[nr] = data["collimator"]["element"][element]
         # return port_coordinates
-
-
 
 
 
@@ -123,17 +121,17 @@ class Collimator:
 
         return vertices_dict.get(element)
 
-    def check_depth_vector(self, element):
-        """
-        Checks the depth vector (perpendicular to the ray direction) for each
-        energy channel.
-        """
-        if str(element) in ["B", "N"]:
-            orientation = self.cc.plas_colim_orientation_vectors()[1] / 1000
-        elif str(element) in ["C", "O"]:
-            orientation = self.cc.plas_colim_orientation_vectors()[0] / 1000
+    # def check_depth_vector(self, element):
+    #     """
+    #     Checks the depth vector (perpendicular to the ray direction) for each
+    #     energy channel.
+    #     """
+    #     if str(element) in ["B", "N"]:
+    #         orientation = self.cc.plas_colim_orientation_vectors()[1] / 1000
+    #     elif str(element) in ["C", "O"]:
+    #         orientation = self.cc.plas_colim_orientation_vectors()[0] / 1000
 
-        return orientation
+    #     return orientation
 
     def read_colim_coord(self):
         """
@@ -211,15 +209,17 @@ class Collimator:
 if __name__ == "__main__":
     element = "B"
     col = Collimator(element, "top closing side", 10, plot=True)
-    elements = [
-        # "B",
-        "C",
-        # "N",
-        "O",
-    ]
+    
+    
+    # elements = [
+    #     # "B",
+    #     "C",
+    #     # "N",
+    #     "O",
+    # ]
 
-    # for element in elements:
-    #     col = Collimator(element, "top closing side", 10, plot=False)
+    # # for element in elements:
+    # #     col = Collimator(element, "top closing side", 10, plot=False)
     #     for slit in range(col.slits_number):
     #         (
     #             colimator_spatial,

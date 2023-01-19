@@ -35,14 +35,14 @@ class DispersiveElement:
         self.radius_central_point = np.array(
             self.disp_elem_coord["radius central point"]
         )
+        self.AOI = np.array(self.disp_elem_coord["AOI"])
         self.A = np.array(self.disp_elem_coord["vertex"]["A"])
         self.B = np.array(self.disp_elem_coord["vertex"]["B"])
         self.C = np.array(self.disp_elem_coord["vertex"]["C"])
         self.D = np.array(self.disp_elem_coord["vertex"]["D"])
         self.R = self.distance_between_poinst(
-            self.crystal_central_point, self.radius_central_point
+            self.A, self.radius_central_point
         )
-        print(self.R)
         self.crystal_orientation_vector = self.B - self.C
         # self.shifted_radius_central_point = self.define_radius_central_point()
         self.alpha = self.angle_between_lines(self.radius_central_point, self.A, self.B)
@@ -192,7 +192,7 @@ class DispersiveElement:
 if __name__ == "__main__":
     fig = pv.Plotter()
     fig.set_background("black")
-    disp_elem = ["C", "N", "B", "O"]
+    disp_elem = ["B","O","N", "C"]
     for element in disp_elem:
         disp = DispersiveElement(element, 20, 80)
         crys = disp.make_curved_crystal()
