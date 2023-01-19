@@ -5,7 +5,7 @@ from pyvista import PolyData, Plotter
 from pyvistaqt import BackgroundPlotter
 from icecream import ic
 import json
-import pathlib
+from pathlib import Path
 
 
 class PlasmaMesh:
@@ -53,13 +53,14 @@ class PlasmaMesh:
         self.x_length = cuboid_size[0]
         self.y_length = cuboid_size[1]
         self.z_length = cuboid_size[2]
-        
+
         with open(
-            # pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json" ### linux path
-            pathlib.Path.cwd() / "coordinates.json" ### windows path
+            Path(__file__).parent.resolve() / "coordinates.json"  ### windows path
         ) as file:
             json_file = json.load(file)
-            self.central_point_of_meshed_volume = np.array(json_file["plasma"]["central point"])
+            self.central_point_of_meshed_volume = np.array(
+                json_file["plasma"]["central point"]
+            )
         # self.central_point_of_meshed_volume = (
         #     Plasma().center_of_observed_plasma_volume()
         # )

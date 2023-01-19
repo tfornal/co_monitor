@@ -3,7 +3,8 @@ import pyvista as pv
 from pyvistaqt import BackgroundPlotter
 from scipy.spatial import ConvexHull, Delaunay
 import json
-import pathlib
+from pathlib import Path
+
 
 class Port:
     """_summary_"""
@@ -24,9 +25,9 @@ class Port:
         Returns:
             _type_: _description_
         """
-        ## TODO absolute path readout under Linux machine; - trzeba dodac /"src"/"_geometry" zeby poprawnie odczytal; 
+        ## TODO absolute path readout under Linux machine; - trzeba dodac /"src"/"_geometry" zeby poprawnie odczytal;
         ## w windowsie nie jest to potrzebne
-        f = open(pathlib.Path.cwd() / "coordinates.json")
+        f = open(Path(__file__).parent.resolve() / "coordinates.json")
         data = json.load(f)
         port_coordinates = np.zeros([16, 3])
         for nr, point in enumerate(data["port"]):

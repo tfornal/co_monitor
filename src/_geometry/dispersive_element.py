@@ -1,6 +1,6 @@
 import numpy as np
 import pyvista as pv
-import pathlib
+from pathlib import Path
 import json
 from pyvistaqt import BackgroundPlotter
 from sympy import Point3D, Line3D
@@ -40,9 +40,7 @@ class DispersiveElement:
         self.B = np.array(self.disp_elem_coord["vertex"]["B"])
         self.C = np.array(self.disp_elem_coord["vertex"]["C"])
         self.D = np.array(self.disp_elem_coord["vertex"]["D"])
-        self.R = self.distance_between_poinst(
-            self.A, self.radius_central_point
-        )
+        self.R = self.distance_between_poinst(self.A, self.radius_central_point)
         self.crystal_orientation_vector = self.B - self.C
         # self.shifted_radius_central_point = self.define_radius_central_point()
         self.alpha = self.angle_between_lines(self.radius_central_point, self.A, self.B)
@@ -58,7 +56,8 @@ class DispersiveElement:
 
         with open(
             # pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json" ### linux path
-            pathlib.Path.cwd() / "coordinates.json" ### windows path
+            Path(__file__).parent.resolve()
+            / "coordinates.json"  ### windows path
         ) as file:
             json_file = json.load(file)
             disp_elem_coord = json_file["dispersive element"]["element"][f"{element}"]
@@ -134,7 +133,7 @@ class DispersiveElement:
         Returns:
             _type_: _description_
         """
-        
+
         crys_height = np.linspace(0, 20, self.height_step)  # crystal height range
 
         crys_lenght = (
@@ -172,17 +171,23 @@ class DispersiveElement:
             self.radius_central_point - self.crystal_orientation_vector / 2
         )
 
-        angle = self.angle_between_lines(self.radius_central_point, self.C, crstal_points[0])
+        angle = self.angle_between_lines(
+            self.radius_central_point, self.C, crstal_points[0]
+        )
         crstal_points += shift
-        
+
         ### angle checkout
-        angle = self.angle_between_lines(self.radius_central_point, self.C, crstal_points[0])
-        
+        angle = self.angle_between_lines(
+            self.radius_central_point, self.C, crstal_points[0]
+        )
+
         ### move to the starging place
         crstal_points -= shift
-        
+
         ### rotate by the angle and shift again to the destination place
-        rot_matrix = self.rotation_matrix_3D(np.deg2rad(angle), self.crystal_orientation_vector)
+        rot_matrix = self.rotation_matrix_3D(
+            np.deg2rad(angle), self.crystal_orientation_vector
+        )
         crstal_points = crstal_points.dot(rot_matrix)
         crstal_points += shift
 
@@ -192,7 +197,7 @@ class DispersiveElement:
 if __name__ == "__main__":
     fig = pv.Plotter()
     fig.set_background("black")
-    disp_elem = ["B","O","N", "C"]
+    disp_elem = ["B", "O", "N", "C"]
     for element in disp_elem:
         disp = DispersiveElement(element, 20, 80)
         crys = disp.make_curved_crystal()

@@ -2,8 +2,9 @@ import numpy as np
 import pyvista as pv
 import json
 from scipy.spatial import ConvexHull, Delaunay
+
 # from optics_coordinates_OOP import CollimatorsCoordinates
-import pathlib
+from pathlib import Path
 
 
 class Collimator:
@@ -30,22 +31,24 @@ class Collimator:
         plot : bool, optional
             Plots the 3D graph of calculated collimator. The default is False.
         """
-        
-        
-        self.closing_side= closing_side
+
+        self.closing_side = closing_side
         self.element = element
-        loaded_file = open(pathlib.Path.cwd() / "coordinates.json")
+        loaded_file = open(Path(__file__).parent.resolve() / "coordinates.json")
         all_coordinates = json.load(loaded_file)
-        self.collimator = all_coordinates["collimator"]["element"][f"{element}"][f"{self.closing_side}"]
-        self.vector_front_back = np.array(all_coordinates["collimator"]["element"][f"{element}"]["vector front-back"])
-        
+        self.collimator = all_coordinates["collimator"]["element"][f"{element}"][
+            f"{self.closing_side}"
+        ]
+        self.vector_front_back = np.array(
+            all_coordinates["collimator"]["element"][f"{element}"]["vector front-back"]
+        )
+
         self.vector_top_bottom = np.array(self.collimator["vector_top_bottom"])
         self.A1 = np.array(self.collimator["vertex"]["A1"])
         self.A2 = np.array(self.collimator["vertex"]["A2"])
         self.B1 = np.array(self.collimator["vertex"]["B1"])
         self.B2 = np.array(self.collimator["vertex"]["B2"])
-        
-        
+
         # self.cc = CollimatorsCoordinates()
         # self.collim_depth_vector = self.check_depth_vector(element)
         # sprawdza tyko w colim vertices with depth A1-A1-B1-B2 bez
@@ -66,7 +69,7 @@ class Collimator:
             _type_: _description_
         """
         #### TODO self.vector_front_back - > wczesniej byl depth vector cz cos takiego - sprawdzic ta funkcje!!!!!
-        
+
         collim_vertices_with_depth = np.concatenate(
             (
                 vertices_coordinates + self.vector_front_back,
@@ -82,24 +85,20 @@ class Collimator:
 
         return hull.find_simplex(points) >= 0
 
-
     def get_coordinates(self, element, closing_side):
         """_summary_
 
         Returns:
             _type_: _description_
         """
-        ## TODO absolute path readout under Linux machine; - trzeba dodac /"src"/"_geometry" zeby poprawnie odczytal; 
+        ## TODO absolute path readout under Linux machine; - trzeba dodac /"src"/"_geometry" zeby poprawnie odczytal;
         ## w windowsie nie jest to potrzebne
         f = open(pathlib.Path.cwd() / "coordinates.json")
         data = json.load(f)
-        
+
         # for nr, element in enumerate(data["collimator"]["element"]):
         #     port_coordinates[nr] = data["collimator"]["element"][element]
         # return port_coordinates
-
-
-
 
     def choose_element(self, element: str, closing_side: str) -> tuple:
 
@@ -162,9 +161,7 @@ class Collimator:
                     + (self.vector_top_bottom * 2 * slit)
                 ),
             )  # TODOwprowadzilem sztuczna wartosc
-            
-       
-        
+
         slit_coord_crys_side = slit_coord_crys_side.reshape(self.slits_number, 4, 3)
         slit_coord_plasma_side = (
             slit_coord_crys_side + self.vector_front_back
@@ -209,8 +206,7 @@ class Collimator:
 if __name__ == "__main__":
     element = "B"
     col = Collimator(element, "top closing side", 10, plot=True)
-    
-    
+
     # elements = [
     #     # "B",
     #     "C",

@@ -14,6 +14,7 @@ from detector import Detector
 from scipy.spatial import ConvexHull, Delaunay
 from pathlib import Path
 
+
 class Simulation:
     def __init__(
         self,
@@ -61,19 +62,24 @@ class Simulation:
         ).make_curved_crystal()
         """TODO - poprawic odczytywanie info z plikow optics coordinates i dispersive element, odczytywanie reflectivity"""
         ### DISPERSIVE ELEMENT
-        self.AOI = DispersiveElement(self.element, self.crystal_height_step, self.crystal_length_step
-                                     ).AOI
-        self.max_reflectivity = DispersiveElement(self.element, self.crystal_height_step, self.crystal_length_step
-                                     ).max_reflectivity
-        self.crystal_central_point = DispersiveElement(self.element, self.crystal_height_step, self.crystal_length_step
-                                     ).crystal_central_point
-        self.radius_central_point = DispersiveElement(self.element, self.crystal_height_step, self.crystal_length_step
-                                     ).radius_central_point
-        self.B = DispersiveElement(self.element, self.crystal_height_step, self.crystal_length_step
-                                     ).B
-        self.C = DispersiveElement(self.element, self.crystal_height_step, self.crystal_length_step
-                                     ).C
-        
+        self.AOI = DispersiveElement(
+            self.element, self.crystal_height_step, self.crystal_length_step
+        ).AOI
+        self.max_reflectivity = DispersiveElement(
+            self.element, self.crystal_height_step, self.crystal_length_step
+        ).max_reflectivity
+        self.crystal_central_point = DispersiveElement(
+            self.element, self.crystal_height_step, self.crystal_length_step
+        ).crystal_central_point
+        self.radius_central_point = DispersiveElement(
+            self.element, self.crystal_height_step, self.crystal_length_step
+        ).radius_central_point
+        self.B = DispersiveElement(
+            self.element, self.crystal_height_step, self.crystal_length_step
+        ).B
+        self.C = DispersiveElement(
+            self.element, self.crystal_height_step, self.crystal_length_step
+        ).C
 
         self.crystal_point_area = self.calculate_crystal_area()
         self.crystal_coordinates = da.from_array(crystal, chunks=(2000, 3))
@@ -98,7 +104,7 @@ class Simulation:
         self.distances = self.grab_distances()
         self.angles_of_incident = self.grab_angles()
         self.ddf = self.calculate_radiation_fraction()
-        
+
         if savetxt:
             self.save_to_file()
 
@@ -172,6 +178,7 @@ class Simulation:
         hull = Delaunay(vertices_with_depth)
 
         return hull.find_simplex(intersection_points) >= 0
+
     #############
     def make_thick_obj(self, vertices_coordinates, orientation_Vector):
         obj_3D_vertices = np.concatenate(
@@ -227,16 +234,16 @@ class Simulation:
         plasma_coordinates = self.plasma_coordinates.reshape(-1, 1, 3)
         crystal_coordinates = self.crystal_coordinates.reshape(1, -1, 3)
 
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
         crystal_vector = self.B - self.C
         crys_axis1 = self.radius_central_point
         crys_axis2 = self.radius_central_point + crystal_vector
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!! 
-        
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
+        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
+
         on_axis_crystal_normal_points = da.array([])
         """TODO zmapowac ta funkcje!!!!!!!!!!!!!!!"""
         for i in crystal_coordinates[0]:
@@ -355,7 +362,7 @@ class Simulation:
         selected_intersections = selected_intersections.reshape(
             -1, len(self.plasma_coordinates), krysztal_pkt
         )
-        
+
         selected_intersections = da.concatenate(
             (selected_intersections, da.array(tests_detector), da.array(tests_port)),
             axis=0,
@@ -379,33 +386,39 @@ class Simulation:
             fig.add_mesh(make_detectors_surface, color="purple", opacity=0.4)
 
             fig.add_mesh(
-                self.full_input_array.compute()[0].reshape(-1, 3), color="red", render_points_as_spheres=True
+                self.full_input_array.compute()[0].reshape(-1, 3),
+                color="red",
+                render_points_as_spheres=True,
             )  ### plasma
             fig.add_mesh(
-                self.full_input_array.compute()[1].reshape(-1, 3), color="blue", render_points_as_spheres=True
+                self.full_input_array.compute()[1].reshape(-1, 3),
+                color="blue",
+                render_points_as_spheres=True,
             )  ### crystal
             fig.add_mesh(
-                self.full_input_array.compute()[2].reshape(-1, 3), color="green", render_points_as_spheres=True
+                self.full_input_array.compute()[2].reshape(-1, 3),
+                color="green",
+                render_points_as_spheres=True,
             )  ### reflected plasma
 
             fig.add_mesh(
                 self.plasma_coordinates.compute().flatten().reshape(-1, 3),
                 color="yellow",
                 opacity=0.3,
-                render_points_as_spheres=True
+                render_points_as_spheres=True,
             )
             fig.add_mesh(
                 self.reflected_points_location.compute().flatten().reshape(-1, 3),
                 color="orange",
                 opacity=0.3,
-                render_points_as_spheres=True
+                render_points_as_spheres=True,
             )
             fig.add_points(
                 self.crystal_coordinates.compute(),
                 color="red",
                 point_size=10,
                 label="Crystal coordinates",
-                render_points_as_spheres=True
+                render_points_as_spheres=True,
             )
             # fig.add_points(on_axis_crystal_normal_points[0], color="yellow", point_size = 10, label="Crystal axis")
             fig.show()
@@ -604,7 +617,7 @@ class Simulation:
         """Save dataframe with plasma coordinates and calculated radiation intensity fractions"""
         """TODO - zapis do bazy danych (sql???? czy cos innego?) a nie csv!!!!!!"""
         self.ddf.to_csv(
-            Path.cwd().parents[0]
+            Path(__file__).parent.resolve()
             / "_Results"
             / "numerical"
             / f"{self.element}_plasma_coordinates-{self.distance_between_points}_mm_spacing-height_{self.crystal_height_step}-length_{self.crystal_length_step}-slit_{self.slits_number}*.csv",

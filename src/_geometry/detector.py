@@ -1,6 +1,6 @@
 import numpy as np
 import pyvista as pv
-import pathlib
+from pathlib import Path
 import json
 from scipy.spatial import ConvexHull
 from sympy import Point3D, Plane
@@ -30,9 +30,7 @@ class Detector:
             _type_: _description_
         """
         det_coordinates = np.zeros([5, 3])
-        with open(
-            pathlib.Path.cwd() / "coordinates.json"
-        ) as file:
+        with open(Path(__file__).parent.resolve() / "coordinates.json") as file:
             json_file = json.load(file)
 
             for nr, vertex in enumerate(
