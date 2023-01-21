@@ -10,8 +10,7 @@ from simulation_OOP import Simulation
 from mesh_calculation_OOP import PlasmaMesh
 
 
-def sposob_1():
-    """TODO opis"""
+def first_main():
     for slit in range(10, 9, -1):
         elements_list = ["B"]
         distance_between_points = 30
@@ -69,6 +68,6 @@ def sposob_1():
 start = time.time()
 
 if __name__ == "__main__":
-    sposob_1()
+    first_main()
 
 print(f"\nExecution time is {round((time.time() - start), 2)} s")
