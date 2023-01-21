@@ -5,9 +5,8 @@ from pyvista import PolyData, Plotter
 from scipy.spatial import ConvexHull
 from scipy.spatial import ConvexHull, Delaunay
 import dask.array as da
-from datetime import datetime
-from simulation_OOP import Simulation
-from mesh_calculation_OOP import PlasmaMesh
+from simulation import Simulation
+from mesh_calculation import PlasmaMesh
 
 
 def first_main():
