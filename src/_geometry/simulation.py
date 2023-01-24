@@ -236,7 +236,6 @@ class Simulation:
 
         #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
         #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
         crystal_vector = self.B - self.C
         crys_axis1 = self.radius_central_point
         crys_axis2 = self.radius_central_point + crystal_vector
