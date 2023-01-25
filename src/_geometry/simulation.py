@@ -167,7 +167,6 @@ class Simulation:
 
     ############## implementacja ogolnego check in hull
     ############## implementacja ogolnego check in hull
-    ############## implementacja ogolnego check in hull
 
     def check_in_hull_general(
         self, intersection_points, vertices_coordinates, orientation_vector
@@ -189,7 +188,6 @@ class Simulation:
         ).reshape(8, 3)
         return obj_3D_vertices
 
-    ############## tutaj koniec
     ############## tutaj koniec
     ############## tutaj koniec
 
