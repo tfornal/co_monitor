@@ -74,7 +74,6 @@ class PlasmaMesh:
 
     def calculate_cubes_edge_length(self, coord_range):
         """ """
-        print(coord_range)
         edge_length = abs(coord_range[0] - coord_range[1])
         return edge_length
 
