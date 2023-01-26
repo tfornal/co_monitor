@@ -12,7 +12,8 @@ class PlasmaMesh:
     def __init__(
         self,
         distance_between_points: int = 10,
-        cuboid_size: list = [1350, 800, 250],
+        cuboid_size: list = [1350, 800, 250], ### this size covers the whole 
+        ### plasma volume observed by the system
         plot: bool = False,
         savetxt: bool = False,
     ):

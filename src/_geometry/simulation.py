@@ -13,7 +13,7 @@ from port import Port
 from detector import Detector
 from scipy.spatial import ConvexHull, Delaunay
 from pathlib import Path
-
+import cProfile
 
 class Simulation:
     def __init__(
@@ -643,7 +643,7 @@ if __name__ == "__main__":
 
     for element in elements_list:
         simul = Simulation(element, **testing_settings)
-        plas_points_indices = simul.plas_points_indices
+        cProfile.run("simul")
         # ddf = simul.helper()
 
 

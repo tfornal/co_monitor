@@ -76,7 +76,7 @@ class Detector:
 
 
 if __name__ == "__main__":
-
+    
     def plot_all_detectors():
         fig = pv.Plotter()
         for element in ["B", "C", "N", "O"]:
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             detector = det.make_detectors_surface()
             fig.add_mesh(detector, color="yellow", opacity=0.9)
         fig.show()
-
+    
     plot_all_detectors()
 
     # det = Detector("B", plot=True)
