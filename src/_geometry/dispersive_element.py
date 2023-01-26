@@ -181,7 +181,7 @@ class DispersiveElement:
             self.radius_central_point, self.C, crstal_points[0]
         )
 
-        ### move to the starging place
+        ### move to starting position
         crstal_points -= shift
 
         ### rotate by the angle and shift again to the destination place

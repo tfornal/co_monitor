@@ -57,7 +57,6 @@ def read_Reff_coordinates():
         / "Reff"
         / "Reff_coordinates-10_mm.txt"
     )
-    print(Reff)
     Reff_VMEC_calculated = np.loadtxt(Reff)  ### [mm]
 
     return Reff_VMEC_calculated
@@ -243,7 +242,7 @@ if __name__ == "__main__":
                 plasma_surfaces[:, 0], plasma_surfaces[:, 1], plasma_surfaces[:, 2]
             ),
             line_width=3,
-            color="red",
+            color="grey",
             opacity=0.5,
         )
 

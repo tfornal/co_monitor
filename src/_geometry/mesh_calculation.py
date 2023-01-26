@@ -11,10 +11,10 @@ from pathlib import Path
 class PlasmaMesh:
     def __init__(
         self,
-        distance_between_points=10,
-        cuboid_size=[1350, 800, 250],
-        plot=False,
-        savetxt=False,
+        distance_between_points: int = 10,
+        cuboid_size: list = [1350, 800, 250],
+        plot: bool = False,
+        savetxt: bool = False,
     ):
         """
         Creates mesh of the observed plasma volume. Nominally the interval used for
@@ -74,7 +74,7 @@ class PlasmaMesh:
 
     def calculate_cubes_edge_length(self, coord_range):
         """ """
-        # print(coord_range)
+        print(coord_range)
         edge_length = abs(coord_range[0] - coord_range[1])
         return edge_length
 
@@ -222,7 +222,7 @@ class PlasmaMesh:
             rotated_outer_cube_mesh, self.central_point_of_meshed_volume + [50, 25, 0]
         )
 
-        print(f"\nInvestigated volume: {len(meshed_cuboid)} points.")
+        print(f"Number of points in the considered volume: {len(meshed_cuboid)} points.")
 
         return meshed_cuboid
 
@@ -276,9 +276,6 @@ class PlasmaMesh:
                 header=f"Coordinates X[m], Y[m], Z[m];\nSingle block size: {self.distance_between_points} mm",
             )
             print("Coordinates successfully saved!")
-        # else:
-        # pass
-
 
 def main():
 
