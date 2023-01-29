@@ -1,6 +1,6 @@
 # The C/O monitor code for comprehensive data analysis
 
-The code was created to perform various calculations of potential C/O monitor signals and validate experimental data of the Lyman-alpha lines measurement of hydrogen like ions of B, C, N and O. The code calculates only the line intensities of the given transitions but does not calculate the background radiation (at least not for now).
+The code was created to perform various calculations of potential C/O monitor signals and validate experimental data of the Lyman-alpha lines measurement of hydrogen like ions of B, C, N and O. The code calculates only the line intensities of the given transitions but does not calculate the background radiation (at least not for now). It includes all the obstacles such as W7-X Port, ECRH shields, collimators, curvatures of dispersive elements and position od detectors. 
 
 TBC
 
@@ -13,6 +13,8 @@ directory - co_monitr/src/_geometry
 
 First - by the use of VMEC code (external API) the respective plasma volume in a defined vicinity is calculated. For each plasma point defined in carthesian coordinate system (x,y,z  mm) the Reff (effective minor radius) value is calculated. 
 Next, the code simulates geometry of the C/O monitor system and calculates how much radiation reaches the respective detector. It performes ray-tracing-like operation in order to obtain results wit the highest precision. 
+Visualization of simulated environment (C/O monitor system and W7-X) is presented below:
+
 ![image](https://user-images.githubusercontent.com/53053987/215343224-e3b838d3-9ae7-49ee-84da-e3a590bcce87.png)
 
 TBC
