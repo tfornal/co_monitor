@@ -13,6 +13,7 @@ directory - co_monitr/src/_geometry
 
 First - by the use of VMEC code (external API) the respective plasma volume in a defined vicinity is calculated. For each plasma point defined in carthesian coordinate system (x,y,z  mm) the Reff (effective minor radius) value is calculated. 
 Next, the code simulates geometry of the C/O monitor system and calculates how much radiation reaches the respective detector. It performes ray-tracing-like operation in order to obtain results wit the highest precision. 
+![image](https://user-images.githubusercontent.com/53053987/215343224-e3b838d3-9ae7-49ee-84da-e3a590bcce87.png)
 
 TBC
 
