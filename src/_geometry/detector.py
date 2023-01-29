@@ -1,19 +1,19 @@
 import numpy as np
 import pyvista as pv
-from pathlib import Path
 import json
+from pathlib import Path
 from scipy.spatial import ConvexHull
 from sympy import Point3D, Plane
 
 
 class Detector:
-    """_summary_"""
+    """Class representing the respective detector."""
 
     def __init__(self, element, plot=False):
-        """_summary_
+        """Constructor of a detector object.
 
         Args:
-            element (_type_): _description_
+            element (str): _description_
             plot (bool, optional): _description_. Defaults to False.
         """
         self.det_vertices_coord = self.get_all_coordinates(element)[:4]
@@ -76,7 +76,7 @@ class Detector:
 
 
 if __name__ == "__main__":
-    
+
     def plot_all_detectors():
         fig = pv.Plotter()
         for element in ["B", "C", "N", "O"]:
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             detector = det.make_detectors_surface()
             fig.add_mesh(detector, color="yellow", opacity=0.9)
         fig.show()
-    
+
     plot_all_detectors()
 
     # det = Detector("B", plot=True)

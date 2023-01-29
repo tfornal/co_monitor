@@ -14,6 +14,7 @@ from detector import Detector
 from scipy.spatial import ConvexHull, Delaunay
 from pathlib import Path
 
+
 class Simulation:
     def __init__(
         self,
@@ -231,17 +232,12 @@ class Simulation:
         plasma_coordinates = self.plasma_coordinates.reshape(-1, 1, 3)
         crystal_coordinates = self.crystal_coordinates.reshape(1, -1, 3)
 
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
+        ### calculate reflection angle
         crystal_vector = self.B - self.C
         crys_axis1 = self.radius_central_point
         crys_axis2 = self.radius_central_point + crystal_vector
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
-        #### TODO poprawic pomiar kąta!!!!!!!!!!!!!
 
         on_axis_crystal_normal_points = da.array([])
-        """TODO zmapowac ta funkcje!!!!!!!!!!!!!!!"""
         for i in crystal_coordinates[0]:
             xxx = closest_point_on_line(crys_axis1, crys_axis2, i)
             on_axis_crystal_normal_points = np.append(
@@ -268,16 +264,12 @@ class Simulation:
         return reflected_points_location, full_input_array
 
     def check_ray_transmission(self):
-        """
-        Checks the transmission of each plasma-crystal combination through a collimator.
+        """Checks the transmission of each plasma-crystal combination through a collimator.
 
-
-        Returns
-        -------
-        selected_intersections : DASK ARRAY (plasma_coordinates, crystal_coordinates)
+        Returns:
+            dask array: selected_intersections
             2D array with all plasma points (rows) and all crystal points (columns).
         """
-
         tests_crys_side = []
         found_intersection_points_crys_side = []
 
@@ -289,7 +281,8 @@ class Simulation:
 
         tests_detector = []
         found_intersection_points_detector = []
-        """TODO - odseparowac poszczegolne elementy z mozliwoscia ich 'wylaczenia' """
+
+        """TODO w przyszlosci - odseparowac poszczegolne elementy z mozliwoscia ich 'wylaczenia' """
 
         for i in range(self.slits_number):
             p1, p2, p3 = self.slit_coord_crys_side[i, :3]
@@ -364,12 +357,12 @@ class Simulation:
             axis=0,
         ).rechunk("auto")
         selected_intersections = selected_intersections.all(axis=0)
-        # ### checks the transmission of each ray over input/output of the collimators slits (all -> axis = 3);
-        # ### next checks whether there was transmission over any of the investigated slits (any -> axis = 2);
-        # ### axis = 0 --> all plasma points
-        # ### axis = 1 --> all crystal points
-        # ### dask_array (plasma points, crystal points) boolean array presenting
-        # ### transmission of each plasma-crystal combination ()
+        ### checks the transmission of each ray over input/output of the collimators slits (all -> axis = 3);
+        ### next checks whether there was transmission over any of the investigated slits (any -> axis = 2);
+        ### axis = 0 --> all plasma points
+        ### axis = 1 --> all crystal points
+        ### dask_array (plasma points, crystal points) boolean array presenting
+        ### transmission of each plasma-crystal combination ()
 
         def plotter():
 
@@ -556,14 +549,14 @@ class Simulation:
 
     def calculate_radiation_fraction(self):
         """
-        Calculates final dataset with selected plasma coordinates and the total intensities.
+        Calculates fina`l dataset with selected plasma coordinates and the total intensities.
         Total intensity fraction takes into account distance of the plasma point from crystal
         and angle of incident (AOI) of the ray and the surface of the crystal.
         Since it is assumed that the radiation is emitted into the full solid angle,
         the fraction of this solid angle to the outer sphere's surface is calculated.
         AOI represents the angle of incidend of each ray to the crystals surface.
         The reflection fraction is then calculated checking the AOI and calculating
-        the particular fraction using calculate_reflectivity function.
+        the particular fraction using calculate_reflectivity function.`
         """
         data_frames = [
             self.plas_points_indices,

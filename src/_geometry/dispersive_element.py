@@ -67,14 +67,13 @@ class DispersiveElement:
     def distance_between_poinst(p1, p2):
         """Accepts only np.array containing 3 int/float
         Args:
-            p1 (_type_): _description_
-            p2 (_type_): _description_
+            p1 (np.array): first point in carthesian coordinate system (in mm)
+            p2 (np.array): second point in carthesian coordinate system (in mm)
         Returns:
-            _type_: _description_
+            int: distance (in mm) between the points
         """
         squared_dist = np.sum((p1 - p2) ** 2, axis=0)
         R = np.sqrt(squared_dist).round(2)
-
         return int(R)
 
     # def define_radius_central_point(self):

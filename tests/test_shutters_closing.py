@@ -1,13 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+"""
+TODO! TRASH !!
 
-### TODO - implement one meta class
-
-"""C"""
+"""
 
 slits_number = np.arange(0, 11)
-
 intensities_top_gauss_profiles = np.array(
     [
         0,
@@ -260,17 +259,6 @@ plt.legend(loc="upper left")
 for i in slits_number:
     plt.axvline(i, 0, 1, label="pyplot vertical line", ls="--", color="black", lw=0.5)
 plt.show()
-
-
-# plt.title("Dependence ot the incoming light intensity on the number of slits\n N VII predefined_profile")
-# plt.ylabel('Emissivity [ph/cm3/s]')
-# plt.xlabel('Nr of slits')
-# plt.plot(slits_number, intensity_top_predefined_profile_5, label="top_to_bottom opening")
-# plt.plot(slits_number, intensity_bottom_predefined_profile_5, label="bottom_to_top opening")
-# plt.legend(loc="upper left")
-# for i in slits_number:
-#     plt.axvline(i, 0, 1, label='pyplot vertical line',ls='--', color = "black", lw = 0.5)
-# plt.show()
 
 
 ### zapisac procentowa zmiane sygnalu - niezaleznie od profilu - mozna to wtedy ladnie wyliczyc

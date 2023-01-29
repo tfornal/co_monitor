@@ -1,36 +1,30 @@
-# -*- coding: utf-8 -*-
 """
 Created on Wed Jul 28 13:40:42 2021
 
 @author: t_fornal
 """
-
 import numpy as np
-import pathlib
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 
-reff_file_name = "Reff_coordinates-10_mm"
-
-
-def load_Reff(Reff_path):
+def load_Reff(Reff_path):  ### TODO np > pandas - zmiana formatu liczb
     """
     Load file with plasma coordinates and calculated Reff value.
     """
-    Reff_path = pathlib.Path.cwd() / "_Input_files" / "Reff" / f"{Reff_path}.txt"
-
-    """TODOOOOOO np > pandas - zmiana formatu liczb"""
+    Reff_path = open(
+        Path().absolute() / "src" / "_Input_files" / "Reff" / f"{Reff_path}.txt"
+    )
 
     Reff = np.loadtxt(Reff_path)
     reff_coordinates = pd.DataFrame(Reff, columns=["idx_plasma", "x", "y", "z", "Reff"])
 
     return reff_coordinates
 
-
-def load_calculated_observed_plasma():
-    Reff_path = (
-        pathlib.Path.cwd()
+    Reff_path = open(
+        Path().absolute()
+        / "src"
         / "_Input_files"
         / "Geometric_data"
         / "C"
@@ -38,6 +32,7 @@ def load_calculated_observed_plasma():
         / "C_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
     )
     reff_coordinates = pd.read_csv(Reff_path, sep=";")
+
     return reff_coordinates
 
 
@@ -71,12 +66,8 @@ def total_plasma(reff):
     plt.show()
 
 
-def main():
+if __name__ == "__main__":
+    reff_file_name = "Reff_coordinates-10_mm"
     reff = load_Reff(reff_file_name)
     oobserved_plasma(reff)
     total_plasma(reff)
-    # print(reff)
-
-
-if __name__ == "__main__":
-    main()
