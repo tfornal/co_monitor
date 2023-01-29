@@ -1,15 +1,15 @@
 import pyvista as pv
+import numpy as np
+import pandas as pd
+import math
+import json
 from dispersive_element import DispersiveElement
 from collimator import Collimator
 from detector import Detector
 from port import Port
-import numpy as np
+from pathlib import Path
 from mesh_calculation import PlasmaMesh
 from radiation_shield import RadiationShield
-import pandas as pd
-from pathlib import Path
-import math
-import json
 from scipy.spatial import ConvexHull
 
 
