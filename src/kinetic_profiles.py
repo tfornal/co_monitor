@@ -1,13 +1,9 @@
-"""
-Classes to store electron temperature and density profiles.
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import interpolate
 import os
 import pandas as pd
-import pathlib
+from pathlib import Path
+from scipy import interpolate
 
 
 class Profile:
@@ -44,7 +40,7 @@ class Profile:
         """
         Saves generated profile to *.txt file.
         """
-        directory = pathlib.Path.cwd() / "results" / "plasma_profiles"
+        directory = Path.cwd() / "src" / "results" / "plasma_profiles"
         if not pathlib.Path.is_dir(directory):
             pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
         np.savetxt(
@@ -82,11 +78,12 @@ class PredefinedProfile(Profile):
         """
 
         heating_scenario = os.path.join(
-            os.getcwd(),
-            "_Input_files",
-            "Kinetic_profiles",
-            "Theoretical",
-            (f"8MWECRH_{self.file_nr}.txt"),
+            Path.cwd()
+            / "src"
+            / "_Input_files"
+            / "Kinetic_profiles"
+            / "Theoretical"
+            / (f"8MWECRH_{self.file_nr}.txt")
         )
         read_file = np.loadtxt(heating_scenario, delimiter=" ")
 
@@ -240,7 +237,8 @@ class ExperimentalProfile(Profile):
             ".../_Input_files/Profiles/Experimental/file_name.txt" directory;
         """
         file_path = (
-            pathlib.Path.cwd()
+            Path.cwd()
+            / "src"
             / "_Input_files"
             / "Kinetic_profiles"
             / "Experimental"
@@ -463,6 +461,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-print("DONE")

@@ -1,3 +1,5 @@
+import numpy as np
+from pathlib import Path
 from collections import namedtuple
 from reader import Emissivity
 from kinetic_profiles import (
@@ -5,10 +7,9 @@ from kinetic_profiles import (
     TwoGaussSumProfile,
     ExperimentalProfile,
 )
-import pathlib
-import numpy as np
 
-lyman_alpha_lines = ["B", "C", "N", "O"]
+
+lyman_alpha_lines = ["C", "B", "O", "N"]  #
 Element = namedtuple("Element", "ion_state wavelength impurity_fraction")
 
 lyman_alpha_line = {
@@ -18,39 +19,6 @@ lyman_alpha_line = {
     "O": Element("Z7", 19.0, 0.02),
 }
 transitions = ["EXCIT", "RECOM"]
-
-
-
-def main():
-    """
-    Script runs the code for the plasma emissivity calculation. Requires to
-    choose the profile type (calculated, experimental or theoretical), select
-    lines of interest and emission type (EXCIT, RECOM, CHEXC).
-    All input files are stored in the "_Input_files" directory.
-    """
-
-    ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
-    Te = [1870, 0, 0.155, 210, 0.38, 0.07]
-
-    # profile = two_gauss_prof(ne, Te)
-    # profile = experimental_prof()
-    profile = predefined_profile(4)
-
-    reff_file_name = "Reff_coordinates-1cm"
-
-    for element in lyman_alpha_lines:
-        line = lyman_alpha_line[element]
-        ce = Emissivity(
-            reff_file_name,
-            profile,
-            element,
-            line.ion_state,
-            line.wavelength,
-            line.impurity_fraction,
-            transitions,
-        )
-        # ce.savefile()
-        ce.plot(savefig=False)
 
 
 def calculate_coeficients(a, b, num):
@@ -85,22 +53,6 @@ def two_gauss_prof(ne, Te):
 
 
 def experimental_prof():
-    def experimental_profile_files():
-        """Reads the input file list from a directory"""
-        file_path = (
-            pathlib.Path.cwd() / "_Input_files" / "Kinetic_profiles" / "Experimental"
-        )
-        experimental_profiles = []
-        for filename in pathlib.Path.iterdir(file_path):
-            if filename.endswith(".txt"):
-                experimental_profiles.append(filename.split(".")[0])
-
-        return experimental_profiles
-
-    # #### sequence of files
-    # file_list = experimental_profile_files()
-    # for file in file_list:
-    #     experimental_profile = pt.experimental(file)
 
     #### one selected file
     experimental_profile_file = "report_20181016_037@3_3000_v_"
@@ -110,4 +62,53 @@ def experimental_prof():
 
 
 if __name__ == "__main__":
-    main()
+    """
+    Script runs  the plasma emissivity calculation. It requires to
+    choose the profile type (calculated, experimental or theoretical), select
+    lines of interest and emission type (EXCIT, RECOM, CHEXC).
+    All input files are stored in the "_Input_files" directory.
+    """
+
+    ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
+    Te = [1870, 0, 0.155, 210, 0.38, 0.07]
+
+    ###  select profile type
+    # profile = experimental_prof()
+    # profile = predefined_profile(1)
+    profile = two_gauss_prof(ne, Te)
+
+    reff_file_name = "Reff_coordinates-10_mm"
+    observed_plasma = (
+        Path.cwd()
+        / "src"
+        / "_Input_files"
+        / "Geometric_data"
+        / "C"
+        / "top"
+        / "C_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
+    )
+    impurity_file_name = "20181011_012@5_5000_conv--100_diff-2000.0.csv"
+    for element in lyman_alpha_lines:
+        line = lyman_alpha_line[element]
+        observed_plasma = (
+            Path.cwd()
+            / "src"
+            / "_Input_files"
+            / "Geometric_data"
+            / f"{element}"
+            / "top"
+            / f"{element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
+        )
+        ce = Emissivity(
+            observed_plasma,
+            reff_file_name,
+            profile,
+            impurity_file_name,
+            element,
+            line.ion_state,
+            line.wavelength,
+            line.impurity_fraction,
+            transitions,
+        )
+        # ce.savefile()
+        ce.plot(savefig=False)

@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from scipy import interpolate
 import pandas as pd
+from scipy import interpolate
+from pathlib import Path
 
 
 class FractionalAbundance:
@@ -23,8 +24,7 @@ class FractionalAbundance:
         self.step = step
         self.loaded_file_df = self.read_file()
         self.df_interpolated_frac_ab = self.interpolated_fractional_abundance()
-
-        #### dolaczyc fractional abundance ze strahla!!!!!!!!
+        #### TODO dolaczyc fractional abundance ze strahla!!!!!!!!
 
     def read_file(self):
         """
@@ -35,19 +35,17 @@ class FractionalAbundance:
             fractional_abundance (float list): fractional values of selected ion
 
         """
-        fractional_abundance = os.path.join(
-            os.getcwd(),
-            "_Input_files",
-            "Fractional_abundance",
-            ("fractional_abundance_{}.dat".format(self.element)),
+        fractional_abundance = (
+            Path.cwd()
+            / "src"
+            / "_Input_files"
+            / "Fractional_abundance"
+            / f"fractional_abundance_{self.element}.dat"
         )
+
         loaded_file_df = pd.read_csv(fractional_abundance, delimiter=" ")
 
         return loaded_file_df
-
-    # def import_to_df(self):
-    #     loaded_file_df = self.loaded_file
-    #     return loaded_file_df
 
     def interpolated_fractional_abundance(self):
         """

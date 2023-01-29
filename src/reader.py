@@ -1,17 +1,19 @@
-import pathlib
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+
+from pathlib import Path, PurePath
+from collections import Counter, OrderedDict, namedtuple
+from pec import PEC
 from fractional_abundance import FractionalAbundance
 from kinetic_profiles import (
     PredefinedProfile,
     TwoGaussSumProfile,
     ExperimentalProfile,
 )
-from collections import Counter, OrderedDict, namedtuple
-from pec import PEC
-import pandas as pd
 from impurity_profiles import get_impurity_profile
-from icecream import ic
+from pyvistaqt import BackgroundPlotter
+import pyvista as pv
 
 
 class Emissivity:
@@ -26,6 +28,7 @@ class Emissivity:
         wavelength,
         impurity_fraction,
         transitions,
+        plot=False,
     ):
         """
         Calculates radial emission and total emissivity of investigated ion.
@@ -70,9 +73,7 @@ class Emissivity:
 
         # wybrac minimum z maximum
         reff = min(max_reff_from_profiles, max_reff_from_geometr_file)
-        print("MINIMUM REFF IS: ", reff)
         self.element = element
-        print(self.reff_coordinates_with_radiation_fractions.columns)
         self.impurity_concentration = impurity_fraction  # [%]
         self.ion_state = ion_state
         self.wavelength = wavelength
@@ -95,7 +96,7 @@ class Emissivity:
         Load file with plasma coordinates and calculated Reff value.
         """
         Reff_path = (
-            pathlib.Path.cwd() / "_Input_files" / "Reff" / f"{reff_file_name}.txt"
+            Path.cwd() / "src" / "_Input_files" / "Reff" / f"{reff_file_name}.txt"
         )
 
         """TODO np > pandas - zmiana formatu liczb"""
@@ -113,12 +114,12 @@ class Emissivity:
         Load file with plasma coordinates and calculated Reff value.
         """
         Reff_path = (
-            pathlib.Path.cwd()
+            Path.cwd()
+            / "src"
             / "_Input_files"
             / "Dane_wejsciowe"
             / f"{geometry_file_name}"
         )
-
         """TODOOOOOO np -> pandas"""
 
         ### odczytac Reff z poprzedniej funkcji, zaladowac nowy plik,
@@ -138,8 +139,6 @@ class Emissivity:
 
         def plotter():
             to_numpy = df.to_numpy()
-            from pyvistaqt import BackgroundPlotter
-            import pyvista as pv
 
             def create_point_cloud(coordinates, reff):
                 point_cloud = pv.PolyData(coordinates)
@@ -153,11 +152,13 @@ class Emissivity:
             pc = create_point_cloud(plasma_coordinates, intensity)
             # pc2 = create_point_cloud(plasma_coordinates, reff)
 
-            fig = BackgroundPlotter()
-            fig.add_mesh(pv.PolyData(pc), point_size=8, render_points_as_spheres=True)
-            # fig.add_mesh(pv.PolyData(pc2), point_size = 8, render_points_as_spheres = True)
+            fig = pv.Plotter()
+            fig.set_background("black")
 
-        # plotter()
+            fig.add_mesh(pv.PolyData(pc), point_size=8, render_points_as_spheres=True)
+            fig.show()
+
+        plotter()
 
         return df
 
@@ -376,11 +377,11 @@ class Emissivity:
         Saves an output dataframe containing all the calculated information in
         the given directory. Creates 'results' / 'numerical_results' path if not exists.
         """
-        directory = pathlib.Path.cwd() / "_Results" / "numerical_results"
-        if not pathlib.Path.is_dir(directory):
-            pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
+        directory = Path.cwd() / "_Results" / "numerical_results"
+        if not Path.is_dir(directory):
+            Path(directory).mkdir(parents=True, exist_ok=True)
         np.savetxt(
-            pathlib.PurePath(
+            PurePath(
                 directory,
                 f"Emissivity ({self.element} - {self.ion_state} - file_nr_{iterator}).dat",
             ),
@@ -422,11 +423,11 @@ class Emissivity:
 
         def save():
             if savefig == True:
-                directory = pathlib.Path.cwd() / "_Results" / "figures"
-                if not pathlib.Path.is_dir(directory):
-                    pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
+                directory = Path.cwd() / "_Results" / "figures"
+                if not Path.is_dir(directory):
+                    Path(directory).mkdir(parents=True, exist_ok=True)
                 plt.savefig(
-                    pathlib.PurePath(
+                    PurePath(
                         directory, f"Emissivity ({self.element} - {self.ion_state})"
                     )
                 )
@@ -439,8 +440,9 @@ class Emissivity:
 
 def main():
     reff_file_name = "Reff_coordinates-10_mm"
-    Reff_path = (
-        pathlib.Path.cwd()
+    observed_plasma = (
+        Path.cwd()
+        / "src"
         / "_Input_files"
         / "Geometric_data"
         / "C"
@@ -448,21 +450,12 @@ def main():
         / "C_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
     )
 
-    #############################################
-    ##### Choose profile type
-    #############################################
-    ##### SWITCH CASE????
-
-    # profile = PredefinedProfile(5)
-    # profile = profile.profile_df
-
     def profile_maker():
         ne1 = [7.03e13, 0.01, 0.36, 1.00e13, 0.47, 0.08]
         ne2 = [1.96e13, 0, 0.37, 2.80e12, 0.45, 0.15]
 
         Te1 = [1870, 0, 0.155, 210, 0.38, 0.07]
         Te2 = [8029, 0, 0.155, 210, 0.38, 0.07]
-
         ne = np.linspace(ne1, ne2, 1, endpoint=True)
         Te = np.linspace(Te1, Te2, 1, endpoint=True)
 
@@ -470,17 +463,15 @@ def main():
 
     ne, Te = profile_maker()
     iterator = 0
-
-    lista_parametrow = []
     imp_conc_profiles = [
-        "cxrs-peaked",
-        # "cxrs-flat"
+        # "cxrs-peaked",
+        "cxrs-flat"
     ]
     impurity_file_name = "20181011_012@5_5000_conv--100_diff-2000.0.csv"
     for number, profile in enumerate(imp_conc_profiles):
-        for i, n in enumerate(ne):
-            for j, t in enumerate(Te):
-                plasma_profile = TwoGaussSumProfile(ne[i], Te[j])
+        for idx_ne, n in enumerate(ne):
+            for idx_te, t in enumerate(Te):
+                plasma_profile = TwoGaussSumProfile(ne[idx_ne], Te[idx_te])
                 plasma_profile.plot()
                 plasma_profile = plasma_profile.profile_df
 
@@ -493,10 +484,7 @@ def main():
                 ### wpisac albo "cxrs" albofloat zawartosci
                 lyman_alpha_line = {
                     "B": Element("Z4", 48.6, 2),
-                    "C": Element(
-                        "Z5", 33.7, 1
-                    ),  ####### TODO enumerate na cos innego? TODO
-                    ###hardcoded impurity_fraction (concentration), linear albo provided by cxrs.
+                    "C": Element("Z5", 33.7, 1),
                     "N": Element("Z6", 24.8, 2),
                     "O": Element("Z7", 19.0, 1),
                 }
@@ -504,7 +492,7 @@ def main():
                 for element in lyman_alpha_lines:
                     line = lyman_alpha_line[element]
                     em = Emissivity(
-                        Reff_path,
+                        observed_plasma,
                         reff_file_name,
                         plasma_profile,
                         impurity_file_name,
@@ -517,10 +505,7 @@ def main():
                     em.plot(savefig=True)
                     em.savefile(iterator)
                     lista_parametrow.append((iterator, float(em.total_emissivity)))
-                    # lista_parametrow.append((iterator, line.impurity_fraction, [i for i in n], [i for i in t], float(em.total_emissivity)))
-
                     iterator += 1
-    # np.savetxt(f"{element}_parametry.txt", lista_parametrow)
 
 
 import time

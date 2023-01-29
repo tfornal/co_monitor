@@ -14,12 +14,14 @@ class PEC:
         transitions,
         ne_samples_amount=20,
         Te_samples_amount=20,
+        plot=False,
     ):
         self.element = element
         self.wavelength = wavelength
+        self.transitions = transitions
         self.ne_samples_amount = ne_samples_amount
         self.Te_samples_amount = Te_samples_amount
-        self.transitions = transitions
+        self.plot = plot
         self.pec_file_path = self.select_pec_file()
         self.total_pec_file = self.separate_pec_file()
         self.comments_df = self.read_pec_comments()
@@ -29,16 +31,12 @@ class PEC:
         self.analyse_pec()
 
     def select_pec_file(self):
-        pec_element_path = Path.cwd() / "_Input_files" / "PEC" / self.element
+        pec_element_path = Path.cwd() / "src" / "_Input_files" / "PEC" / self.element
         pec_file_path = list(Path(pec_element_path).glob("*.dat"))[0]
 
         return pec_file_path
 
     def separate_pec_file(self):
-        """
-        TODO dafaq?
-        """
-
         num_list = []
         with open(self.pec_file_path, "r") as fh:
             for line in fh:
@@ -260,8 +258,7 @@ class PEC:
             interp_ne_te_pec[:, te_value, 1] = Te_interpolated_all
             interp_ne_te_pec[:, te_value, 2] = pec_interpolated_all
 
-        def plotter():
-
+        if self.plot:
             X = interp_ne_te_pec[:, :, 0]
             Y = interp_ne_te_pec[:, :, 1]
             Z = interp_ne_te_pec[:, :, 2]
@@ -273,9 +270,7 @@ class PEC:
             ax.set_xlabel("Ne [1/cm3]")
             ax.set_ylabel("Te [eV]")
             ax.set_zlabel("PEC")
-
-        if __name__ == "__main__":
-            plotter()
+            plt.show()
 
         return interp_ne_te_pec
 
@@ -320,8 +315,9 @@ class PEC:
 
 ### correct the function calling, to namedtuple
 if __name__ == "__main__":
+    element = "C"
     transitions = ["EXCIT", "RECOM"]
-    pec = PEC("C", 33.7, transitions)
+    pec = PEC(element, 33.7, transitions, plot=False)
     # pec = PEC("B", 48.6, transitions)
     # pec = PEC("O", 19.0, transitions)
     # pec = PEC("N", 24.8, transitions)
