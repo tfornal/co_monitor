@@ -9,10 +9,13 @@ TBC
 ### Module 1 - Geometry calculation
 
 The section calculates the observed plasma volume by the respective energy channel (possible options - boron (B), carbon (C), nitrogen (N) and oxygen (O)). 
-directory - co_monitr/src/_geometry 
+directory - co_monitor/src/_geometry 
 
 First - by the use of VMEC code (external API) the respective plasma volume in a defined vicinity is calculated. For each plasma point defined in carthesian coordinate system (x,y,z  mm) the Reff (effective minor radius) value is calculated. 
 Next, the code simulates geometry of the C/O monitor system and calculates how much radiation reaches the respective detector. It performes ray-tracing-like operation in order to obtain results wit the highest precision. 
+Calculations are preformed by : 
+#### co_monitor/src/_geometry/simulation.py
+ 
 Visualization of simulated environment (C/O monitor system and W7-X) is presented below:
 
 ![image](https://user-images.githubusercontent.com/53053987/215343224-e3b838d3-9ae7-49ee-84da-e3a590bcce87.png)
