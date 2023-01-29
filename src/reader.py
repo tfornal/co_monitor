@@ -1,8 +1,11 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import time
+import pyvista as pv
 
 from pathlib import Path, PurePath
+from pyvistaqt import BackgroundPlotter
 from collections import Counter, OrderedDict, namedtuple
 from pec import PEC
 from fractional_abundance import FractionalAbundance
@@ -12,14 +15,12 @@ from kinetic_profiles import (
     ExperimentalProfile,
 )
 from impurity_profiles import get_impurity_profile
-from pyvistaqt import BackgroundPlotter
-import pyvista as pv
 
 
 class Emissivity:
     def __init__(
         self,
-        geometry_file_name,
+        # observed_plasma_volume,
         reff_file_name,
         plasma_profiles,
         impurity_file_name,
@@ -62,17 +63,14 @@ class Emissivity:
 
         self.plasma_profiles = plasma_profiles
         self.imp_file_name = impurity_file_name
-        max_reff_from_profiles = self.plasma_profiles["Reff"].max()
         self.reff_coordinates = self.load_Reff(reff_file_name)
+        self.observed_plasma_volume = self.load_observed_plasma(element)
         self.reff_coordinates_with_radiation_fractions = (
-            self.read_plasma_coordinates_with_radiation_fractions(geometry_file_name)
+            self.read_plasma_coordinates_with_radiation_fractions()
         )
         max_reff_from_geometr_file = self.reff_coordinates_with_radiation_fractions[
             "Reff"
         ].max()
-
-        # wybrac minimum z maximum
-        reff = min(max_reff_from_profiles, max_reff_from_geometr_file)
         self.element = element
         self.impurity_concentration = impurity_fraction  # [%]
         self.ion_state = ion_state
@@ -93,44 +91,43 @@ class Emissivity:
 
     def load_Reff(self, reff_file_name):
         """
-        Load file with plasma coordinates and calculated Reff value.
+        Load file with plasma coordinates and their calculated Reff value (if exists).
         """
         Reff_path = (
             Path.cwd() / "src" / "_Input_files" / "Reff" / f"{reff_file_name}.txt"
         )
 
-        """TODO np > pandas - zmiana formatu liczb"""
-
-        Reff = np.loadtxt(Reff_path)
-        reff_coordinates = pd.DataFrame(
-            Reff, columns=["idx_plasma", "x", "y", "z", "Reff"]
+        reff_coordinates = pd.read_csv(Reff_path, sep=" ")
+        reff_coordinates.columns = ["idx_plasma", "x", "y", "z", "Reff"]
+        reff_coordinates = reff_coordinates.astype(
+            {"idx_plasma": int, "x": float, "y": float, "z": float, "Reff": float}
         )
-
         return reff_coordinates
 
-    def read_plasma_coordinates_with_radiation_fractions(self, geometry_file_name):
-
+    def load_observed_plasma(self, element):
         """
-        Load file with plasma coordinates and calculated Reff value.
+        Load file with observed plasma volume by each spectroscopic channel.
         """
-        Reff_path = (
+        observed_plasma = (
             Path.cwd()
             / "src"
             / "_Input_files"
-            / "Dane_wejsciowe"
-            / f"{geometry_file_name}"
+            / "Geometric_data"
+            / f"{element}"
+            / "top"
+            / f"{element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
         )
-        """TODOOOOOO np -> pandas"""
+        observed_plasma_volume = pd.read_csv(observed_plasma, sep=";")
+        return observed_plasma_volume
 
-        ### odczytac Reff z poprzedniej funkcji, zaladowac nowy plik,
-        ### odczytac wszystkie Reff z nowego pliku, te dane dopiero przekazac
-        ### dalej do wyliczenia
-        plasma = self.reff_coordinates
-
-        df = pd.read_csv(Reff_path, sep=";")
+    def read_plasma_coordinates_with_radiation_fractions(self):
+        """
+        Load file with plasma coordinates and calculated Reff value.
+        """
+        df = self.observed_plasma_volume
 
         lista_indexow = df["idx_sel_plas_points"].tolist()
-        plasma_points_po_indeksowaniu = plasma.iloc[lista_indexow]
+        plasma_points_po_indeksowaniu = self.reff_coordinates.iloc[lista_indexow]
         Reff = plasma_points_po_indeksowaniu["Reff"]
         Reff = plasma_points_po_indeksowaniu["Reff"].tolist()
 
@@ -150,7 +147,6 @@ class Emissivity:
             intensity = to_numpy[:, -2]
             plasma_coordinates = to_numpy[:, 1:4]
             pc = create_point_cloud(plasma_coordinates, intensity)
-            # pc2 = create_point_cloud(plasma_coordinates, reff)
 
             fig = pv.Plotter()
             fig.set_background("black")
@@ -280,18 +276,16 @@ class Emissivity:
 
         """
         df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
-        for iterator, value in enumerate(self.transitions_list.values()):
+        for idx, value in enumerate(self.transitions_list.values()):
             pec = []
             for i, row in df_prof_frac_ab_pec.iterrows():
                 ne_idx = (
-                    np.abs(row["n_e"] - self.interpolated_pec_df[iterator, :, 0, 0])
+                    np.abs(row["n_e"] - self.interpolated_pec_df[idx, :, 0, 0])
                 ).argmin()
                 te_idx = (
-                    np.abs(
-                        row["T_e"] - self.interpolated_pec_df[iterator, ne_idx, :, 1]
-                    )
+                    np.abs(row["T_e"] - self.interpolated_pec_df[idx, ne_idx, :, 1])
                 ).argmin()
-                pec.append(self.interpolated_pec_df[iterator, ne_idx, te_idx, 2])
+                pec.append(self.interpolated_pec_df[idx, ne_idx, te_idx, 2])
             df_prof_frac_ab_pec[f"pec_{value}"] = pec
 
         return df_prof_frac_ab_pec
@@ -372,7 +366,7 @@ class Emissivity:
 
         return total_emissivity
 
-    def savefile(self, iterator):
+    def savefile(self):
         """
         Saves an output dataframe containing all the calculated information in
         the given directory. Creates 'results' / 'numerical_results' path if not exists.
@@ -383,7 +377,7 @@ class Emissivity:
         np.savetxt(
             PurePath(
                 directory,
-                f"Emissivity ({self.element} - {self.ion_state} - file_nr_{iterator}).dat",
+                f"Emissivity ({self.element} - {self.ion_state} - file).dat",
             ),
             self.df_prof_frac_ab_pec,
             header=f"{self.df_prof_frac_ab_pec.columns} \n Total emissivity: {self.total_emissivity}",
@@ -434,21 +428,20 @@ class Emissivity:
             else:
                 pass
 
-        # save()
         plt.show()
 
 
 def main():
     reff_file_name = "Reff_coordinates-10_mm"
-    observed_plasma = (
-        Path.cwd()
-        / "src"
-        / "_Input_files"
-        / "Geometric_data"
-        / "C"
-        / "top"
-        / "C_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
-    )
+    # observed_plasma = (
+    #     Path.cwd()
+    #     / "src"
+    #     / "_Input_files"
+    #     / "Geometric_data"
+    #     / "C"
+    #     / "top"
+    #     / "C_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
+    # )
 
     def profile_maker():
         ne1 = [7.03e13, 0.01, 0.36, 1.00e13, 0.47, 0.08]
@@ -462,7 +455,6 @@ def main():
         return ne, Te
 
     ne, Te = profile_maker()
-    iterator = 0
     imp_conc_profiles = [
         # "cxrs-peaked",
         "cxrs-flat"
@@ -472,10 +464,10 @@ def main():
         for idx_ne, n in enumerate(ne):
             for idx_te, t in enumerate(Te):
                 plasma_profile = TwoGaussSumProfile(ne[idx_ne], Te[idx_te])
-                plasma_profile.plot()
+                # plasma_profile.plot()
                 plasma_profile = plasma_profile.profile_df
 
-                lyman_alpha_lines = ["C"]
+                lyman_alpha_lines = ["O"]
 
                 Element = namedtuple(
                     "Element", "ion_state wavelength impurity_fraction"
@@ -491,8 +483,16 @@ def main():
 
                 for element in lyman_alpha_lines:
                     line = lyman_alpha_line[element]
+                    observed_plasma = (
+                        Path.cwd()
+                        / "src"
+                        / "_Input_files"
+                        / "Geometric_data"
+                        / f"{element}"
+                        / "top"
+                        / f"{element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
+                    )
                     em = Emissivity(
-                        observed_plasma,
                         reff_file_name,
                         plasma_profile,
                         impurity_file_name,
@@ -502,13 +502,7 @@ def main():
                         line.impurity_fraction,
                         transitions,
                     )
-                    em.plot(savefig=True)
-                    em.savefile(iterator)
-                    lista_parametrow.append((iterator, float(em.total_emissivity)))
-                    iterator += 1
 
-
-import time
 
 start = time.time()
 

@@ -78,29 +78,10 @@ if __name__ == "__main__":
     profile = two_gauss_prof(ne, Te)
 
     reff_file_name = "Reff_coordinates-10_mm"
-    observed_plasma = (
-        Path.cwd()
-        / "src"
-        / "_Input_files"
-        / "Geometric_data"
-        / "C"
-        / "top"
-        / "C_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
-    )
     impurity_file_name = "20181011_012@5_5000_conv--100_diff-2000.0.csv"
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]
-        observed_plasma = (
-            Path.cwd()
-            / "src"
-            / "_Input_files"
-            / "Geometric_data"
-            / f"{element}"
-            / "top"
-            / f"{element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
-        )
         ce = Emissivity(
-            observed_plasma,
             reff_file_name,
             profile,
             impurity_file_name,

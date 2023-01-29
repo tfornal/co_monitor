@@ -426,9 +426,9 @@ class ExperimentalProfile(Profile):
         return super().save_txt(self.profile_df)
 
 
-def main():
+if __name__ == "__main__":
     pp = PredefinedProfile(5)
-    pp.plot()
+    # pp.plot()
 
     # def profile_maker():
     #     ne1 = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
@@ -457,7 +457,3 @@ def main():
     # ep = ExperimentalProfile("report_20181011_012@5_5000_v_1")
     # print(ep.profile_df)
     # ep.plot()
-
-
-if __name__ == "__main__":
-    main()
