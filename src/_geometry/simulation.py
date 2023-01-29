@@ -13,7 +13,6 @@ from port import Port
 from detector import Detector
 from scipy.spatial import ConvexHull, Delaunay
 from pathlib import Path
-import cProfile
 
 class Simulation:
     def __init__(
@@ -643,8 +642,6 @@ if __name__ == "__main__":
 
     for element in elements_list:
         simul = Simulation(element, **testing_settings)
-        cProfile.run("simul")
-        # ddf = simul.helper()
 
 
 print(f"\nExecution time is {round((time.time() - start), 2)} s")

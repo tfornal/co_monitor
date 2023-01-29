@@ -2,8 +2,6 @@ import numpy as np
 import pyvista as pv
 import json
 from scipy.spatial import ConvexHull, Delaunay
-
-# from optics_coordinates_OOP import CollimatorsCoordinates
 from pathlib import Path
 
 
