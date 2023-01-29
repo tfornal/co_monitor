@@ -3,9 +3,7 @@ import pyvista as pv
 from pyvistaqt import BackgroundPlotter
 from scipy.spatial import ConvexHull
 import json
-import pathlib
-
-# TODO - poprawienie dokumentacji!
+from pathlib import Path
 
 
 class RadiationShield:
@@ -41,9 +39,7 @@ class RadiationShield:
         Returns:
             _type_: _description_
         """
-        with open(
-            pathlib.Path.cwd() / "coordinates.json"
-        ) as file:
+        with open(Path(__file__).parent.resolve() / "coordinates.json") as file:
             json_file = json.load(file)
             shield_coordinates = json_file["ECRH shield"][f"{chamber_position}"][
                 f"{shield_nr}"

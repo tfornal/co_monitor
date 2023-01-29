@@ -433,15 +433,6 @@ class Emissivity:
 
 def main():
     reff_file_name = "Reff_coordinates-10_mm"
-    # observed_plasma = (
-    #     Path.cwd()
-    #     / "src"
-    #     / "_Input_files"
-    #     / "Geometric_data"
-    #     / "C"
-    #     / "top"
-    #     / "C_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
-    # )
 
     def profile_maker():
         ne1 = [7.03e13, 0.01, 0.36, 1.00e13, 0.47, 0.08]

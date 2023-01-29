@@ -8,7 +8,7 @@ from pathlib import Path
 
 class FractionalAbundance:
     """
-    The script reads the files representing containing fractional abundances (FA) of a given
+    The script reads the files representing fractional abundances (FA) of a given
     ion and interpolates the data.
     It is also possible to plot fractional abundances of selected ions.
 

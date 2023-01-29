@@ -7,12 +7,10 @@ import numpy as np
 from mesh_calculation import PlasmaMesh
 from radiation_shield import RadiationShield
 import pandas as pd
-import pathlib
+from pathlib import Path
 import math
 import json
 from scipy.spatial import ConvexHull
-
-# TODO poprawienie dokumentacji!
 
 
 def make_hull(points):
@@ -52,11 +50,13 @@ def read_Reff_coordinates():
         _type_: _description_
     """
     Reff = (
-        pathlib.Path.cwd().parents[0]
+        Path(__file__).parent.parent
         / "_Input_files"
         / "Reff"
         / "Reff_coordinates-10_mm.txt"
     )
+
+    print(Reff)
     Reff_VMEC_calculated = np.loadtxt(Reff)  ### [mm]
 
     return Reff_VMEC_calculated
@@ -91,7 +91,7 @@ def make_observed_plasma_volume(Reff_VMEC_calculated, element):
         _type_: _description_
     """
     calculated_plasma_coordinates = (
-        pathlib.Path.cwd().parents[0]
+        Path(__file__).parent.parent.resolve()
         # / "src"
         / "_Input_files"
         / "__Visualization"
@@ -164,7 +164,7 @@ def calculate_plasma_surfaces(phi, surface_number):
     """
     plasma_surfaces = []
     W7X_surface = (
-        pathlib.Path.cwd().parents[0]
+        Path(__file__).parent.parent
         # / "src"
         / "_Input_files"
         / "__Visualization"
@@ -332,12 +332,7 @@ if __name__ == "__main__":
 
     ###########################################################################
 
-    elements_list = {
-        "B": "red", 
-        "C": "blue", 
-        "N": "green", 
-        "O": "orange"
-        }
+    elements_list = {"B": "red", "C": "blue", "N": "green", "O": "orange"}
     Reff_VMEC_calculated = read_Reff_coordinates()
     plot_W7X()
     plot_cuboid()
