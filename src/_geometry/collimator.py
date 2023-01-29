@@ -46,11 +46,6 @@ class Collimator:
         self.A2 = np.array(self.collimator["vertex"]["A2"])
         self.B1 = np.array(self.collimator["vertex"]["B1"])
         self.B2 = np.array(self.collimator["vertex"]["B2"])
-
-        # self.cc = CollimatorsCoordinates()
-        # self.collim_depth_vector = self.check_depth_vector(element)
-        # sprawdza tyko w colim vertices with depth A1-A1-B1-B2 bez
-        # przesuniec!! poprawic
         self.slits_number = slits_number
         self.visualization(plot)
 
