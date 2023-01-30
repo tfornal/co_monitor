@@ -3,10 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time
 import pyvista as pv
-
 from pathlib import Path, PurePath
 from pyvistaqt import BackgroundPlotter
 from collections import Counter, OrderedDict, namedtuple
+
 from pec import PEC
 from fractional_abundance import FractionalAbundance
 from kinetic_profiles import (
@@ -455,8 +455,8 @@ if __name__ == "__main__":
     ]
     impurity_file_name = "20181011_012@5_5000_conv--100_diff-2000.0.csv"
     for number, profile in enumerate(imp_conc_profiles):
-        for idx_ne, n in enumerate(ne):
-            for idx_te, t in enumerate(Te):
+        for idx_ne, _ in enumerate(ne):
+            for idx_te, _ in enumerate(Te):
                 plasma_profile = TwoGaussSumProfile(ne[idx_ne], Te[idx_te])
                 # plasma_profile.plot()
                 plasma_profile = plasma_profile.profile_df
@@ -467,7 +467,7 @@ if __name__ == "__main__":
                     "Element", "ion_state wavelength impurity_fraction"
                 )
                 transitions = ["EXCIT", "RECOM"]  # , "CHEXC"]
-                ### wpisac albo "cxrs" albofloat zawartosci
+                ### wpisac albo "cxrs" albof loat zawartosci
                 lyman_alpha_line = {
                     "B": Element("Z4", 48.6, 2),
                     "C": Element("Z5", 33.7, 1),
