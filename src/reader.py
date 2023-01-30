@@ -94,7 +94,10 @@ class Emissivity:
         Load file with plasma coordinates and their calculated Reff value (if exists).
         """
         Reff_path = (
-            Path(__file__).parent.resolve() / "_Input_files" / "Reff" / f"{reff_file_name}.txt"
+            Path(__file__).parent.resolve()
+            / "_Input_files"
+            / "Reff"
+            / f"{reff_file_name}.txt"
         )
 
         reff_coordinates = pd.read_csv(Reff_path, sep=" ")
@@ -430,7 +433,8 @@ class Emissivity:
         plt.show()
 
 
-def main():
+if __name__ == "__main__":
+    start = time.time()
     reff_file_name = "Reff_coordinates-10_mm"
 
     def profile_maker():
@@ -457,7 +461,7 @@ def main():
                 # plasma_profile.plot()
                 plasma_profile = plasma_profile.profile_df
 
-                lyman_alpha_lines = ["O"]
+                lyman_alpha_lines = ["N"]
 
                 Element = namedtuple(
                     "Element", "ion_state wavelength impurity_fraction"
@@ -493,12 +497,4 @@ def main():
                         transitions,
                     )
 
-
-start = time.time()
-
-if __name__ == "__main__":
-    main()
-
-print(
-    f"\nFinished within {round(time.time() - start, 2)}s",
-)
+    print(f"\nFinished within {round(time.time() - start, 2)}s")

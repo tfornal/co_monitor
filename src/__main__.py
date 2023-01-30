@@ -53,7 +53,6 @@ def two_gauss_prof(ne, Te):
 
 
 def experimental_prof():
-
     #### one selected file
     experimental_profile_file = "report_20181016_037@3_3000_v_"
     profile = ExperimentalProfile(experimental_profile_file).profile_df
@@ -72,7 +71,7 @@ if __name__ == "__main__":
     ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
     Te = [1870, 0, 0.155, 210, 0.38, 0.07]
 
-    ###  select profile type
+    ##  select profile type
     # profile = experimental_prof()
     # profile = predefined_profile(1)
     profile = two_gauss_prof(ne, Te)
