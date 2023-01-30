@@ -4,7 +4,7 @@ import os
 import pandas as pd
 from scipy import interpolate
 from pathlib import Path
-
+#### TODO dolaczyc fractional abundance ze strahla!!!!!!!!
 
 class FractionalAbundance:
     """
@@ -18,13 +18,16 @@ class FractionalAbundance:
         step (int): step of the interpolation - nominally 1 [eV] (optional)
     """
 
-    def __init__(self, element, ion_state, step=1):
+    def __init__(self, element, ion_state, step=1, plot = False):
         self.element = element
         self.ion_state = ion_state
         self.step = step
+        self.plot = plot
         self.loaded_file_df = self.read_file()
         self.df_interpolated_frac_ab = self.interpolated_fractional_abundance()
-        #### TODO dolaczyc fractional abundance ze strahla!!!!!!!!
+        if plot:
+            self.plotter()
+        
 
     def read_file(self):
         """
@@ -36,12 +39,12 @@ class FractionalAbundance:
 
         """
         fractional_abundance = (
-            Path.cwd()
-            / "src"
+            Path(__file__).parent.resolve()
             / "_Input_files"
             / "Fractional_abundance"
             / f"fractional_abundance_{self.element}.dat"
         )
+        Path(__file__).parent.resolve()
 
         loaded_file_df = pd.read_csv(fractional_abundance, delimiter=" ")
 
@@ -86,8 +89,8 @@ class FractionalAbundance:
         df_interpolated_frac_ab = self.interpolated_fractional_abundance()
         np.savetxt(f"{element} {ion_state}.txt", df_interpolated_frac_ab)
         print(f"Fractional abundance of {element}-{ion_state} ion successfuly saved!")
-
-    def plot_all_fa(self):
+    
+    def plotter(self):
         """
         Plots interpolated T_e [eV] and all fractional abundance [%].
         """
@@ -106,14 +109,5 @@ class FractionalAbundance:
 
         plt.show()
 
-
-def main(element, ion_state):
-    fa = FractionalAbundance(element, ion_state)
-    fa.plot_all_fa()
-
-
 if __name__ == "__main__":
-    main("B", "Z4")
-    main("C", "Z5")
-    main("N", "Z6")
-    main("O", "Z7")
+    fa = FractionalAbundance("O", "Z7", plot = False)

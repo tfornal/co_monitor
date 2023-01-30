@@ -94,7 +94,7 @@ class Emissivity:
         Load file with plasma coordinates and their calculated Reff value (if exists).
         """
         Reff_path = (
-            Path.cwd() / "src" / "_Input_files" / "Reff" / f"{reff_file_name}.txt"
+            Path(__file__).parent.resolve() / "_Input_files" / "Reff" / f"{reff_file_name}.txt"
         )
 
         reff_coordinates = pd.read_csv(Reff_path, sep=" ")
@@ -109,8 +109,7 @@ class Emissivity:
         Load file with observed plasma volume by each spectroscopic channel.
         """
         observed_plasma = (
-            Path.cwd()
-            / "src"
+            Path(__file__).parent.resolve()
             / "_Input_files"
             / "Geometric_data"
             / f"{element}"
@@ -371,7 +370,7 @@ class Emissivity:
         Saves an output dataframe containing all the calculated information in
         the given directory. Creates 'results' / 'numerical_results' path if not exists.
         """
-        directory = Path.cwd() / "_Results" / "numerical_results"
+        directory = Path(__file__).parent.resolve() / "_Results" / "numerical_results"
         if not Path.is_dir(directory):
             Path(directory).mkdir(parents=True, exist_ok=True)
         np.savetxt(

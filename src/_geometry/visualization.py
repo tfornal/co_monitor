@@ -92,11 +92,10 @@ def make_observed_plasma_volume(Reff_VMEC_calculated, element):
     """
     calculated_plasma_coordinates = (
         Path(__file__).parent.parent.resolve()
-        # / "src"
         / "_Input_files"
         / "__Visualization"
         / f"{element}_plasma_coordinates.csv"
-    )  # / "Reff" / f"{reff_file_name}.txt"
+    ) 
 
     df = pd.read_csv(calculated_plasma_coordinates, sep=";")
     indexes = df.iloc[:, 0].values

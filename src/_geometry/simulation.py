@@ -598,18 +598,18 @@ class Simulation:
                 "total_intensity_fraction",
             ]
         ]
-        # ddf = ddf.to_dask_array().compute_chunk_sizes()
-        # print(ddf.compute())
         return ddf
 
     def save_to_file(self):
         """Save dataframe with plasma coordinates and calculated radiation intensity fractions"""
         """TODO - zapis do bazy danych (sql???? czy cos innego?) a nie csv!!!!!!"""
+        print(Path(__file__).parent.parent.resolve())
         self.ddf.to_csv(
-            Path(__file__).parent.resolve()
-            / "_Results"
-            / "numerical"
-            / f"{self.element}_plasma_coordinates-{self.distance_between_points}_mm_spacing-height_{self.crystal_height_step}-length_{self.crystal_length_step}-slit_{self.slits_number}*.csv",
+        Path(__file__).parent.parent.resolve()
+            / "_Input_files"
+            / "Geometric_data"
+            / f"{self.element}" ####  +top/bottom closing side -resolve
+            / f"{self.element}_plasma_coordinates-{self.distance_between_points}_mm_spacing-height_{self.crystal_height_step}-length_{self.crystal_length_step}-slit_{self.slits_number}*.dat",
             sep=";",
             header=True,
             index=False,

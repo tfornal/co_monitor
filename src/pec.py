@@ -31,7 +31,7 @@ class PEC:
         self.analyse_pec()
 
     def select_pec_file(self):
-        pec_element_path = Path.cwd() / "src" / "_Input_files" / "PEC" / self.element
+        pec_element_path = Path(__file__).parent.resolve() / "_Input_files" / "PEC" / self.element
         pec_file_path = list(Path(pec_element_path).glob("*.dat"))[0]
 
         return pec_file_path

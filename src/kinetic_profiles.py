@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
-from pathlib import Path
+from pathlib import Path, PurePath
 from scipy import interpolate
 
 
@@ -40,11 +40,11 @@ class Profile:
         """
         Saves generated profile to *.txt file.
         """
-        directory = Path.cwd() / "src" / "results" / "plasma_profiles"
-        if not pathlib.Path.is_dir(directory):
-            pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
+        directory = Path(__file__).parent.resolve() / "src" / "results" / "plasma_profiles"
+        if not Path.is_dir(directory):
+            Path(directory).mkdir(parents=True, exist_ok=True)
         np.savetxt(
-            pathlib.PurePath(directory, "plasma_profile.txt"), profile_df, fmt="%.3e"
+            PurePath(directory, "plasma_profile.txt"), profile_df, fmt="%.3e"
         )
 
         print("Profile saved to file!")
@@ -76,15 +76,8 @@ class PredefinedProfile(Profile):
             ne_raw: array of Ne values for given Reff values [1/cm-3]
             Te_raw: array of Te values for given Reff values [eV]
         """
-
-        heating_scenario = os.path.join(
-            Path.cwd()
-            / "src"
-            / "_Input_files"
-            / "Kinetic_profiles"
-            / "Theoretical"
-            / (f"8MWECRH_{self.file_nr}.txt")
-        )
+        heating_scenario = Path(__file__).parent.resolve() / "_Input_files" / "Kinetic_profiles" / "Theoretical" / f"8MWECRH_{self.file_nr}.txt"
+        
         read_file = np.loadtxt(heating_scenario, delimiter=" ")
 
         Reff_raw, T_e_raw, n_e_raw = (
@@ -213,19 +206,6 @@ class ExperimentalProfile(Profile):
         self.max_Reff = max_Reff  # [m]
         self.profile_df = self.interpolate_raw_profile()
 
-        def gen_for_STRAHL():
-            columns_titles = ["Reff", "n_e", "T_e"]
-            self.profile_df = self.profile_df.reindex(columns=columns_titles)
-            # print(self.profile_df)
-            self.profile_df["n_e"] = self.profile_df["n_e"] / 1e14
-            self.profile_df["T_e"] = self.profile_df["T_e"] / 1e3
-            self.profile_df["T_i (fake)"] = 1
-            # print(self.profile_df)
-            # np.savetxt(f"{file_name}_kinetic_profiles.dat",
-            #            self.profile_df.to_numpy(),
-            #            header = "!      r     n_20m3_e      T_keV_e      T_keV_H", fmt='%.6e', delimiter = "  ")
-
-        # gen_for_STRAHL()
 
     def read_file_path(self):
         """
@@ -237,8 +217,7 @@ class ExperimentalProfile(Profile):
             ".../_Input_files/Profiles/Experimental/file_name.txt" directory;
         """
         file_path = (
-            Path.cwd()
-            / "src"
+            Path(__file__).parent.resolve()
             / "_Input_files"
             / "Kinetic_profiles"
             / "Experimental"
@@ -427,33 +406,13 @@ class ExperimentalProfile(Profile):
 
 
 if __name__ == "__main__":
-    pp = PredefinedProfile(5)
-    # pp.plot()
+    pp = PredefinedProfile(1)
+    pp.plot()
 
-    # def profile_maker():
-    #     ne1 = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
-    #     ne2 = [3.5e13, 0, 0.4, 2.5e12, 0.38, 0.15]
+    ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
+    Te = [1870, 0, 0.155, 210, 0.38, 0.07]
+    tgsp = TwoGaussSumProfile(ne, Te)
+    tgsp.plot()
 
-    #     Te1 = [1870, 0, 0.155, 210, 0.38, 0.07]
-    #     Te2 = [2900, 0, 0.195, 80, 0.38, 0.07]
-
-    #     # ne1 = [1,2,3]
-    #     # ne2 = [10,20,30]
-    #     ne = np.linspace(ne1, ne2, 2)
-    #     Te = np.linspace(Te1, Te2, 2)
-    #     return ne, Te
-
-    # ne, Te = profile_maker()
-    # for i, j in enumerate(ne):
-    #     tgsp = TwoGaussSumProfile(ne[i], Te[i])
-    #     tgsp.plot()
-
-    # ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
-    # Te = [1870, 0, 0.155, 210, 0.38, 0.07]
-    # tgsp = TwoGaussSumProfile(ne, Te)
-    # tgsp.plot()
-
-    # 20180816_022@3_9500_v_; 20181011_012@5_500
-    # ep = ExperimentalProfile("report_20181011_012@5_5000_v_1")
-    # print(ep.profile_df)
-    # ep.plot()
+    ep = ExperimentalProfile("report_20181011_012@5_5000_v_1")
+    ep.plot()
