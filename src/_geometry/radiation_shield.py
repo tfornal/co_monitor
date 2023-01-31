@@ -7,10 +7,10 @@ from pathlib import Path
 
 
 class RadiationShield:
-    """A class to represent ECRH protective shield"""
+    """A class creates representation of ECRH protective shields."""
 
-    def __init__(self, chamber_position, shield_nr):
-        """Construct all the necessary attributes for the specific protective shield.
+    def __init__(self, chamber_position: str, shield):
+        """Construct all the necessary attributes for the respective protective shield.
 
         Args:
             chamber_position (str): defines the position of the spectrometers vacuum chamber;
@@ -20,9 +20,9 @@ class RadiationShield:
             accepts either "1st shield" or "2nd shield"
         """
         self.chamber_position = chamber_position
-        self.shield_nr = shield_nr
+        self.selected_shield = shield
         self.sields_coordinates = self.get_coordinates(
-            self.chamber_position, self.shield_nr
+            self.chamber_position, self.selected_shield
         )
         self.radius_central_point = self.sields_coordinates["central point"]
         self.radius = self.sields_coordinates["radius"]
