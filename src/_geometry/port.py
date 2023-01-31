@@ -1,12 +1,13 @@
-import numpy as np
-import pyvista as pv
-from scipy.spatial import ConvexHull
 import json
 from pathlib import Path
 
+import numpy as np
+import pyvista as pv
+from scipy.spatial import ConvexHull
+
 
 class Port:
-    """Creates numerical representation of the W7-X port based on its edge vertices coordinates in  x, y, z (mm)."""
+    """ Creates numerical representation of the W7-X port based on its edge vertices coordinates in  x, y, z (mm)."""
     
     def __init__(self, plot = False):
         """Constructs the hull of the port based on its vertices.
@@ -14,7 +15,7 @@ class Port:
         Args:
             plot (bool): creates 3D visualization if set to "True"
         """
-        self.coordinates_data = self.read_json_file()
+        self.coordinates_from_file = self.read_json_file()
         self.vertices_coordinates = self.get_vertices_coordinates()
         self.orientation_vector = self.get_orientation_vector()
         self.spatial_port_coord = self.calculate_port_thickness()
@@ -36,7 +37,8 @@ class Port:
         Returns:
             np.ndarray: n points representing port vertices (rows) and 3 columns (representing x,y,z)
         """
-        port_coordinates = [self.coordinates_data["port"]["vertices"][vertex] for point, vertex in enumerate(self.coordinates_data["port"]["vertices"])]
+        port_coordinates = [self.coordinates_from_file["port"]["vertices"][vertex] \
+                            for point, vertex in enumerate(self.coordinates_from_file["port"]["vertices"])]
         port_coordinates = np.vstack(port_coordinates)
         
         return port_coordinates
@@ -48,7 +50,7 @@ class Port:
         Returns:
             np.ndarray: port orientation vector (x, y, z)
         """
-        orientation_vector = np.array(self.coordinates_data["port"]["orientation vector"])
+        orientation_vector = np.array(self.coordinates_from_file["port"]["orientation vector"])
 
         return orientation_vector
 
