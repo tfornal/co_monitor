@@ -14,6 +14,7 @@ class Port:
         
         Args:
             plot (bool): creates 3D visualization if set to "True"
+            (default is False)
         """
         self.coordinates_from_file = self.read_json_file()
         self.vertices_coordinates = self.get_vertices_coordinates()
@@ -23,7 +24,8 @@ class Port:
         if plot:
             self.plotter()
     
-    def read_json_file(self) -> dict:
+    @classmethod
+    def read_json_file(cls) -> dict:
         """Reads json file with set of all port coordinates."""
         
         file = open(Path(__file__).parent.resolve() / "coordinates.json")
