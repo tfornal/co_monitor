@@ -22,52 +22,45 @@ class Detector:
                 Defaults to False.
         """
         self.coordinates_from_file = self.read_json_file()
-        self.det_vertices_coord = self.get_all_coordinates(element)[:4]
-        self.orientation_vector = self.get_all_coordinates(element)[-1]
-        self.spatial_det_coordinates = self.create_thick_det(self.det_vertices_coord)
+        self.vertices = self.get_vertices(element)
+        self.orientation_vector = self.get_orientation_vector(element)
+        self.spatial_det_coordinates = self.create_thick_det(self.vertices)
         if plot:
             self.plotter()
             
-            
-            
-        
     def read_json_file(self) -> dict:
         """Reads json file with set of all port coordinates."""
         
-        file = open(Path(__file__).parent.resolve() / "coordinates.json")
-        data = json.load(file)
+        with open(Path(__file__).parent.resolve() / "coordinates.json") as file:
+            data = json.load(file)
 
         return data
 
-    
-    def get_all_coordinates(self, element):
+    def get_vertices(self, element):
         """_summary_
 
         Args:
-            element (_type_): _description_
+            vertices_coordinates (_type_): _description_
 
         Returns:
             _type_: _description_
         """
-        det_coordinates = np.zeros([5, 3])
-        with open(Path(__file__).parent.resolve() / "coordinates.json") as file:
-            json_file = json.load(file)
+        det_coordinates = [self.coordinates_from_file["detector"]["element"][element]["vertex"][vertex] \
+                            for vertex in self.coordinates_from_file["detector"]["element"][element]["vertex"]]
+        return np.vstack(det_coordinates)
+    
+    def get_orientation_vector(self, element):
+        """_summary_
 
-            for nr, vertex in enumerate(
-                json_file["detector"]["element"][element]["vertex"]
-            ):
-                det_coordinates[nr] = json_file["detector"]["element"][element][
-                    "vertex"
-                ][vertex]
-            det_coordinates[-1] = json_file["detector"]["element"][element][
-                "orientation vector"
-            ]
-            
-            det_coordinates2 = [self.coordinates_data["port"]["vertices"][vertex] \
-                                for point, vertex in enumerate(self.coordinates_data["port"]["vertices"])]
-            
-            print(det_coordinates)
-        return det_coordinates
+        Args:
+            vertices_coordinates (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        orientation_vector = [self.coordinates_from_file["detector"]["element"][element]["orientation vector"]]
+        return np.vstack(orientation_vector)
+        
 
     def create_thick_det(self, vertices_coordinates):
         """_summary_
