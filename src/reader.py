@@ -90,8 +90,17 @@ class Emissivity:
         self.total_emissivity = self.calculate_total_emissivity()
 
     def load_Reff(self, reff_file_name):
-        """
-        Load file with plasma coordinates and their calculated Reff value (if exists).
+        """Load file with plasma coordinates and their calculated Reff value (if exists).
+
+        Parameters
+        ----------
+        reff_file_name : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
         """
         Reff_path = (
             Path(__file__).parent.resolve()
