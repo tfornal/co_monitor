@@ -37,8 +37,8 @@ class Port:
         Returns:
             np.ndarray: n points representing port vertices (rows) and 3 columns (representing x,y,z)
         """
-        port_coordinates = [self.coordinates_from_file["port"]["vertices"][vertex] \
-                            for point, vertex in enumerate(self.coordinates_from_file["port"]["vertices"])]
+        port_coordinates = [self.coordinates_from_file["port"]["vertex"][vertex] \
+                            for vertex in self.coordinates_from_file["port"]["vertex"]]
         port_coordinates = np.vstack(port_coordinates)
         
         return port_coordinates
