@@ -1,10 +1,9 @@
-import json
-from pathlib import Path
 
 import numpy as np
 import pyvista as pv
 from scipy.spatial import ConvexHull
 
+from json_reader import read_json_file
 
 class Port:
     """ Creates numerical representation of the W7-X port based on its edge vertices coordinates in  x, y, z (mm)."""
@@ -16,22 +15,14 @@ class Port:
             plot (bool): creates 3D visualization if set to "True"
             (default is False)
         """
-        self.coordinates_from_file = self.read_json_file()
+        self.loaded_file = read_json_file()
         self.vertices_coordinates = self.get_vertices()
         self.orientation_vector = self.get_orientation_vector()
         self.spatial_port = self.calculate_port_thickness()
-        self.port_hull = self.calculate_port_hull()
+        self.port_hull = self.make_port_hull()
         if plot:
             self.plotter()
     
-    @classmethod
-    def read_json_file(cls) -> dict:
-        """Reads json file with set of all diagnostic coordinates."""
-        
-        file = open(Path(__file__).parent.resolve() / "coordinates.json")
-        data = json.load(file)
-
-        return data
     
     def get_vertices(self) -> np.ndarray:
         """Reads coordinates of all port vertices.
@@ -39,8 +30,8 @@ class Port:
         Returns:
             np.ndarray: n points representing port vertices (rows) and 3 columns (representing x,y,z)
         """
-        port_coordinates = [self.coordinates_from_file["port"]["vertex"][vertex] \
-                            for vertex in self.coordinates_from_file["port"]["vertex"]]
+        port_coordinates = [self.loaded_file["port"]["vertex"][vertex] \
+                            for vertex in self.loaded_file["port"]["vertex"]]
         port_coordinates = np.vstack(port_coordinates)
         
         return port_coordinates
@@ -52,7 +43,7 @@ class Port:
         Returns:
             np.ndarray: port orientation vector (x, y, z)
         """
-        orientation_vector = np.array(self.coordinates_from_file["port"]["orientation vector"])
+        orientation_vector = np.array(self.loaded_file["port"]["orientation vector"])
 
         return orientation_vector
 
@@ -70,8 +61,8 @@ class Port:
         )
         return det_vertices_with_depth
 
-    def calculate_port_hull(self) -> pv.core.pointset.PolyData:
-        """Creates 3D representation of port as polyhull."""
+    def make_port_hull(self) -> pv.core.pointset.PolyData:
+        """Creates surface geometry (poly data) representing port object."""
         
         hull = ConvexHull(self.spatial_port)
         faces = np.column_stack(

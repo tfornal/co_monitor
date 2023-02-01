@@ -1,15 +1,18 @@
-import numpy as np
-import pyvista as pv
-from pyvistaqt import BackgroundPlotter
-from scipy.spatial import ConvexHull
 import json
 from pathlib import Path
 
+import numpy as np
+import pyvista as pv
+from scipy.spatial import ConvexHull
+
+from json_reader import read_json_file
+from rotation_matrix import rotation_matrix
+
 
 class RadiationShield:
-    """A class creates representation of ECRH protective shields."""
+    """Class creating 3D representation of ECRH protective shields against stray radiation."""
 
-    def __init__(self, chamber_position: str, shield):
+    def __init__(self, chamber_position: str, selected_shield: str):
         """Construct all the necessary attributes for the respective protective shield.
 
         Args:
@@ -20,57 +23,30 @@ class RadiationShield:
             accepts either "1st shield" or "2nd shield"
         """
         self.chamber_position = chamber_position
-        self.selected_shield = shield
-        self.sields_coordinates = self.get_coordinates(
-            self.chamber_position, self.selected_shield
-        )
-        self.radius_central_point = self.sields_coordinates["central point"]
-        self.radius = self.sields_coordinates["radius"]
-        self.orientation_vector = self.sields_coordinates["orientation vector"]
-        self.vertices_coordinates = self.calculate_circular_shield(
+        self.selected_shield = selected_shield
+        self.loaded_file = read_json_file()
+        self.shields_coordinates  = self.get_coordinates()
+        self.radius_central_point = self.shields_coordinates["central point"]
+        self.radius = self.shields_coordinates["radius"]
+        self.orientation_vector = self.shields_coordinates["orientation vector"]
+        self.vertices_coordinates = self.make_shield(
             self.radius, self.radius_central_point, self.orientation_vector
         )
-        self.poly_hull = self.make_radiation_protection_shield()
+        self.radiation_shield = self.make_radiation_protection_shield()
 
-    def get_coordinates(self, chamber_position, shield_nr):
-        """Get the position of spectrometers vacuum chamber position (top or bottom)
-        and number of protection shield (1 or 2 int)
-
-        Returns:
-            _type_: _description_
-        """
-        with open(Path(__file__).parent.resolve() / "coordinates.json") as file:
-            json_file = json.load(file)
-            shield_coordinates = json_file["ECRH shield"][f"{chamber_position}"][
-                f"{shield_nr}"
-            ]
-        return shield_coordinates
-
-    def rotation_matrix_3D(self, theta, axis):
-        """_summary_
-
-        Args:
-            theta (float): _description_
-            axis (ndarray): 1D array containing x,y,z coordinates of axis of rotation
+        
+    def get_coordinates(self) -> np.ndarray:
+        """Reads coordinates of all port vertices.
 
         Returns:
-            _type_: _description_
+            np.ndarray: n points representing port vertices (rows) and 3 columns (representing x,y,z)
         """
-        axis = np.asarray(axis) / np.sqrt(np.dot(axis, axis))
-        a = np.cos(theta / 2.0)
-        b, c, d = -axis * np.sin(theta / 2.0)
-        aa, bb, cc, dd = a**2, b**2, c**2, d**2
-        bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
+        ecrh_coordinates = self.loaded_file["ECRH shield"][f"{self.chamber_position}"][f"{self.selected_shield}"]
 
-        return np.array(
-            [
-                [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-                [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc],
-            ]
-        )
-
-    def calculate_circular_shield(
+        return ecrh_coordinates
+    
+    
+    def make_shield(
         self,
         radius,
         radius_central_point,
@@ -117,11 +93,12 @@ class RadiationShield:
         oaxis = np.cross(ovec, cylvec)
         rot = np.arccos(np.dot(ovec, cylvec))
 
-        R = self.rotation_matrix_3D(rot, oaxis)
+        R = rotation_matrix(rot, oaxis)
         cylinder_points = points.dot(R)
-
+        
+        # shift of created 
         shifted_cylinder_points = cylinder_points + radius_central_point
-
+        
         return shifted_cylinder_points
 
     def make_radiation_protection_shield(self):
@@ -140,15 +117,26 @@ class RadiationShield:
 
 
 if __name__ == "__main__":
+
+    def plotter(*args):
+        
+        fig = pv.Plotter()
+        fig.set_background("black")
+        for protective_shield in args:
+            fig.add_mesh(protective_shield.vertices_coordinates, color="blue", opacity=0.9)
+            fig.add_mesh(protective_shield.radiation_shield, color="green", opacity=0.9)
+    
+        fig.show()
+        
     rad1 = RadiationShield("upper chamber", "1st shield")
     rad2 = RadiationShield("bottom chamber", "1st shield")
     rad3 = RadiationShield("upper chamber", "2nd shield")
     rad4 = RadiationShield("bottom chamber", "2nd shield")
-
-    fig = pv.Plotter()
-    fig.set_background("black")
-    for protective_shield in [rad1, rad2, rad3, rad4]:
-        fig.add_mesh(protective_shield.vertices_coordinates, color="blue", opacity=0.9)
-        fig.add_mesh(protective_shield.poly_hull, color="green", opacity=0.9)
-
-    fig.show()
+    
+    plotter(rad1, rad2, rad3, rad4)
+    
+    
+    
+    
+    
+    

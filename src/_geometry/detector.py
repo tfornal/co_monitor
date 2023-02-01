@@ -1,8 +1,8 @@
 import numpy as np
 import pyvista as pv
-import json
-from pathlib import Path
 from scipy.spatial import ConvexHull
+
+from json_reader import read_json_file
 
 
 class Detector:
@@ -18,21 +18,12 @@ class Detector:
             plot (bool, optional): If True -> create 3D visualization (default is False).
         """
         self.element = element
-        self.coordinates_from_file = self.read_json_file()
+        self.loaded_file = read_json_file()
         self.vertices = self.get_vertices(self.element)
         self.orientation_vector = self.get_orientation_vector(self.element)
         self.spatial_det_coordinates = self.create_thick_det(self.vertices)
         if plot:
             self.plotter()
-            
-    @classmethod
-    def read_json_file(cls) -> dict:
-        """Reads json file with set of all diagnostic coordinates."""
-        
-        with open(Path(__file__).parent.resolve() / "coordinates.json") as file:
-            data = json.load(file)
-
-        return data
 
     def get_vertices(self, element):
         """Reads coordinates of selected detector.
@@ -43,8 +34,8 @@ class Detector:
         Returns:
             np.ndarray : Stack of detector's vertices.
         """
-        det_coordinates = [self.coordinates_from_file["detector"]["element"][element]["vertex"][vertex] \
-                            for vertex in self.coordinates_from_file["detector"]["element"][element]["vertex"]]
+        det_coordinates = [self.loaded_file["detector"]["element"][element]["vertex"][vertex] \
+                            for vertex in self.loaded_file["detector"]["element"][element]["vertex"]]
         det_coordinates = np.vstack(det_coordinates)
         assert(det_coordinates.shape == (4,3)), "Wrong number of vertices!"
         
@@ -59,7 +50,7 @@ class Detector:
         Returns:
             np.ndarray: Stack of detector's vertices.
         """
-        orientation_vector = [self.coordinates_from_file["detector"]["element"][element]["orientation vector"]]
+        orientation_vector = [self.loaded_file["detector"]["element"][element]["orientation vector"]]
         
         orientation_vector = np.vstack(orientation_vector)
         assert(orientation_vector.shape == (1,3)), "Orientation vector should consist of 1 point."

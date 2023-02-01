@@ -1,14 +1,16 @@
+import json
+from math import degrees
+from pathlib import Path
+
 import numpy as np
 import pyvista as pv
-from pathlib import Path
-import json
-from pyvistaqt import BackgroundPlotter
 from sympy import Point3D, Line3D
-from math import degrees
+
+from rotation_matrix import rotation_matrix
 
 
 class DispersiveElement:
-    def __init__(self, element, crystal_height_step=10, crystal_length_step=20):
+    def __init__(self, element, crystal_height_step = 10, crystal_length_step = 20):
         """
         This class creates the curved surface of the selected dispersive element
         with given coordinates.
@@ -20,9 +22,6 @@ class DispersiveElement:
             Accuracy of the crystals length mesh (by default 10 points).
         crystal_length_step : int, optional
             Accuracy of the crystals length mesh (by default 20 points).
-        TODO test!!!!
-        TODO REfactoring!
-
         """
         self.height_step = crystal_height_step
         self.length_step = crystal_length_step
@@ -42,7 +41,6 @@ class DispersiveElement:
         self.D = np.array(self.disp_elem_coord["vertex"]["D"])
         self.R = self.distance_between_poinst(self.A, self.radius_central_point)
         self.crystal_orientation_vector = self.B - self.C
-        # self.shifted_radius_central_point = self.define_radius_central_point()
         self.alpha = self.angle_between_lines(self.radius_central_point, self.A, self.B)
 
     @staticmethod
@@ -55,10 +53,7 @@ class DispersiveElement:
         """
 
         with open(
-            # pathlib.Path.cwd() / "src" / "_geometry" / "coordinates.json" ### linux path
-            Path(__file__).parent.resolve()
-            / "coordinates.json"  ### windows path
-        ) as file:
+            Path(__file__).parent.resolve() / "coordinates.json") as file:
             json_file = json.load(file)
             disp_elem_coord = json_file["dispersive element"]["element"][f"{element}"]
         return disp_elem_coord
@@ -76,12 +71,6 @@ class DispersiveElement:
         R = np.sqrt(squared_dist).round(2)
         return int(R)
 
-    # def define_radius_central_point(self):
-    #     shifted_radius_central_point = self.radius_central_point - (
-    #         self.crystal_orientation_vector / 2
-    #     )
-
-    #     return shifted_radius_central_point
 
     def shift_cylinder(self, object_coordinates):
         """
@@ -106,26 +95,7 @@ class DispersiveElement:
         angle = degrees(l1.angle_between(l2))
 
         return angle
-
-    def rotation_matrix_3D(self, theta, axis):
-        """
-        Rotation matrix based on the Euler-Rodrigues formula for matrix conversion of 3d object.
-        Input - angle (in radians), axis in carthesian coordinates [x,y,z].
-        Return - rotated  matrix.
-        """
-        axis = np.asarray(axis) / np.sqrt(np.dot(axis, axis))
-        a = np.cos(theta / 2.0)
-        b, c, d = -axis * np.sin(theta / 2.0)
-        aa, bb, cc, dd = a**2, b**2, c**2, d**2
-        bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-
-        return np.array(
-            [
-                [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-                [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc],
-            ]
-        )
+    
 
     def make_curved_crystal(self):
         """_summary_
@@ -163,7 +133,7 @@ class DispersiveElement:
         oaxis = np.cross(ovec, cylvec)
         rot = np.arccos(np.dot(ovec, cylvec))
 
-        rot_matrix = self.rotation_matrix_3D(rot, oaxis)
+        rot_matrix = rotation_matrix(rot, oaxis)
         crstal_points = crstal_points.dot(rot_matrix)
 
         shift = np.array(
@@ -183,8 +153,8 @@ class DispersiveElement:
         ### move to starting position
         crstal_points -= shift
 
-        ### rotate by the angle and shift again to the destination place
-        rot_matrix = self.rotation_matrix_3D(
+        ### rotate by the calculated angle and shift again to the destination place
+        rot_matrix = rotation_matrix(
             np.deg2rad(angle), self.crystal_orientation_vector
         )
         crstal_points = crstal_points.dot(rot_matrix)
@@ -194,32 +164,36 @@ class DispersiveElement:
 
 
 if __name__ == "__main__":
-    fig = pv.Plotter()
-    fig.set_background("black")
-    disp_elem = ["B", "O", "N", "C"]
-    for element in disp_elem:
-        disp = DispersiveElement(element, 20, 80)
-        crys = disp.make_curved_crystal()
-        fig.add_mesh(
-            np.array([disp.A, disp.B, disp.C, disp.D]),
-            color="red",
-            render_points_as_spheres=True,
-            point_size=10,
-        )
-
-        fig.add_mesh(
-            disp.C, color="yellow", render_points_as_spheres=True, point_size=10
-        )
-        fig.add_mesh(
-            crys[0],
-            color="purple",
-            render_points_as_spheres=True,
-            point_size=10,
-        )
-        fig.add_mesh(
-            crys,
-            color="orange",
-            render_points_as_spheres=True,
-            point_size=3,
-        )
-    fig.show()
+    
+    def plot_dispersive_elements():
+        fig = pv.Plotter()
+        fig.set_background("black")
+        disp_elem = ["B", "O", "N", "C"]
+        for element in disp_elem:
+            disp = DispersiveElement(element, 20, 80)
+            crys = disp.make_curved_crystal()
+            fig.add_mesh(
+                np.array([disp.A, disp.B, disp.C, disp.D]),
+                color="red",
+                render_points_as_spheres=True,
+                point_size=10,
+            )
+    
+            fig.add_mesh(
+                disp.C, color="yellow", render_points_as_spheres=True, point_size=10
+            )
+            fig.add_mesh(
+                crys[0],
+                color="purple",
+                render_points_as_spheres=True,
+                point_size=10,
+            )
+            fig.add_mesh(
+                crys,
+                color="orange",
+                render_points_as_spheres=True,
+                point_size=3,
+            )
+        fig.show()
+        
+    plot_dispersive_elements()
