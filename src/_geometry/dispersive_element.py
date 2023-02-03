@@ -10,7 +10,7 @@ from rotation_matrix import rotation_matrix
 
 
 class DispersiveElement:
-    def __init__(self, element, crystal_height_step = 10, crystal_length_step = 20):
+    def __init__(self, element, crystal_height_step=10, crystal_length_step=20):
         """
         This class creates the curved surface of the selected dispersive element
         with given coordinates.
@@ -52,8 +52,7 @@ class DispersiveElement:
             _type_: _description_
         """
 
-        with open(
-            Path(__file__).parent.resolve() / "coordinates.json") as file:
+        with open(Path(__file__).parent.resolve() / "coordinates.json") as file:
             json_file = json.load(file)
             disp_elem_coord = json_file["dispersive element"]["element"][f"{element}"]
         return disp_elem_coord
@@ -70,7 +69,6 @@ class DispersiveElement:
         squared_dist = np.sum((p1 - p2) ** 2, axis=0)
         R = np.sqrt(squared_dist).round(2)
         return int(R)
-
 
     def shift_cylinder(self, object_coordinates):
         """
@@ -95,7 +93,6 @@ class DispersiveElement:
         angle = degrees(l1.angle_between(l2))
 
         return angle
-    
 
     def make_curved_crystal(self):
         """_summary_
@@ -154,9 +151,7 @@ class DispersiveElement:
         crstal_points -= shift
 
         ### rotate by the calculated angle and shift again to the destination place
-        rot_matrix = rotation_matrix(
-            np.deg2rad(angle), self.crystal_orientation_vector
-        )
+        rot_matrix = rotation_matrix(np.deg2rad(angle), self.crystal_orientation_vector)
         crstal_points = crstal_points.dot(rot_matrix)
         crstal_points += shift
 
@@ -164,7 +159,7 @@ class DispersiveElement:
 
 
 if __name__ == "__main__":
-    
+
     def plot_dispersive_elements():
         fig = pv.Plotter()
         fig.set_background("black")
@@ -178,7 +173,7 @@ if __name__ == "__main__":
                 render_points_as_spheres=True,
                 point_size=10,
             )
-    
+
             fig.add_mesh(
                 disp.C, color="yellow", render_points_as_spheres=True, point_size=10
             )
@@ -195,5 +190,5 @@ if __name__ == "__main__":
                 point_size=3,
             )
         fig.show()
-        
+
     plot_dispersive_elements()
