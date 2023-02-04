@@ -68,9 +68,6 @@ class Emissivity:
         self.reff_coordinates_with_radiation_fractions = (
             self.read_plasma_coordinates_with_radiation_fractions()
         )
-        max_reff_from_geometr_file = self.reff_coordinates_with_radiation_fractions[
-            "Reff"
-        ].max()
         self.element = element
         self.impurity_concentration = impurity_fraction  # [%]
         self.ion_state = ion_state
@@ -89,19 +86,23 @@ class Emissivity:
         )
         self.total_emissivity = self.calculate_total_emissivity()
 
-    def load_Reff(self, reff_file_name):
-        """Load file with plasma coordinates and their calculated Reff value (if exists).
+    def load_Reff(self, reff_file_name: str) -> pd.DataFrame:
+        """
+        Load a file containing plasma coordinates and their calculated Reff value (if available).
 
         Parameters
         ----------
-        reff_file_name : _type_
-            _description_
+        reff_file_name : str
+            The name of the file containing the Reff values.
 
         Returns
         -------
-        _type_
-            _description_
+        reff_coordinates : pd.DataFrame
+            A DataFrame with columns ['idx_plasma', 'x', 'y', 'z', 'Reff'], containing the plasma coordinates
+            and their corresponding Reff values. The data types of the columns are:
+            int for 'idx_plasma', float for 'x', 'y', 'z', and 'Reff'.
         """
+
         Reff_path = (
             Path(__file__).parent.resolve()
             / "_Input_files"
@@ -116,9 +117,19 @@ class Emissivity:
         )
         return reff_coordinates
 
-    def load_observed_plasma(self, element):
+    def load_observed_plasma(self, element: str) -> pd.DataFrame:
         """
-        Load file with observed plasma volume by each spectroscopic channel.
+        Load a file containing observed plasma volume for each spectroscopic channel.
+
+        Parameters
+        ----------
+        element : str
+            The element of interest (B, C, N or O).
+
+        Returns
+        -------
+        pd.DataFrame
+            A DataFrame containing the observed plasma volume for each spectroscopic channel.
         """
         observed_plasma = (
             Path(__file__).parent.resolve()
@@ -129,6 +140,7 @@ class Emissivity:
             / f"{element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
         )
         observed_plasma_volume = pd.read_csv(observed_plasma, sep=";")
+
         return observed_plasma_volume
 
     def read_plasma_coordinates_with_radiation_fractions(self):
@@ -137,31 +149,31 @@ class Emissivity:
         """
         df = self.observed_plasma_volume
 
-        lista_indexow = df["idx_sel_plas_points"].tolist()
-        plasma_points_po_indeksowaniu = self.reff_coordinates.iloc[lista_indexow]
+        idx_list = df["idx_sel_plas_points"].tolist()
+        plasma_points_po_indeksowaniu = self.reff_coordinates.iloc[idx_list]
         Reff = plasma_points_po_indeksowaniu["Reff"]
         Reff = plasma_points_po_indeksowaniu["Reff"].tolist()
-
         df["Reff"] = Reff
         df = df.dropna()
 
         def plotter():
-            to_numpy = df.to_numpy()
+            reff = df["Reff"]
+            intensity = df["total_intensity_fraction"]
+            plasma_coordinates = df.to_numpy()[:, 1:4]
 
             def create_point_cloud(coordinates, reff):
+                """
+                Create point cloud from plasma coordinates and their Reff value.
+                """
                 point_cloud = pv.PolyData(coordinates)
                 point_cloud["Reff [mm]"] = reff
 
                 return point_cloud
 
-            reff = to_numpy[:, -1]
-            intensity = to_numpy[:, -2]
-            plasma_coordinates = to_numpy[:, 1:4]
             pc = create_point_cloud(plasma_coordinates, intensity)
 
             fig = pv.Plotter()
             fig.set_background("black")
-
             fig.add_mesh(pv.PolyData(pc), point_size=8, render_points_as_spheres=True)
             fig.show()
 
@@ -169,10 +181,15 @@ class Emissivity:
 
         return df
 
-    def read_ne_te(self):  ### basic version!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    def read_ne_te(self):
         """
-        Assigns electron temperature and density to each of Reff values based
+        Assigns electron temperature and density to each Reff value based
         on a given plasma profiles.
+
+        Returns
+        -------
+        plasma_with_parameters : pd.DataFrame
+            A DataFrame containing the observed plasma volume for each spectroscopic channel.
         """
         plasma_params = pd.DataFrame(
             self.plasma_profiles, columns=["Reff", "n_e", "T_e"]

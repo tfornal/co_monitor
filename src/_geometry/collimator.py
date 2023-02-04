@@ -51,9 +51,19 @@ class Collimator:
     def __repr__(self, *args, **kwargs):
         return f'Collimator(element="{element}", A={self.A1}, B={self.A2}, C={self.B1})'
 
-    def spatial_colimator(self, vertices_coordinates):
+    def spatial_colimator(self, vertices_coordinates: np.ndarray) -> np.ndarray:
         """
-        Creates representation of one empty space between the collimator slit based on its defined coordinates.
+        Creates a representation of an empty space between the collimator slits based on its defined coordinates.
+
+        Parameters
+        ----------
+        vertices_coordinates : numpy.ndarray
+            Coordinates of the vertices of the collimator.
+
+        Returns
+        -------
+        numpy.ndarray
+            Coordinates of the collimator with depth.
         """
         collim_vertices_with_depth = np.concatenate(
             (
@@ -66,7 +76,19 @@ class Collimator:
 
     def check_in_hull(self, points, vertices_coordinates):
         """
-        Checks if calculated points are within the space defined by the vertices coordinates (its hull)
+        Check if the given points are within the space defined by the vertices coordinates (its convex hull).
+
+        Parameters
+        ----------
+        points : numpy.ndarray
+            A 2D array of shape (n_points, n_dims) representing the points to be checked.
+        vertices_coordinates : numpy.ndarray
+            A 2D array of shape (n_vertices, n_dims) representing the coordinates of the vertices that define the space.
+
+        Returns
+        -------
+        numpy.ndarray
+            A 1D array of shape (n_points,) with the result of the in/out check for each point. The value is 1 if the point is inside the hull, -1 if outside and 0 if on the hull.
         """
         collim_vertices_with_depth = self.spatial_colimator(vertices_coordinates)
         hull = Delaunay(collim_vertices_with_depth)
@@ -75,9 +97,19 @@ class Collimator:
 
     def get_coordinates(self, element, closing_side):
         """
-        Args:
-            element (_type_): _description_
-            closing_side (_type_): _description_
+        Retrieve the coordinates for a given element and closing side.
+
+        Parameters
+        ----------
+        element : str
+            The name of the element to retrieve coordinates for.
+        closing_side : str
+            The closing side to retrieve coordinates for.
+
+        Returns
+        -------
+        dict
+            A dictionary representing the coordinates for the given element and closing side.
         """
         loaded_file = open(Path(__file__).parent.resolve() / "coordinates.json")
         all_coordinates = json.load(loaded_file)
@@ -86,8 +118,12 @@ class Collimator:
 
     def read_colim_coord(self):
         """
-        Calculates the comprehensive 3D array (slits_number, 8, 3) containing
-        coordinates of the collimator.
+        Calculates the comprehensive 3D array (slits_number, 8, 3) of collimator coordinates.
+
+        Returns
+        -------
+        tuple of numpy.ndarray
+            A tuple containing the comprehensive 3D array of collimator coordinates, the crystal-side slit coordinates, and the plasma-side slit coordinates.
         """
         slit_coord_crys_side = np.array([])
         for slit in range(self.slits_number):
@@ -126,25 +162,36 @@ class Collimator:
 
         return colimator_spatial, slit_coord_crys_side, slit_coord_plasma_side
 
-    def make_collimator(self, points):
-        """Creates 3D representation of a collimator.
+    def make_collimator(self, points: np.ndarray) -> pv.PolyData:
+        """Creates a 3D representation of a collimator using the points array as vertices of the convex hull.
 
-        Args:
-            ndarray: numerical representation of all empty spaces between slits
+        Parameters
+        ----------
+        points : np.ndarray
+            numerical representation of all empty spaces between the collimator slits
 
-        Returns:
-            polydata: poly data of all slits - each represents empty space through which radiaion can pass freely
+        Returns
+        -------
+        pv.PolyData
+            A PolyData object of all slits - each represents empty space through which radiaion can pass freely
         """
+
         hull = ConvexHull(points)
         faces = np.column_stack(
             (3 * np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)
         ).flatten()
         poly = pv.PolyData(hull.points, faces)
+
         return poly
 
     def visualization(self, plot: bool) -> None:
         """
-        Creates visual representation of collimator
+        Creates a visual representation of the collimator.
+
+        Parameters
+        ----------
+        plot : bool
+            Whether to create a plot.
         """
         if plot:
             fig = pv.Plotter()
