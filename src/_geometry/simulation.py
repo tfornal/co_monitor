@@ -89,7 +89,7 @@ class Simulation:
         self.port_orientation_vector = Port().orientation_vector
 
         ### DETECTOR
-        self.detector_vertices_coordinates = Detector(self.element).det_vertices_coord
+        self.detector_vertices_coordinates = Detector(self.element).vertices
         self.detector_orientation_vector = Detector(self.element).orientation_vector
 
         ### CALCULATE REFLECTION
@@ -605,10 +605,10 @@ class Simulation:
         """TODO - zapis do bazy danych (sql???? czy cos innego?) a nie csv!!!!!!"""
         print(Path(__file__).parent.parent.resolve())
         self.ddf.to_csv(
-        Path(__file__).parent.parent.resolve()
+            Path(__file__).parent.parent.resolve()
             / "_Input_files"
             / "Geometric_data"
-            / f"{self.element}" ####  +top/bottom closing side -resolve
+            / f"{self.element}"  ####  +top/bottom closing side -resolve
             / f"{self.element}_plasma_coordinates-{self.distance_between_points}_mm_spacing-height_{self.crystal_height_step}-length_{self.crystal_length_step}-slit_{self.slits_number}*.dat",
             sep=";",
             header=True,

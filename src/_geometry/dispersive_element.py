@@ -16,7 +16,7 @@ class DispersiveElement:
         with given coordinates.
         Parameters
         ----------
-            Elements symbol like B, C, N or O in order to select proper coordinates
+            Elements symbol like B, C, N or O in order to select their coordinates
             from the "optics_coordinates" file containing all the necessary input; .
         crystal_height_step : int, optional
             Accuracy of the crystals length mesh (by default 10 points).
