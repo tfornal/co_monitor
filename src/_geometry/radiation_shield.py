@@ -46,7 +46,7 @@ class RadiationShield:
         Parameters
         ----------
         length : float, optional
-            Length of the shield, by default 1.
+            Length of the cyllinder based on which the shield is created, by default 1.
         nlength : int, optional
             Number of points along the length, by default 2.
         alpha : float, optional
