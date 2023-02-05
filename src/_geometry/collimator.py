@@ -1,11 +1,18 @@
+import json
+from pathlib import Path
+
 import numpy as np
 import pyvista as pv
-import json
 from scipy.spatial import ConvexHull, Delaunay
-from pathlib import Path
+
+from json_reader import read_json_file
 
 
 class Collimator:
+    """Creates a numerical representation of a grid collimator with the number of slits specifiec by a user.
+    The 3D model of a single cuboid represents the single slit.
+    """
+
     def __init__(
         self,
         element: str,
@@ -14,63 +21,49 @@ class Collimator:
         plot: bool = False,
     ):
         """
-        Creates a numerical representation of a grid collimator with the
-        number of slits specifiec by a user.
-        The 3D model of a single cuboid represents the single slit.
-        In order to fulfill the requirements o
+        Constructs the 3D representation of a collimator based on its cartesian coordinates.
+
 
         Parameters
         ----------
         element : str
             Element for which the representation of a grid collimator is calculated.
         closing_side : str
-            Indicates from which side (top or bottom) the collimator may be closed when performing simulations.
+            Indicates which side (top or bottom) the collimator may be closed when performing simulations.
             Takes as an argument: "bottom closing side" or "top closing side".
         slits_number : int, optional
-            Requires number of . The default is 10.
+            Requires number of slits in the collimator, by default 10.
         plot : bool, optional
-            Creates 3D representation of calculated collimator. False by default.
+            Creates 3D representation of calculated collimator, by default False.
         """
         self.slits_number = slits_number
-        self.all_coordinates = self.get_coordinates(element, closing_side)
-        self.collimator = self.all_coordinates["collimator"]["element"][f"{element}"][
-            f"{closing_side}"
-        ]
-        self.vector_front_back = np.array(
-            self.all_coordinates["collimator"]["element"][f"{element}"][
-                "vector front-back"
-            ]
-        )
+        self.element = element
+        self.closing_side = closing_side
+        self.loaded_file = read_json_file()
+        self.collimator, self.vector_front_back = self.get_coordinates()
         self.vector_top_bottom = np.array(self.collimator["vector_top_bottom"])
         self.A1 = np.array(self.collimator["vertex"]["A1"])
         self.A2 = np.array(self.collimator["vertex"]["A2"])
         self.B1 = np.array(self.collimator["vertex"]["B1"])
         self.B2 = np.array(self.collimator["vertex"]["B2"])
-        self.visualization(plot)
+        if plot:
+            self.visualization()
 
     def __repr__(self, *args, **kwargs):
         return f'Collimator(element="{element}", A={self.A1}, B={self.A2}, C={self.B1})'
 
-    def get_coordinates(self, element, closing_side):
-        """
-        Retrieve the coordinates for a given element and closing side.
+    def get_coordinates(self) -> np.ndarray:
+        """Returns the collimator and vector front-back coordinates for the specified element and closing side."""
+        collimator = self.loaded_file["collimator"]["element"][f"{self.element}"][
+            f"{self.closing_side}"
+        ]
+        vector_front_back = np.array(
+            self.loaded_file["collimator"]["element"][f"{self.element}"][
+                "vector front-back"
+            ]
+        )
 
-        Parameters
-        ----------
-        element : str
-            The name of the element to retrieve coordinates for.
-        closing_side : str
-            The closing side to retrieve coordinates for.
-
-        Returns
-        -------
-        dict
-            A dictionary representing the coordinates for the given element and closing side.
-        """
-        loaded_file = open(Path(__file__).parent.resolve() / "coordinates.json")
-        all_coordinates = json.load(loaded_file)
-
-        return all_coordinates
+        return collimator, vector_front_back
 
     def spatial_colimator(self, vertices_coordinates: np.ndarray) -> np.ndarray:
         """
@@ -78,12 +71,12 @@ class Collimator:
 
         Parameters
         ----------
-        vertices_coordinates : numpy.ndarray
-            Coordinates of the vertices of the collimator.
+        vertices_coordinates : numpy.ndarray, shape (N, 3)
+            Coordinates of the vertices of the collimator, where N is the number of vertices.
 
         Returns
         -------
-        numpy.ndarray
+        numpy.ndarray, shape (2N, 3)
             Coordinates of the collimator with depth.
         """
         collim_vertices_with_depth = np.concatenate(
@@ -95,7 +88,9 @@ class Collimator:
 
         return collim_vertices_with_depth
 
-    def check_in_hull(self, points, vertices_coordinates):
+    def check_in_hull(
+        self, points: np.ndarray, vertices_coordinates: np.ndarray
+    ) -> np.ndarray:
         """
         Check if the given points are within the space defined by the vertices coordinates (its convex hull).
 
@@ -125,37 +120,25 @@ class Collimator:
         tuple of numpy.ndarray
             A tuple containing the comprehensive 3D array of collimator coordinates, the crystal-side slit coordinates, and the plasma-side slit coordinates.
         """
-        slit_coord_crys_side = np.array([])
+
+        slit_coord_crys_side = np.empty((self.slits_number, 4, 3))
         for slit in range(self.slits_number):
+            slit_coord_crys_side[slit, 0, :] = self.A1 + (
+                self.vector_top_bottom * 2 * slit
+            )
+            slit_coord_crys_side[slit, 1, :] = (self.A1 + self.vector_top_bottom) + (
+                self.vector_top_bottom * 2 * slit
+            )
+            slit_coord_crys_side[slit, 2, :] = self.A2 + (
+                self.vector_top_bottom * 2 * slit
+            )
+            slit_coord_crys_side[slit, 3, :] = (
+                self.A2
+                + 0.001
+                + self.vector_top_bottom  ### 0.0001 in order to add a depth to a surface
+            ) + (self.vector_top_bottom * 2 * slit)
 
-            slit_coord_crys_side = np.append(
-                slit_coord_crys_side, (self.A1 + (self.vector_top_bottom * 2 * slit))
-            )
-            slit_coord_crys_side = np.append(
-                slit_coord_crys_side,
-                (
-                    (self.A1 + self.vector_top_bottom)
-                    + (self.vector_top_bottom * 2 * slit)
-                ),
-            )
-            slit_coord_crys_side = np.append(
-                slit_coord_crys_side, (self.A2 + (self.vector_top_bottom * 2 * slit))
-            )
-            slit_coord_crys_side = np.append(
-                slit_coord_crys_side,
-                (
-                    (
-                        self.A2 + 0.001 + self.vector_top_bottom
-                    )  ### 0.0001 in order to add a depth to a surface
-                    + (self.vector_top_bottom * 2 * slit)
-                ),
-            )
-
-        slit_coord_crys_side = slit_coord_crys_side.reshape(self.slits_number, 4, 3)
-        slit_coord_plasma_side = (
-            slit_coord_crys_side + self.vector_front_back
-        ).reshape(self.slits_number, 4, 3)
-
+        slit_coord_plasma_side = slit_coord_crys_side + self.vector_front_back
         colimator_spatial = np.concatenate(
             (slit_coord_crys_side, slit_coord_plasma_side), axis=1
         )
@@ -173,7 +156,7 @@ class Collimator:
         Returns
         -------
         pv.PolyData
-            A PolyData object of all slits - each represents empty space through which radiaion can pass freely
+            A PolyData object of all slits - each represents empty space between in the collimator through which radiaion can pass freely
         """
 
         hull = ConvexHull(points)
@@ -184,27 +167,21 @@ class Collimator:
 
         return poly
 
-    def visualization(self, plot: bool) -> None:
+    def visualization(self):
         """
-        Creates a visual representation of the collimator.
-
-        Parameters
-        ----------
-        plot : bool
-            Whether to create a plot.
+        Visualize the collimator.
         """
-        if plot:
-            fig = pv.Plotter()
-            fig.set_background("black")
-            for slit in range(self.slits_number):
-                (
-                    colimator_spatial,
-                    slit_coord_crys_side,
-                    slit_coord_plasma_side,
-                ) = self.read_colim_coord()
-                collimator_points = self.make_collimator(colimator_spatial[slit])
-                fig.add_mesh(collimator_points, color="yellow")
-            fig.show()
+        fig = pv.Plotter()
+        fig.set_background("black")
+        (
+            colimator_spatial,
+            slit_coord_crys_side,
+            slit_coord_plasma_side,
+        ) = self.read_colim_coord()
+        for slit in range(self.slits_number):
+            collimator_points = self.make_collimator(colimator_spatial[slit])
+            fig.add_mesh(collimator_points, color="yellow")
+        fig.show()
 
 
 if __name__ == "__main__":
@@ -223,7 +200,7 @@ if __name__ == "__main__":
         fig = pv.Plotter()
         fig.set_background("black")
         for element in elements:
-            col = Collimator(element, "top closing side", 10, plot=False)
+            col = Collimator(element, "top closing side", 10)
             for slit in range(col.slits_number):
                 (
                     colimator_spatial,
@@ -235,7 +212,7 @@ if __name__ == "__main__":
                 fig.add_mesh(col.A1, color="red", point_size=10)
                 fig.add_mesh(col.A2, color="blue", point_size=10)
 
-            col = Collimator(element, "bottom closing side", 10, plot=False)
+            col = Collimator(element, "bottom closing side", 10)
             for slit in range(col.slits_number):
                 (
                     colimator_spatial,
