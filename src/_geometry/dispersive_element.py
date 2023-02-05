@@ -104,13 +104,18 @@ class DispersiveElement:
         angle = np.degrees(
             np.arccos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
         )
-
         return angle
 
     def make_curved_crystal(self):
+        """
+        Creates a curved dispersive element/crystal with the given parameters.
 
+        Returns
+        -------
+        crystal_points : numpy.ndarray
+            3D array of the curved crystal's points in cartesian coordinate system.
+        """
         crys_height = np.linspace(0, 20, self.height_step)  # crystal height range
-
         crys_lenght = (
             np.linspace(
                 0,
@@ -122,11 +127,10 @@ class DispersiveElement:
         )
         X = self.R * np.cos(crys_lenght)
         Y = self.R * np.sin(crys_lenght)
-
         px = np.repeat(X, self.height_step)
         py = np.repeat(Y, self.height_step)
         pz = np.tile(crys_height, self.length_step)
-        crstal_points = np.vstack((pz, px, py)).T
+        crystal_points = np.vstack((pz, px, py)).T
 
         ovec = self.crystal_orientation_vector / (
             np.linalg.norm(self.crystal_orientation_vector)
@@ -134,42 +138,43 @@ class DispersiveElement:
         cylvec = np.array([1, 0, 0])
 
         if np.allclose(cylvec, ovec):
-            return crstal_points
+            return crystal_points
 
         oaxis = np.cross(ovec, cylvec)
         rot = np.arccos(np.dot(ovec, cylvec))
 
         rot_matrix = rotation_matrix(rot, oaxis)
-        crstal_points = crstal_points.dot(rot_matrix)
+        crystal_points = crystal_points.dot(rot_matrix)
 
         shift = np.array(
             self.radius_central_point - self.crystal_orientation_vector / 2
         )
 
         angle = self.angle_between_lines(
-            self.radius_central_point, self.C, crstal_points[0]
+            self.radius_central_point, self.C, crystal_points[0]
         )
-        crstal_points += shift
+        crystal_points += shift
 
         ### angle checkout
         angle = self.angle_between_lines(
-            self.radius_central_point, self.C, crstal_points[0]
+            self.radius_central_point, self.C, crystal_points[0]
         )
 
         ### move to starting position
-        crstal_points -= shift
+        crystal_points -= shift
 
         ### rotate by the calculated angle and shift again to the destination place
         rot_matrix = rotation_matrix(np.deg2rad(angle), self.crystal_orientation_vector)
-        crstal_points = crstal_points.dot(rot_matrix)
-        crstal_points += shift
+        crystal_points = crystal_points.dot(rot_matrix)
+        crystal_points += shift
 
-        return crstal_points
+        return crystal_points
 
 
 if __name__ == "__main__":
 
     def plot_dispersive_elements():
+        """Helper function to plot all dispersive elements at once."""
         fig = pv.Plotter()
         fig.set_background("black")
         disp_elem = ["B", "O", "N", "C"]
