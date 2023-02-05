@@ -37,7 +37,7 @@ def make_cuboid():
     Returns:
         _type_: _description_
     """
-    pm = PlasmaMesh(distance_between_points=100, cuboid_size=[1800, 800, 2000])
+    pm = PlasmaMesh(distance_between_points=100, cuboid_dimensions=[1800, 800, 2000])
     reduced_cuboid_coordinates = pm.outer_cube_mesh
     print("Cuboid generated!")
     return reduced_cuboid_coordinates
