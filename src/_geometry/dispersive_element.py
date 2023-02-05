@@ -4,8 +4,8 @@ from pathlib import Path
 
 import numpy as np
 import pyvista as pv
-from sympy import Point3D, Line3D
 
+from json_reader import read_json_file
 from rotation_matrix import rotation_matrix
 
 
@@ -23,9 +23,12 @@ class DispersiveElement:
         crystal_length_step : int, optional
             Accuracy of the crystals length mesh (by default 20 points).
         """
+        self.element = element
         self.height_step = crystal_height_step
         self.length_step = crystal_length_step
-        self.disp_elem_coord = self.get_coordinates(element)
+        # self.disp_elem_coord = self.get_coordinates(element)
+        self.loaded_file = read_json_file()
+        self.disp_elem_coord = self.get_coordinates()
         self.AOI = self.disp_elem_coord["AOI"]
         self.max_reflectivity = self.disp_elem_coord["max reflectivity"]
         self.crystal_central_point = np.array(
@@ -39,66 +42,72 @@ class DispersiveElement:
         self.B = np.array(self.disp_elem_coord["vertex"]["B"])
         self.C = np.array(self.disp_elem_coord["vertex"]["C"])
         self.D = np.array(self.disp_elem_coord["vertex"]["D"])
-        self.R = self.distance_between_poinst(self.A, self.radius_central_point)
+        self.R = self.distance_between_points(self.A, self.radius_central_point)
         self.crystal_orientation_vector = self.B - self.C
         self.alpha = self.angle_between_lines(self.radius_central_point, self.A, self.B)
 
-    @staticmethod
-    def get_coordinates(element):
-        """_summary_
-        Args:
-            element (_type_): _description_
-        Returns:
-            _type_: _description_
-        """
+    def get_coordinates(self) -> np.ndarray:
+        """Read the coordinates of a given dispersive element from a JSON file.
 
-        with open(Path(__file__).parent.resolve() / "coordinates.json") as file:
-            json_file = json.load(file)
-            disp_elem_coord = json_file["dispersive element"]["element"][f"{element}"]
+        Returns
+        -------
+        np.ndarray
+            n points representing the vertices (rows) of the dispersive element and 3 columns (representing x,y,z).
+        """
+        disp_elem_coord = self.loaded_file["dispersive element"]["element"][
+            f"{self.element}"
+        ]
         return disp_elem_coord
 
     @staticmethod
-    def distance_between_poinst(p1, p2):
-        """Accepts only np.array containing 3 int/float
+    def distance_between_points(p1: np.ndarray, p2: np.ndarray) -> int:
+        """Calculate the Euclidean distance between two points in a 3D cartesian coordinate system.
+
         Args:
-            p1 (np.array): first point in carthesian coordinate system (in mm)
-            p2 (np.array): second point in carthesian coordinate system (in mm)
+        -------
+        p1 : np.ndarray
+            The first point represented as a 3 element numpy array in millimeters.
+        p2 : np.ndarray
+            The second point represented as a 3 element numpy array in millimeters.
+
         Returns:
-            int: distance (in mm) between the points
+        -------
+        int
+            The Euclidean distance between the two points rounded to the nearest integer, in millimeters.
         """
         squared_dist = np.sum((p1 - p2) ** 2, axis=0)
         R = np.sqrt(squared_dist).round(2)
+
         return int(R)
-
-    def shift_cylinder(self, object_coordinates):
-        """
-        Adds vector to 2D array (N, 3) of 3D object row by row.
-        Input - 2d array of interest, vector to add.
-        Return - 2d array with included vector.
-        """
-        coordinates_plus_vector = object_coordinates + self.crystal_orientation_vector
-
-        return coordinates_plus_vector
 
     def angle_between_lines(self, central_point, p1, p2):
         """
-        Returns angle between two lines in 3D carthesian coordinate system.
+        Returns the angle in degrees between two lines in 3D cartesian coordinate system.
+
+        Parameters
+        ----------
+        central_point : np.array
+            The central point in the form of [x, y, z].
+        p1 : np.array
+            First point in the form of [x, y, z].
+        p2 : np.array
+            Second point in the form of [x, y, z].
+
         Returns
         -------
         angle : float
-            angle in degrees.
+            The angle in degrees between the two lines.
         """
-        central_point, p1, p2 = Point3D(central_point), Point3D(p1), Point3D(p2)
-        l1, l2 = Line3D(central_point, p1), Line3D(central_point, p2)
-        angle = degrees(l1.angle_between(l2))
+        central_point, p1, p2 = np.array(central_point), np.array(p1), np.array(p2)
+        v1 = p1 - central_point
+        v2 = p2 - central_point
+        angle = np.degrees(
+            np.arccos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
+        )
 
         return angle
 
     def make_curved_crystal(self):
-        """_summary_
-        Returns:
-            _type_: _description_
-        """
 
         crys_height = np.linspace(0, 20, self.height_step)  # crystal height range
 
