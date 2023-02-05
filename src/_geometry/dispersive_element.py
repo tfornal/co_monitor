@@ -10,14 +10,17 @@ from rotation_matrix import rotation_matrix
 
 
 class DispersiveElement:
+    """This class creates the curved surface of the selected dispersive element
+    with given coordinates.
+    """
+
     def __init__(self, element, crystal_height_step=10, crystal_length_step=20):
         """
-        This class creates the curved surface of the selected dispersive element
-        with given coordinates.
         Parameters
         ----------
+        element : str
             Elements symbol like B, C, N or O in order to select their coordinates
-            from the "optics_coordinates" file containing all the necessary input; .
+            from the "optics_coordinates" file containing all the necessary input.
         crystal_height_step : int, optional
             Accuracy of the crystals length mesh (by default 10 points).
         crystal_length_step : int, optional
@@ -26,7 +29,6 @@ class DispersiveElement:
         self.element = element
         self.height_step = crystal_height_step
         self.length_step = crystal_length_step
-        # self.disp_elem_coord = self.get_coordinates(element)
         self.loaded_file = read_json_file()
         self.disp_elem_coord = self.get_coordinates()
         self.AOI = self.disp_elem_coord["AOI"]

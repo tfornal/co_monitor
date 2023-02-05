@@ -6,13 +6,10 @@ from json_reader import read_json_file
 
 
 class Detector:
-    """A class to represent a detector object.
-
-    It is used to create numerical representation (hull made out of vertices) of the selected detector for observation of B, C, N and O channels.
-    """
+    """A class to represent a detector object."""
 
     def __init__(self, element: str, plot=False):
-        """_summary_
+        """It is used to create numerical representation (hull made out of vertices) of the selected detector for observation of B, C, N and O channels.
 
         Parameters
         ----------

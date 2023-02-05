@@ -13,6 +13,14 @@ class RadiationShield:
     """Class for creating 3D representation of ECRH protective shields against stray radiation."""
 
     def __init__(self, chamber_position: str, selected_shield: str):
+        """
+        Parameters
+        ----------
+        chamber_position : str
+            The position of the chamber.
+        selected_shield : str
+            The selected shield.
+        """
         self.chamber_position = chamber_position
         self.selected_shield = selected_shield
         self.loaded_file = read_json_file()
