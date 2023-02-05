@@ -138,7 +138,7 @@ class Detector:
 if __name__ == "__main__":
 
     def plot_all_detectors():
-        """Helper to plot all detectors at once."""
+        """Helper function to plot all detectors at once."""
 
         fig = pv.Plotter()
         for element in ["B", "C", "N", "O"]:

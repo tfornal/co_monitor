@@ -1,12 +1,21 @@
 """Reads json file with set of all diagnostic coordinates."""
 
-from pathlib import Path
 import json
+from pathlib import Path
 
 
 def read_json_file() -> dict:
+    """
+    Read a JSON file and return the data as a dictionary.
 
-    with open(Path(__file__).parent.resolve() / "coordinates.json") as file:
+    Returns:
+    -------
+    dict :
+        Dictionary representation of the data in the JSON file.
+    """
+    file_path = Path(__file__).parent.resolve() / "coordinates.json"
+
+    with open(file_path) as file:
         data = json.load(file)
 
     return data

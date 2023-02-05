@@ -10,18 +10,9 @@ from rotation_matrix import rotation_matrix
 
 
 class RadiationShield:
-    """Class creating 3D representation of ECRH protective shields against stray radiation."""
+    """Class for creating 3D representation of ECRH protective shields against stray radiation."""
 
     def __init__(self, chamber_position: str, selected_shield: str):
-        """Construct all the necessary attributes for the respective protective shield.
-
-        Args:
-            chamber_position (str): defines the position of the spectrometers vacuum chamber;
-            accepts either "upper chamber" or "bottom chamber"
-
-            shield_nr (str): defines the position of the protection shield for a given vacuum chamber;
-            accepts either "1st shield" or "2nd shield"
-        """
         self.chamber_position = chamber_position
         self.selected_shield = selected_shield
         self.loaded_file = read_json_file()
@@ -29,46 +20,45 @@ class RadiationShield:
         self.radius_central_point = self.shields_coordinates["central point"]
         self.radius = self.shields_coordinates["radius"]
         self.orientation_vector = self.shields_coordinates["orientation vector"]
-        self.vertices_coordinates = self.make_shield(
-            self.radius, self.radius_central_point, self.orientation_vector
-        )
-        self.radiation_shield = self.make_radiation_protection_shield()
+        self.vertices_coordinates = self.make_cyllinder()
+        self.radiation_shield = self.make_shield()
 
     def get_coordinates(self) -> np.ndarray:
-        """Reads coordinates of all port vertices.
-
-        Returns:
-            np.ndarray: n points representing port vertices (rows) and 3 columns (representing x,y,z)
         """
-        ecrh_coordinates = self.loaded_file["ECRH shield"][f"{self.chamber_position}"][
-            f"{self.selected_shield}"
-        ]
+        Get the coordinates of all shield vertices.
 
-        return ecrh_coordinates
+        Returns
+        -------
+        numpy.ndarray
+            An array with `n` points representing shield vertices (rows) and 3 columns (representing `x`, `y`, `z`).
 
-    def make_shield(
-        self,
-        radius,
-        radius_central_point,
-        orientation,
-        length=1,
-        nlength=2,
-        alpha=360,
-        nalpha=360,
-    ):
-        """_summary_
+        """
+        shield_coordinates = self.loaded_file["ECRH shield"][
+            f"{self.chamber_position}"
+        ][f"{self.selected_shield}"]
 
-        Args:
-            radius (_type_): _description_
-            radius_central_point (_type_): _description_
-            orientation (_type_): _description_
-            length (int, optional): _description_. Defaults to 1.
-            nlength (int, optional): _description_. Defaults to 2.
-            alpha (int, optional): _description_. Defaults to 360.
-            nalpha (int, optional): _description_. Defaults to 360.
+        return shield_coordinates
 
-        Returns:
-            _type_: _description_
+    def make_cyllinder(self, length=1, nlength=2, alpha=360, nalpha=360) -> np.ndarray:
+        """
+        Create a numpy array of vertices coordinates for the cyllindrical shield.
+
+        Parameters
+        ----------
+        length : float, optional
+            Length of the shield, by default 1.
+        nlength : int, optional
+            Number of points along the length, by default 2.
+        alpha : float, optional
+            Angle of the shield, by default 360.
+        nalpha : int, optional
+            Number of points along the angle, by default 360.
+
+        Returns
+        -------
+        numpy.ndarray
+            An array with `n` points representing shield vertices (rows) and 3 columns (representing `x`, `y`, `z`).
+
         """
         I = np.linspace(0, length, nlength)
         if int(alpha) == 360:
@@ -76,15 +66,15 @@ class RadiationShield:
         else:
             A = np.linspace(0, alpha, num=nalpha) / 180 * np.pi
 
-        X = radius * np.cos(A)
-        Y = radius * np.sin(A)
+        X = self.radius * np.cos(A)
+        Y = self.radius * np.sin(A)
 
         px = np.repeat(X, nlength)
         py = np.repeat(Y, nlength)
         pz = np.tile(I, nalpha)
         points = np.vstack((pz, px, py)).T
 
-        ovec = orientation / (np.linalg.norm(orientation))
+        ovec = self.orientation_vector / (np.linalg.norm(self.orientation_vector))
         cylvec = np.array([1, 0, 0])
 
         if np.allclose(cylvec, ovec):
@@ -96,16 +86,15 @@ class RadiationShield:
         R = rotation_matrix(rot, oaxis)
         cylinder_points = points.dot(R)
 
-        # shift of created
-        shifted_cylinder_points = cylinder_points + radius_central_point
+        shifted_cylinder_points = cylinder_points + self.radius_central_point
 
         return shifted_cylinder_points
 
-    def make_radiation_protection_shield(self):
-        """_summary_
+    def make_shield(self) -> pv.PolyData:
+        """Create a vtk PolyData object from the convex hull of the shield vertices.
 
         Returns:
-            _type_: _description_
+            pv.PolyData: a 3D polygonal data representation of the shield.
         """
         hull = ConvexHull(self.vertices_coordinates)
         faces = np.column_stack(
@@ -119,7 +108,7 @@ class RadiationShield:
 if __name__ == "__main__":
 
     def plotter(*args):
-
+        """Helper function to plot all radiation shields at once."""
         fig = pv.Plotter()
         fig.set_background("black")
         for protective_shield in args:
