@@ -1,3 +1,9 @@
+"""The diagnostic_coordinates dictionary holds information about various 
+components in a diagnostic system, such as detectors, chamber orientation 
+vector, collimator and its elements. Each component is described with its 
+vertex and orientation vector, where vertex is further described with 
+its x,y,z coordinates in a 3D space."""
+
 import json
 
 diagnostic_coordinates = {
@@ -156,8 +162,7 @@ diagnostic_coordinates = {
                     "A": [-5567.611, 6900.203, -45.192],
                     "B": [-5547.408, 6823.007, -50.90],
                     "C": [-5546.404, 6821.796, -30.959],
-                    "D": [-5566.607, 6898.993, -25.254]
-                    
+                    "D": [-5566.607, 6898.993, -25.254],
                 },
             },
             "N": {
@@ -169,8 +174,7 @@ diagnostic_coordinates = {
                     "A": [-5563.773, 6899.448, -594.513],
                     "B": [-5548.218, 6821.173, -588.936],
                     "C": [-5549.23, 6822.393, -568.999],
-                    "D": [-5564.785, 6900.667, -574.57]
-                    
+                    "D": [-5564.785, 6900.667, -574.57],
                 },
             },
             "O": {
@@ -236,10 +240,10 @@ diagnostic_coordinates = {
             "p11": [-3975.0, 4691.0, -588.0],
             "p12": [-3882.0, 4697.0, -676.0],
             "p13": [-3697.0, 4802.0, -658.0],
-            "p14": [-3674.5, 4842.0, -603.0]
-            },
+            "p14": [-3674.5, 4842.0, -603.0],
+        },
         # "coplanar vertex": [-3693.98024454, 4902.45205254, -527.06278198],
-        "orientation vector":   [29.048, -35.021, 0.0]
+        "orientation vector": [29.048, -35.021, 0.0],
     },
     "plasma": {
         "central point": [-3430.25, 4305.75, -320.75],

@@ -95,7 +95,7 @@ def make_observed_plasma_volume(Reff_VMEC_calculated, element):
         / "_Input_files"
         / "__Visualization"
         / f"{element}_plasma_coordinates.csv"
-    ) 
+    )
 
     df = pd.read_csv(calculated_plasma_coordinates, sep=";")
     indexes = df.iloc[:, 0].values
@@ -283,7 +283,7 @@ if __name__ == "__main__":
 
     def port():
         pt = Port()
-        port = pt.calculate_port_hull()
+        port = pt.make_port_hull()
         fig.add_mesh(port, color="purple", opacity=0.9)
 
     def radiation_shields():
@@ -298,7 +298,11 @@ if __name__ == "__main__":
                 fig.add_mesh(
                     protective_shield.vertices_coordinates, color="blue", opacity=0.9
                 )
-                fig.add_mesh(protective_shield.poly_hull, color="green", opacity=0.9)
+                fig.add_mesh(
+                    protective_shield.radiation_shield,
+                    color="green",
+                    opacity=0.9,
+                )
 
     def collimators(element, closing_side):
         # col = Collimator(element, 10, plot = False)

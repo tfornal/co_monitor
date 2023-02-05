@@ -63,7 +63,6 @@ class ReaderReffVMEC:
         chunks_nr = get_coord_chunks()
         print(f"Number of chunks: {chunks_nr}")
         print(f"Chunk size: {chunk_size}")
-
         for chunk in tqdm(range(chunks_nr)):
 
             def get_tasks(session):
@@ -89,7 +88,7 @@ class ReaderReffVMEC:
             asyncio.run(get_reff_points())
 
             np.savetxt(
-                f"C:/Users/tofo/Desktop/reff_calculation_OOP/reff/Reff_VMEC_reff-{chunk}.txt",
+                f"C:/Users/tofo/Desktop/reff_calculation_OOP/reff/Reff_VMEC_reff-{chunk}.txt",  #### TODO poprawic sciezke
                 np.array(results, dtype=float),
                 fmt="%.3e",
             )

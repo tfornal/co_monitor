@@ -25,7 +25,7 @@ class RadiationShield:
         self.chamber_position = chamber_position
         self.selected_shield = selected_shield
         self.loaded_file = read_json_file()
-        self.shields_coordinates  = self.get_coordinates()
+        self.shields_coordinates = self.get_coordinates()
         self.radius_central_point = self.shields_coordinates["central point"]
         self.radius = self.shields_coordinates["radius"]
         self.orientation_vector = self.shields_coordinates["orientation vector"]
@@ -34,18 +34,18 @@ class RadiationShield:
         )
         self.radiation_shield = self.make_radiation_protection_shield()
 
-        
     def get_coordinates(self) -> np.ndarray:
         """Reads coordinates of all port vertices.
 
         Returns:
             np.ndarray: n points representing port vertices (rows) and 3 columns (representing x,y,z)
         """
-        ecrh_coordinates = self.loaded_file["ECRH shield"][f"{self.chamber_position}"][f"{self.selected_shield}"]
+        ecrh_coordinates = self.loaded_file["ECRH shield"][f"{self.chamber_position}"][
+            f"{self.selected_shield}"
+        ]
 
         return ecrh_coordinates
-    
-    
+
     def make_shield(
         self,
         radius,
@@ -95,10 +95,10 @@ class RadiationShield:
 
         R = rotation_matrix(rot, oaxis)
         cylinder_points = points.dot(R)
-        
-        # shift of created 
+
+        # shift of created
         shifted_cylinder_points = cylinder_points + radius_central_point
-        
+
         return shifted_cylinder_points
 
     def make_radiation_protection_shield(self):
@@ -119,24 +119,20 @@ class RadiationShield:
 if __name__ == "__main__":
 
     def plotter(*args):
-        
+
         fig = pv.Plotter()
         fig.set_background("black")
         for protective_shield in args:
-            fig.add_mesh(protective_shield.vertices_coordinates, color="blue", opacity=0.9)
+            fig.add_mesh(
+                protective_shield.vertices_coordinates, color="blue", opacity=0.9
+            )
             fig.add_mesh(protective_shield.radiation_shield, color="green", opacity=0.9)
-    
+
         fig.show()
-        
+
     rad1 = RadiationShield("upper chamber", "1st shield")
     rad2 = RadiationShield("bottom chamber", "1st shield")
     rad3 = RadiationShield("upper chamber", "2nd shield")
     rad4 = RadiationShield("bottom chamber", "2nd shield")
-    
+
     plotter(rad1, rad2, rad3, rad4)
-    
-    
-    
-    
-    
-    

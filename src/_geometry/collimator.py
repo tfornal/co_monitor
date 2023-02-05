@@ -51,6 +51,27 @@ class Collimator:
     def __repr__(self, *args, **kwargs):
         return f'Collimator(element="{element}", A={self.A1}, B={self.A2}, C={self.B1})'
 
+    def get_coordinates(self, element, closing_side):
+        """
+        Retrieve the coordinates for a given element and closing side.
+
+        Parameters
+        ----------
+        element : str
+            The name of the element to retrieve coordinates for.
+        closing_side : str
+            The closing side to retrieve coordinates for.
+
+        Returns
+        -------
+        dict
+            A dictionary representing the coordinates for the given element and closing side.
+        """
+        loaded_file = open(Path(__file__).parent.resolve() / "coordinates.json")
+        all_coordinates = json.load(loaded_file)
+
+        return all_coordinates
+
     def spatial_colimator(self, vertices_coordinates: np.ndarray) -> np.ndarray:
         """
         Creates a representation of an empty space between the collimator slits based on its defined coordinates.
@@ -94,27 +115,6 @@ class Collimator:
         hull = Delaunay(collim_vertices_with_depth)
 
         return hull.find_simplex(points) >= 0
-
-    def get_coordinates(self, element, closing_side):
-        """
-        Retrieve the coordinates for a given element and closing side.
-
-        Parameters
-        ----------
-        element : str
-            The name of the element to retrieve coordinates for.
-        closing_side : str
-            The closing side to retrieve coordinates for.
-
-        Returns
-        -------
-        dict
-            A dictionary representing the coordinates for the given element and closing side.
-        """
-        loaded_file = open(Path(__file__).parent.resolve() / "coordinates.json")
-        all_coordinates = json.load(loaded_file)
-
-        return all_coordinates
 
     def read_colim_coord(self):
         """

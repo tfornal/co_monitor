@@ -11,9 +11,10 @@ class Port:
     def __init__(self, plot=False):
         """Constructs the hull of the port based on its vertices.
 
-        Args:
-            plot (bool): creates 3D visualization if set to "True"
-            (default is False)
+        Parameters
+        ----------
+        plot : bool, optional
+            Creates 3D visualization if set to "True" (default is False).
         """
         self.loaded_file = read_json_file()
         self.vertices_coordinates = self.get_vertices()
@@ -24,34 +25,44 @@ class Port:
             self.plotter()
 
     def get_vertices(self) -> np.ndarray:
-        """Reads coordinates of all port vertices.
-
-        Returns:
-            np.ndarray: n points representing port vertices (rows) and 3 columns (representing x,y,z)
         """
-        port_coordinates = [
-            self.loaded_file["port"]["vertex"][vertex]
-            for vertex in self.loaded_file["port"]["vertex"]
-        ]
-        port_coordinates = np.vstack(port_coordinates)
+        Get the coordinates of all port vertices.
 
-        return port_coordinates
+        Returns
+        -------
+        ndarray
+            A n x 3 array representing the n port vertices, where each row represents a vertex and the columns represent the x, y, and z coordinates.
+
+        """
+        port_vertices = np.vstack(
+            [
+                self.loaded_file["port"]["vertex"][vertex]
+                for vertex in self.loaded_file["port"]["vertex"]
+            ]
+        )
+        return port_vertices
 
     def get_orientation_vector(self) -> np.ndarray:
-        """Reads coordinates of orientation vector.
+        """
+        Get the coordinates of the port orientation vector.
 
-        Returns:
-            np.ndarray: port orientation vector (x, y, z)
+        Returns
+        -------
+        ndarray
+            A 1 x 3 array representing the port orientation vector, where each column represents the x, y, and z coordinates.
+
         """
         orientation_vector = np.array(self.loaded_file["port"]["orientation vector"])
-
         return orientation_vector
 
     def calculate_port_thickness(self) -> np.ndarray:
-        """Takes np.ndarray of n points in cartesian coordinate system (mm) and creates a thick W7-X port object adding the thickness of its orientation vector.
+        """
+        Calculate the thick W7-X port object by adding the thickness of its orientation vector to its vertices coordinates.
 
-        Returns:
-            np.ndarray: set of 8 points in carthesian coordinate system representing W7-X port dimensions including its thickness.
+        Returns
+        -------
+        np.ndarray
+            An array of 8 points in the cartesian coordinate system representing the W7-X port dimensions including its thickness.
         """
         det_vertices_with_depth = np.concatenate(
             (
@@ -62,14 +73,19 @@ class Port:
         return det_vertices_with_depth
 
     def make_port_hull(self) -> pv.core.pointset.PolyData:
-        """Creates surface geometry (poly data) representing port object."""
+        """Creates surface geometry (poly data) representing port object.
 
+        Returns
+        -------
+        poly : pv.PolyData
+            The poly data representing the surface geometry of the port object.
+        """
         hull = ConvexHull(self.spatial_port)
+        simplices = hull.simplices
         faces = np.column_stack(
-            (3 * np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)
+            (np.ones((len(simplices), 1), dtype=int) * 3, simplices)
         ).flatten()
         poly = pv.PolyData(hull.points, faces)
-
         return poly
 
     def plotter(self) -> None:

@@ -29,14 +29,24 @@ class Detector:
         if plot:
             self.plotter()
 
-    def get_vertices(self, element):
+    def get_vertices(self, element: str) -> np.ndarray:
         """Reads coordinates of selected detector.
 
-        Args:
-            element (str): Element name for which the respective detector is chosen.
+        Parameters
+        ----------
+        element : str
+            Element name for which the respective detector is chosen.
 
-        Returns:
-            np.ndarray : Stack of detector's vertices.
+        Returns
+        -------
+        numpy.ndarray
+            Stack of detector's vertices, with shape (4, 3).
+
+        Raises
+        ------
+        AssertionError
+            If the shape of the returned coordinates is not (4, 3).
+
         """
         det_coordinates = [
             self.loaded_file["detector"]["element"][element]["vertex"][vertex]
@@ -44,17 +54,21 @@ class Detector:
         ]
         det_coordinates = np.vstack(det_coordinates)
         assert det_coordinates.shape == (4, 3), "Wrong number of vertices!"
-
         return det_coordinates
 
-    def get_orientation_vector(self, element):
-        """Reads orientation vector of selected detector.
+    def get_orientation_vector(self, element: str) -> np.ndarray:
+        """
+        Reads orientation vector of selected detector.
 
-        Args:
-            element (str): Element name for which the orientation vector of respective detector is chosen.
+        Parameters
+        ----------
+        element : str
+            Element name for which the orientation vector of respective detector is chosen.
 
-        Returns:
-            np.ndarray: Stack of detector's vertices.
+        Returns
+        -------
+        np.ndarray
+            Stack of detector's orientation vector.
         """
         orientation_vector = [
             self.loaded_file["detector"]["element"][element]["orientation vector"]
@@ -65,17 +79,27 @@ class Detector:
             1,
             3,
         ), "Orientation vector should consist of 1 point."
-
         return orientation_vector
 
-    def create_thick_det(self, vertices_coordinates):
-        """Gives the detector a thickness dimension depending on its orientation vector.
+    def create_thick_det(self, vertices_coordinates: np.ndarray) -> np.ndarray:
+        """
+        Add thickness to a detector.
 
-        Args:
-            vertices_coordinates (np.ndarray(4,3)): Stack of detector's vertices.
+        Parameters
+        ----------
+        vertices_coordinates : np.ndarray
+            An array of shape (4, 3) representing the stack of the detector's vertices.
 
-        Returns:
-            _type_: Stack of spatial detector's vertices.
+        Returns
+        -------
+        np.ndarray
+            An array of shape (8, 3) representing the stack of the spatial detector's vertices with added thickness.
+
+        Raises
+        ------
+        AssertionError
+            If the resulting stack of spatial detector's vertices does not have shape (8, 3).
+
         """
         det_vertices_with_depth = np.concatenate(
             (
@@ -84,12 +108,17 @@ class Detector:
             )
         )
         assert det_vertices_with_depth.shape == (8, 3), "Wrong number of vertices!"
-
         return det_vertices_with_depth
 
-    def make_detectors_surface(self):
-        """Creates surface geometry (poly data) representing detector object."""
+    def make_detectors_surface(self) -> pv.PolyData:
+        """
+        Create surface geometry representing the detector object.
 
+        Returns
+        -------
+        pv.PolyData
+            The surface geometry of the detector object.
+        """
         hull = ConvexHull(self.spatial_det_coordinates)
         faces = np.column_stack(
             (3 * np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)
@@ -99,7 +128,6 @@ class Detector:
 
     def plotter(self):
         """Plots 3D representaiton of calculated detector hull."""
-
         detector = self.make_detectors_surface()
         fig = pv.Plotter()
         fig.set_background("black")
