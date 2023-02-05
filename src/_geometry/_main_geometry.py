@@ -9,12 +9,12 @@ from mesh_calculation import PlasmaMesh
 
 elements_list = ["B", "N"]
 testing_settings = dict(
-    slits_number = 10,
-    distance_between_points = 50,
-    crystal_height_step = 5,
-    crystal_length_step = 5,
-    savetxt = True,
-    plot = False,
+    slits_number=10,
+    distance_between_points=50,
+    crystal_height_step=5,
+    crystal_length_step=5,
+    savetxt=True,
+    plot=False,
 )
 
 
