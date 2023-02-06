@@ -30,7 +30,10 @@ class DispersiveElement:
         self.height_step = crystal_height_step
         self.length_step = crystal_length_step
         self.loaded_file = read_json_file()
-        self.disp_elem_coord = self.get_coordinates()
+        self.disp_elem_coord = self.read_coord_from_file()
+        self._init_coordinates()
+
+    def _init_coordinates(self):
         self.AOI = self.disp_elem_coord["AOI"]
         self.max_reflectivity = self.disp_elem_coord["max reflectivity"]
         self.crystal_central_point = np.array(
@@ -44,11 +47,11 @@ class DispersiveElement:
         self.B = np.array(self.disp_elem_coord["vertex"]["B"])
         self.C = np.array(self.disp_elem_coord["vertex"]["C"])
         self.D = np.array(self.disp_elem_coord["vertex"]["D"])
-        self.R = self.distance_between_points(self.A, self.radius_central_point)
+        self.radius = self.distance_between_points(self.A, self.radius_central_point)
         self.crystal_orientation_vector = self.B - self.C
         self.alpha = self.angle_between_lines(self.radius_central_point, self.A, self.B)
 
-    def get_coordinates(self) -> np.ndarray:
+    def read_coord_from_file(self) -> np.ndarray:
         """Read the coordinates of a given dispersive element from a JSON file.
 
         Returns
@@ -127,8 +130,8 @@ class DispersiveElement:
             / 180
             * np.pi
         )
-        X = self.R * np.cos(crys_lenght)
-        Y = self.R * np.sin(crys_lenght)
+        X = self.radius * np.cos(crys_lenght)
+        Y = self.radius * np.sin(crys_lenght)
         px = np.repeat(X, self.height_step)
         py = np.repeat(Y, self.height_step)
         pz = np.tile(crys_height, self.length_step)
