@@ -3,6 +3,9 @@ Kod musi pobierac dane z pliku wyjsciowego uzyskanego za pomoca rest api.
 Step 1 - wyznaczenie objetosci jaka obserwowalby kazdy kanal.
 Step 2 - Nastepnie kazdy punkt sprawdzany bylby modulem ponizej.
 TODO - reflectivity readout -> not a gaussian but experimental profile
+TODO - zapis do bazy danych (sql???? czy cos innego?) a nie csv!!!!!!
+TODO - testy dla slits number closing top i bottom # for slit in slits_number:
+TODO - poprawić nazewnictwo zapisywanych plików!
 """
 
 from functools import reduce
@@ -59,13 +62,13 @@ class Simulation:
         # calculate ray reflection
         (
             self.reflected_points_location,
-            self.full_input_array,
+            self.crys_plas_data_arr,
         ) = self.calculate_radiation_reflection()
         self.selected_intersections = self.check_ray_transmission()
         self.selected_indices = self.calculate_indices()
         self.plas_points_indices = self.calculate_plasma_points_indices()
-        self.distances = self.grab_distances()
-        self.angles_of_incident = self.grab_angles()
+        self.distances = self.calculate_distances()
+        self.angles_of_incident = self.calculate_angles()
         self.ddf = self.calculate_radiation_fraction()
 
         if savetxt:
@@ -277,7 +280,7 @@ class Simulation:
         -------
         reflected_points_location : da.ndarray
             Array of reflected points locations.
-        full_input_array : da.ndarray
+        crys_plas_data_arr : da.ndarray
             Array of all input points: plasma, crystal and reflected.
         """
         print("\n--- Calculating reflected beam ---")
@@ -312,7 +315,7 @@ class Simulation:
         r = d - 2 * (d * n).sum(axis=-1, keepdims=True) * n
         reflected_points_location = crystal_coordinates + r
 
-        full_input_array = da.stack(
+        crys_plas_data_arr = da.stack(
             (
                 crystal_coordinates - d,  # plasma
                 plasma_coordinates + d,  # crystal
@@ -320,7 +323,7 @@ class Simulation:
             ),
             axis=0,
         ).rechunk("auto")
-        return reflected_points_location, full_input_array
+        return reflected_points_location, crys_plas_data_arr
 
     def check_ray_transmission(self):
         """Checks the transmission of each plasma-crystal combination through a collimator
@@ -350,7 +353,7 @@ class Simulation:
             # check the collision with collimator's crystal side
             p1, p2, p3 = self.slit_coord_crys_side[slit, :3]
             all_intersection_points_crys_side = self.find_intersection_points(
-                p1, p2, p3, self.full_input_array[0], self.full_input_array[1]
+                p1, p2, p3, self.crys_plas_data_arr[0], self.crys_plas_data_arr[1]
             )
             found_intersection_points_crys_side.append(
                 all_intersection_points_crys_side
@@ -366,7 +369,7 @@ class Simulation:
             # check the collision with collimator's plasma side
             p4, p5, p6 = self.slit_coord_plasma_side[slit, :3]
             all_intersection_points_plasma_side = self.find_intersection_points(
-                p4, p5, p6, self.full_input_array[0], self.full_input_array[1]
+                p4, p5, p6, self.crys_plas_data_arr[0], self.crys_plas_data_arr[1]
             )
             found_intersection_points_plasma_side.append(
                 all_intersection_points_plasma_side
@@ -382,7 +385,7 @@ class Simulation:
         # check the collision with port
         p7, p8, p9 = self.port_vertices_coordinates[:3]
         all_intersection_points_port = self.find_intersection_points(
-            p7, p8, p9, self.full_input_array[0], self.full_input_array[1]
+            p7, p8, p9, self.crys_plas_data_arr[0], self.crys_plas_data_arr[1]
         )
         found_intersection_points_port.append(all_intersection_points_port)
         tested_in_hull = self.check_in_hull(
@@ -395,7 +398,7 @@ class Simulation:
         # check the collision with detectors surface
         p10, p11, p12 = self.detector_vertices_coordinates[:3]
         all_intersetion_points_detector = self.find_intersection_points(
-            p10, p11, p12, self.full_input_array[2], self.full_input_array[1]
+            p10, p11, p12, self.crys_plas_data_arr[2], self.crys_plas_data_arr[1]
         )
 
         found_intersection_points_detector.append(all_intersetion_points_detector)
@@ -437,17 +440,17 @@ class Simulation:
             fig.add_mesh(detectors_surface, color="purple", opacity=0.4)
 
             fig.add_mesh(
-                self.full_input_array.compute()[0].reshape(-1, 3),
+                self.crys_plas_data_arr.compute()[0].reshape(-1, 3),
                 color="red",
                 render_points_as_spheres=True,
             )  ### plasma
             fig.add_mesh(
-                self.full_input_array.compute()[1].reshape(-1, 3),
+                self.crys_plas_data_arr.compute()[1].reshape(-1, 3),
                 color="blue",
                 render_points_as_spheres=True,
             )  ### crystal
             fig.add_mesh(
-                self.full_input_array.compute()[2].reshape(-1, 3),
+                self.crys_plas_data_arr.compute()[2].reshape(-1, 3),
                 color="green",
                 render_points_as_spheres=True,
             )  ### reflected plasma
@@ -475,15 +478,20 @@ class Simulation:
 
         if self.plot:
             plotter()
-
         print("\n--- Ray transmission calculation finished ---")
+
         return selected_intersections
 
-    def calculate_indices(self):
+    def calculate_indices(self) -> dd.DataFrame:
         """
-        Returns list of indices representing combination of plasma-crystal
-        if not blocked by collimator.
-        Returns dask_series. TODO
+        Calculate a list of indices representing the combination of plasma and crystal
+        that are not blocked by the collimator.
+
+        Returns
+        -------
+        dd.DataFrame
+            A dataframe containing the selected indices, with the index column reset.
+
         """
         plas_points, crys_points = self.selected_intersections.shape
         all_indices = da.arange(plas_points * crys_points).reshape(
@@ -496,7 +504,14 @@ class Simulation:
 
         return selected_indices
 
-    def calculate_plasma_points_indices(self):
+    def calculate_plasma_points_indices(self) -> dd.DataFrame:
+        """Calculates the indices of the selected plasma points.
+
+        Returns
+        -------
+        plas_points_indices : dd.DataFrame
+            A dask.DataFrame containing the indices of the selected plasma points.
+        """
         plas_points_indices = self.selected_indices
         plas_points_indices.columns = ["index", "idx_sel_plas_points"]
         plas_points_indices["idx_sel_plas_points"] = plas_points_indices[
@@ -506,51 +521,39 @@ class Simulation:
 
         return plas_points_indices
 
-    def grab_distances(self, save=False):
+    def calculate_distances(self) -> dd.Series:
         """
         Calculate distances between plasma and crystal points.
-        Returns dask_series.
+
+        Returns
+        -------
+        dd.Series
+            Dask series containing the calculated distances.
         """
-        all_data_input = self.full_input_array
-        plasma_coordinates = all_data_input[0]
-        crystal = all_data_input[1]
-        distance_vectors = plasma_coordinates - crystal
+        plasma_coordinates = self.crys_plas_data_arr[0]
+        crystal_coordinates = self.crys_plas_data_arr[1]
+        distance_vectors = plasma_coordinates - crystal_coordinates
         distances = (da.sqrt(da.sum(distance_vectors**2, axis=-1)))[
             self.selected_intersections
         ]
-        if save is not False:
-            self.selected_indices = (
-                self.selected_indices.compute_chunk_sizes().rechunk()
-            )
-            distances = distances.compute_chunk_sizes().rechunk()
-
-            #### TODO zahardkodowane nazwy do poprawienia
-            da.to_zarr(
-                self.selected_indices.astype(np.int64),
-                "selected_indices.zarr",
-                overwrite=True,
-            )
-            da.to_zarr(distances.astype(np.float32), "distances.zarr", overwrite=True)
-        distances = dd.from_dask_array(
-            distances.compute_chunk_sizes()
-        )  ### WASKIE GARDLO
+        distances = dd.from_dask_array(distances.compute_chunk_sizes())
         distances = distances.to_frame().reset_index()
         print("\n--- Distances calculated ---")
-
         return distances
 
-    def grab_angles(self, save=False):
+    def calculate_angles(self) -> dd.Series:
         """
-        Calculate incident angles between plasma ray and crystals surface.
-        Returns dask_series.
-        """
-        all_data_input = self.full_input_array
-        plasma_coordinates = all_data_input[0]
-        crystal_coordinates = all_data_input[1]
-        reflected_points = all_data_input[2]
+        Calculate the angle of incidence between the plasma ray and the curved surface of the crystal.
 
-        vector_plasma_to_crystal = plasma_coordinates - crystal_coordinates
-        reflected_crystal = reflected_points - crystal_coordinates
+        Returns
+        -------
+        dd.Series
+            Dask series containing the calculated angles.
+        """
+        plasma, crystal, reflected_points = self.crys_plas_data_arr
+
+        vector_plasma_to_crystal = plasma - crystal
+        reflected_crystal = reflected_points - crystal
         cosine_angle_matrix = contract(
             "ijk -> ji", vector_plasma_to_crystal * reflected_crystal
         ).T / (
@@ -558,46 +561,33 @@ class Simulation:
             * da.linalg.norm(reflected_crystal, axis=2)
         )
         angle_radians = da.arccos(cosine_angle_matrix)
-        angle_degrees = da.degrees(
-            angle_radians
-        )  ## angle between ray and normal to the crystal at the incidence point
+        # angle between ray and normal to the crystal at the incidence point
+        angle_degrees = da.degrees(angle_radians)
         angle_of_incident = ((180 - angle_degrees.round(2)) / 2)[
             self.selected_intersections
         ]
-        if save is not False:
-            self.selected_indices = (
-                self.selected_indices.compute_chunk_sizes().rechunk()
-            )
-            angle_of_incident = angle_of_incident.compute_chunk_sizes().rechunk()
-
-            # TODO zahardkodowane nazwy do poprawienia
-            da.to_zarr(
-                self.selected_indices.astype(np.int64),
-                "selected_indices.zarr",
-                overwrite=True,
-            )
-            da.to_zarr(
-                angle_of_incident.astype(np.float32),
-                "angle_of_incident.zarr",
-                overwrite=True,
-            )
-
         angle_of_incident = dd.from_dask_array(angle_of_incident.compute_chunk_sizes())
         angle_of_incident = angle_of_incident.to_frame().reset_index()
         print("\n--- Angles calculated ---")
 
         return angle_of_incident
 
-    def calculate_radiation_fraction(self):
-        """
-        Calculates fina`l dataset with selected plasma coordinates and the total intensities.
+    def calculate_radiation_fraction(self) -> dd.DataFrame:
+        """Calculates the final dataset with selected plasma coordinates and the total intensities.
+
         Total intensity fraction takes into account distance of the plasma point from crystal
         and angle of incident (AOI) of the ray and the surface of the crystal.
         Since it is assumed that the radiation is emitted into the full solid angle,
         the fraction of this solid angle to the outer sphere's surface is calculated.
         AOI represents the angle of incidend of each ray to the crystals surface.
         The reflection fraction is then calculated checking the AOI and calculating
-        the particular fraction using calculate_reflectivity function.`
+        the particular fraction using calculate_reflectivity function.
+
+        Returns
+        -------
+        da.DataFrme
+            Dask DataFrame containing final dataset with columns representing indices
+            of selected plasma points, plasma x, y, and z coordinates, and the total intensity fraction.
         """
         data_frames = [
             self.plas_points_indices,
@@ -608,20 +598,19 @@ class Simulation:
         ddf = ddf.drop(["index"], axis=1)
         ddf.columns = ["idx_sel_plas_points", "distances", "angle"]
 
-        def calculate_sphere_area(R):
-            area_of_a_sphere = 4 * np.pi * R**2
-            return area_of_a_sphere
+        def calculate_sphere_area(radius):
+            return 4 * np.pi * radius**2
 
-        def calcualte_reflectivity(calculated_angle):
+        def calc_reflect_prof(angle):
             A1, x1, w1 = (self.max_reflectivity, self.AOI, 2.2)
-            profile = A1 * np.exp(-((calculated_angle - x1) ** 2) / (2 * w1**2))
+            profile = A1 * np.exp(-((angle - x1) ** 2) / (2 * w1**2))
 
             return profile
 
         ddf["fraction"] = self.crystal_point_area / calculate_sphere_area(
             ddf["distances"]
         )
-        ddf["calc_reflect"] = calcualte_reflectivity(ddf["angle"])
+        ddf["calc_reflect"] = calc_reflect_prof(ddf["angle"])
         ddf["total_intensity_fraction"] = ddf["fraction"] * ddf["calc_reflect"]
         ddf = ddf.drop(["distances", "angle", "fraction", "calc_reflect"], axis=1)
         ddf = ddf.groupby("idx_sel_plas_points").sum().reset_index()
@@ -642,8 +631,8 @@ class Simulation:
         return ddf
 
     def save_to_file(self):
-        """Save dataframe with plasma coordinates and calculated radiation intensity fractions"""
-        """TODO - zapis do bazy danych (sql???? czy cos innego?) a nie csv!!!!!!"""
+        """Save dataframe with plasma coordinates and calculated radiation intensity fractions to csv file."""
+
         self.ddf.to_csv(
             Path(__file__).parent.parent.resolve()
             / "_Input_files"
@@ -657,12 +646,8 @@ class Simulation:
         print("\nFile successfully saved!")
 
 
-#### TODO zahardkodowane nazwy do poprawienia
-### TODO zrobic testy dla slits number closing top i bottom # for slit in slits_number:
-
-# elements_list = ["B", "C", "N", "O"]
-elements_list = ["C"]
-
+elements_list = ["B", "C", "N", "O"]
+# elements_list = ["C"]
 testing_settings = dict(
     slits_number=10,
     distance_between_points=50,
