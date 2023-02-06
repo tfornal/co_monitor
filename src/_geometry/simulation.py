@@ -94,7 +94,7 @@ class Simulation:
         de = DispersiveElement(
             self.element, self.crystal_height_step, self.crystal_length_step
         )
-        self.disp_elem = de.make_curved_crystal()
+        self.disp_elem_coord = de.make_curved_crystal()
         self.AOI = de.AOI
         self.max_reflectivity = de.max_reflectivity
         self.radius_central_point = de.radius_central_point
@@ -102,7 +102,7 @@ class Simulation:
         self.C = de.C
 
         self.crystal_point_area = self.calculate_crystal_point_area()
-        self.crystal_coordinates = da.from_array(self.disp_elem, chunks=(2000, 3))
+        self.crystal_coordinates = da.from_array(self.disp_elem_coord, chunks=(2000, 3))
 
     def _init_port(self):
         """Initiate port coordinates."""
