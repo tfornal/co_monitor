@@ -78,6 +78,8 @@ class Simulation:
     def _init_collimator(self):
         """Retrieve collimator coordinates."""
         self.collim = Collimator(self.element, "top closing side", self.slits_number)
+        self.collim_vector_front_back = self.collim.vector_front_back
+
         (
             self.collimator_spatial,
             self.slit_coord_crys_side,
@@ -109,18 +111,27 @@ class Simulation:
         self.detector_vertices_coordinates = Detector(self.element).vertices
         self.detector_orientation_vector = Detector(self.element).orientation_vector
 
-    def generate_cuboid_coordinates(self):
-        """
-        Generate the block of points covering the volume of a plasma observed by each spectroscopic channel.
+    def generate_cuboid_coordinates(self) -> da.array:
+        """Generate the block of points covering the volume of a plasma observed by each spectroscopic channel.
+
+        Returns
+        -------
+        cuboid_coordinates : da.array, shape=(n_points, 3)
+            Array of points covering the volume of a plasma.
         """
         cm = CuboidMesh(self.distance_between_points)
         cuboid_coordinates = cm.outer_cube_mesh
         return da.from_array(cuboid_coordinates, chunks=(2000, 3))
 
-    def calculate_crystal_point_area(self):
+    def calculate_crystal_point_area(self) -> float:
         """
         Returns the value of the area on the crystal which represents the fraction
         of surface on which the radiation from one plasma points is directed.
+
+        Returns
+        -------
+        crystal_point_area : float
+            The value of the area on the crystal.
         """
         crystal_point_area = round(
             20 * 80 / self.crystal_height_step / self.crystal_length_step, 2
@@ -131,11 +142,26 @@ class Simulation:
     @staticmethod
     def line_plane_intersection(
         plane_normal, plane_point, ray_direction, ray_point, epsilon=1e-6
-    ):
+    ) -> da.array:
         """Calculates cross section points of line and plane.
 
-        Returns:
-            _type_: _description_
+        Parameters
+        ----------
+        plane_normal : numpy.ndarray
+            Normal vector of the plane.
+        plane_point : numpy.ndarray
+            A point on the plane.
+        ray_direction : da.array
+            Direction vector of the line.
+        ray_point : da.array
+            A point on the line.
+        epsilon : float, optional
+            Tolerance value, by default 1e-6.
+
+        Returns
+        -------
+        Psi : da.array, shape=(n_intersections, 3)
+            Array of cross section points of the line and the plane.
         """
         ndotu = np.tensordot(plane_normal, ray_direction, axes=(0, 2))
         ndotu[np.abs(ndotu) < epsilon] = np.nan
@@ -145,10 +171,28 @@ class Simulation:
         Psi = w + si * ray_direction + plane_point
         return Psi
 
-    def find_intersection_points_basic(self, p1, p2, p3, plasma, crystal):
+    def find_intersection_points(self, p1, p2, p3, plasma, crystal):
         """
         Calcualte intersection points on a plane given by three points (p1, p2, p3)
-        and line between plasma and crystal points.
+        and a line between plasma and crystal points.
+
+        Parameters
+        ----------
+        p1 : ndarray, shape (N, 3)
+            First point on the plane.
+        p2 : ndarray, shape (N, 3)
+            Second point on the plane.
+        p3 : ndarray, shape (N, 3)
+            Third point on the plane.
+        plasma : ndarray, shape (N, 3)
+            Starting points of lines.
+        crystal : ndarray, shape (N, 3)
+            Ending points of lines.
+
+        Returns
+        -------
+        intersection_points : ndarray, shape (N, 3)
+            Intersection points of plane and lines.
         """
         v12 = da.from_array(p2 - p1)
         v13 = da.from_array(p3 - p2)
@@ -161,67 +205,85 @@ class Simulation:
 
         return intersection_points
 
-    ############## implementacja ogolnego check in hull
-    ############## implementacja ogolnego check in hull
+    def make_spatial_object(
+        self, vertices_coordinates: np.ndarray, orientation_vector: np.ndarray
+    ) -> np.ndarray:
+        """Construct a 3D spatial object from given vertices coordinates and orientation vector.
 
-    def check_in_hull_general(
-        self, intersection_points, vertices_coordinates, orientation_vector
-    ):
-        vertices_with_depth = self.make_thick_obj(
-            vertices_coordinates, orientation_vector
-        )
-        hull = Delaunay(vertices_with_depth)
+        Parameters
+        ----------
+        vertices_coordinates : np.ndarray
+            A 2D array of shape (n_vertices, n_dims) representing the coordinates of the vertices that define the object.
+        orientation_vector : np.ndarray
+            A 1D array representing the orientation vector of the given object.
 
-        return hull.find_simplex(intersection_points) >= 0
-
-    #############
-    def make_thick_obj(self, vertices_coordinates, orientation_Vector):
+        Returns
+        -------
+        np.ndarray
+            A 2D array of shape (2 * n_vertices, n_dims) representing the 3D vertices of the object.
+        """
         obj_3D_vertices = np.concatenate(
             (
-                vertices_coordinates[:4] + orientation_Vector,
-                vertices_coordinates[:4] - orientation_Vector,
+                vertices_coordinates + orientation_vector,
+                vertices_coordinates - orientation_vector,
             )
-        ).reshape(8, 3)
+        ).reshape(-1, 3)
         return obj_3D_vertices
 
-    ############## tutaj koniec
-    ############## tutaj koniec
-
     def check_in_hull(
-        self, intersection_points: da.array, hull_vertices: np.ndarray
-    ) -> da.array:
+        self, intersection_points, vertices_coordinates, orientation_vector
+    ):
+        """Check if the given points are within the space defined by the vertices coordinates (its convex hull).
+
+        Parameters
+        ----------
+        points : numpy.ndarray
+            A 2D array of shape (n_points, n_dims) representing the points to be checked whether in hull.
+        vertices_coordinates : numpy.ndarray
+            A 2D array of shape (n_vertices, n_dims) representing the coordinates of the vertices that define the space.
+        orientation_vector : np.ndarray
+            A 1D array representing the orientation vector of the given object.
+
+        Returns
+        -------
+        numpy.ndarray
+            A 1D array of shape (n_points,) with the result of the in/out check for each point. The value is True if the point is inside or on the hull, and False if outside.
         """
-        Checks whether intersection points are inside the hull defined by its vertices.
-        """
+
+        def is_point_in_hull(
+            points, vertices_coordinates, orientation_vector
+        ) -> np.ndarray:
+            vertices_with_depth = self.make_spatial_object(
+                vertices_coordinates, orientation_vector
+            )
+            hull = Delaunay(vertices_with_depth)
+            return hull.find_simplex(points) >= 0
+
         tested_in_hull = da.map_blocks(
-            self.collim.check_in_hull,
+            is_point_in_hull,
             intersection_points,
-            hull_vertices,
+            vertices_coordinates,
+            orientation_vector,
             dtype=bool,
             drop_axis=2,
         )
-        return tested_in_hull
-
-    def check_in_hull_port(self, intersection_points, hull_points):
-        """
-        Checks whether intersection points are inside the considered hull.
-        """
-
-        tested_in_hull = da.map_blocks(
-            self.check_in_hull_general,
-            intersection_points,
-            hull_points,
-            self.port_orientation_vector,
-            dtype=bool,
-            drop_axis=2,
-        )
-
         return tested_in_hull
 
     def calculate_radiation_reflection(self):
+        """
+        Calculate the reflection of a beam.
+
+        Returns
+        -------
+        reflected_points_location : da.ndarray
+            Array of reflected points locations.
+        full_input_array : da.ndarray
+            Array of all input points: plasma, crystal and reflected.
+        """
         print("\n--- Calculating reflected beam ---")
 
         def closest_point_on_line(a, b, p):
+            """Find the closest point on a line."""
             ap = p - a
             ab = b - a
             result = a + da.dot(ap, ab) / da.dot(ab, ab) * ab
@@ -230,7 +292,7 @@ class Simulation:
         plasma_coordinates = self.cuboid_coordinates.reshape(-1, 1, 3)
         crystal_coordinates = self.crystal_coordinates.reshape(1, -1, 3)
 
-        ### calculate reflection angle
+        # calculates reflection angle
         crystal_vector = self.B - self.C
         crys_axis1 = self.radius_central_point
         crys_axis2 = self.radius_central_point + crystal_vector
@@ -261,10 +323,15 @@ class Simulation:
         return reflected_points_location, full_input_array
 
     def check_ray_transmission(self):
-        """Checks the transmission of each plasma-crystal combination through a collimator.
+        """Checks the transmission of each plasma-crystal combination through a collimator
+        and returns a 2D array with all plasma points. It check the collision between the
+        plasma and component (crystal sides -front and back, port, detector) by finding
+        the intersection points between the ray originating from plasma point and point on
+        the respective dispersive elements surface.
 
-        Returns:
-            dask array: selected_intersections
+        Returns
+        -------
+        selected_intersections : da.ndarray
             2D array with all plasma points (rows) and all crystal points (columns).
         """
         tests_crys_side = []
@@ -279,10 +346,10 @@ class Simulation:
         """TODO odseparowac poszczegolne elementy z mozliwoscia ich 'wylaczenia' """
 
         # check the transmission through collimator
-        for i in range(self.slits_number):
+        for slit in range(self.slits_number):
             # check the collision with collimator's crystal side
-            p1, p2, p3 = self.slit_coord_crys_side[i, :3]
-            all_intersection_points_crys_side = self.find_intersection_points_basic(
+            p1, p2, p3 = self.slit_coord_crys_side[slit, :3]
+            all_intersection_points_crys_side = self.find_intersection_points(
                 p1, p2, p3, self.full_input_array[0], self.full_input_array[1]
             )
             found_intersection_points_crys_side.append(
@@ -290,13 +357,15 @@ class Simulation:
             )
             tests_crys_side.append(
                 self.check_in_hull(
-                    all_intersection_points_crys_side, self.slit_coord_crys_side[i]
+                    all_intersection_points_crys_side,
+                    self.slit_coord_crys_side[slit],
+                    self.collim_vector_front_back,
                 )
             )
 
             # check the collision with collimator's plasma side
-            p4, p5, p6 = self.slit_coord_plasma_side[i, :3]
-            all_intersection_points_plasma_side = self.find_intersection_points_basic(
+            p4, p5, p6 = self.slit_coord_plasma_side[slit, :3]
+            all_intersection_points_plasma_side = self.find_intersection_points(
                 p4, p5, p6, self.full_input_array[0], self.full_input_array[1]
             )
             found_intersection_points_plasma_side.append(
@@ -304,45 +373,53 @@ class Simulation:
             )
             tests_plasma_side.append(
                 self.check_in_hull(
-                    all_intersection_points_plasma_side, self.slit_coord_plasma_side[i]
+                    all_intersection_points_plasma_side,
+                    self.slit_coord_plasma_side[slit],
+                    self.collim_vector_front_back,
                 )
             )
 
         # check the collision with port
         p7, p8, p9 = self.port_vertices_coordinates[:3]
-        all_intersection_points_port = self.find_intersection_points_basic(
+        all_intersection_points_port = self.find_intersection_points(
             p7, p8, p9, self.full_input_array[0], self.full_input_array[1]
         )
         found_intersection_points_port.append(all_intersection_points_port)
-        tested_in_hull = self.check_in_hull_port(
-            all_intersection_points_port, self.port_vertices_coordinates
+        tested_in_hull = self.check_in_hull(
+            all_intersection_points_port,
+            self.port_vertices_coordinates,
+            self.port_orientation_vector,
         )
-
-        # tested_in_hull = self.check_in_hull(all_intersection_points_port, (self.port_vertices_coordinates[:4]))
         tests_port.append(tested_in_hull)
 
         # check the collision with detectors surface
         p10, p11, p12 = self.detector_vertices_coordinates[:3]
-        all_intersetion_points_detector = self.find_intersection_points_basic(
+        all_intersetion_points_detector = self.find_intersection_points(
             p10, p11, p12, self.full_input_array[2], self.full_input_array[1]
         )
 
         found_intersection_points_detector.append(all_intersetion_points_detector)
-        tested_in_hull = self.check_in_hull_general(
+        tested_in_hull = self.check_in_hull(
             all_intersetion_points_detector,
-            self.detector_vertices_coordinates[:4],
+            self.detector_vertices_coordinates,
             self.detector_orientation_vector,
         )
         tests_detector.append(tested_in_hull)
 
+        # checks the transmission of each ray over input/output of the collimators slits (all -> axis = 3);
+        # next checks whether there was transmission over any of the investigated slits (any -> axis = 2);
+        # axis = 0 --> all plasma points
+        # axis = 1 --> all crystal points
+        # dask_array (plasma points, crystal points) boolean array presenting
+        # transmission of each plasma-crystal combination ()
         selected_intersections = da.stack(
             (da.array(tests_crys_side), da.array(tests_plasma_side)), axis=0
         )
         selected_intersections = selected_intersections.all(axis=0)
         selected_intersections = selected_intersections.any(axis=0)
-        krysztal_pkt = self.crystal_height_step * self.crystal_length_step
+        crystal_point = self.crystal_height_step * self.crystal_length_step
         selected_intersections = selected_intersections.reshape(
-            -1, len(self.cuboid_coordinates), krysztal_pkt
+            -1, len(self.cuboid_coordinates), crystal_point
         )
 
         selected_intersections = da.concatenate(
@@ -350,22 +427,14 @@ class Simulation:
             axis=0,
         ).rechunk("auto")
         selected_intersections = selected_intersections.all(axis=0)
-        ### checks the transmission of each ray over input/output of the collimators slits (all -> axis = 3);
-        ### next checks whether there was transmission over any of the investigated slits (any -> axis = 2);
-        ### axis = 0 --> all plasma points
-        ### axis = 1 --> all crystal points
-        ### dask_array (plasma points, crystal points) boolean array presenting
-        ### transmission of each plasma-crystal combination ()
 
         def plotter():
 
             fig = pv.Plotter()
             fig.set_background("black")
             fig.add_mesh(self.detector_vertices_coordinates[:4], color="red")
-            # fig.add_mesh(wszystkie_detector,color = "yellow", opacity = 0.01)
-            # fig.add_mesh(wszystkie_detector[przeszly_detector] ,color = "red")
-            make_detectors_surface = Detector(self.element).make_detectors_surface()
-            fig.add_mesh(make_detectors_surface, color="purple", opacity=0.4)
+            detectors_surface = Detector(self.element).make_detectors_surface()
+            fig.add_mesh(detectors_surface, color="purple", opacity=0.4)
 
             fig.add_mesh(
                 self.full_input_array.compute()[0].reshape(-1, 3),
@@ -402,34 +471,13 @@ class Simulation:
                 label="Crystal coordinates",
                 render_points_as_spheres=True,
             )
-            # fig.add_points(on_axis_crystal_normal_points[0], color="yellow", point_size = 10, label="Crystal axis")
             fig.show()
 
         if self.plot:
             plotter()
 
         print("\n--- Ray transmission calculation finished ---")
-
         return selected_intersections
-
-    def percentage_transmission(self):
-        """
-        Returns percentage transmission of amount of observable plasma points in reference to all used for calculation
-        """
-        all_plas_crys_combinations = len(self.cuboid_coordinates) * len(
-            self.crystal_coordinates
-        )
-        indices = da.arange(all_plas_crys_combinations).reshape(
-            len(self.cuboid_coordinates), len(self.crystal_coordinates)
-        )
-        selected_indices = indices[self.selected_intersections]
-        transmission = round(
-            len(selected_indices.compute())
-            / (len(self.cuboid_coordinates) * len(self.crystal_coordinates))
-            * 100,  ### TODO zahardkodowane wartosci;
-            2,
-        )
-        print(f"\nTrnasmission is: {transmission}%\n")
 
     def calculate_indices(self):
         """
@@ -617,11 +665,11 @@ elements_list = ["C"]
 
 testing_settings = dict(
     slits_number=10,
-    distance_between_points=80,
+    distance_between_points=50,
     crystal_height_step=3,
     crystal_length_step=3,
     savetxt=False,
-    plot=True,
+    plot=False,
 )
 
 start = time.time()

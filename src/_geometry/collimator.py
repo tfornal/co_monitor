@@ -41,6 +41,8 @@ class Collimator:
         self.closing_side = closing_side
         self.loaded_file = read_json_file()
         self.collimator, self.vector_front_back = self.get_coordinates()
+        print(self.vector_front_back)
+
         self.vector_top_bottom = np.array(self.collimator["vector_top_bottom"])
         self.A1 = np.array(self.collimator["vertex"]["A1"])
         self.A2 = np.array(self.collimator["vertex"]["A2"])
@@ -50,7 +52,7 @@ class Collimator:
             self.visualization()
 
     def __repr__(self, *args, **kwargs):
-        return f'Collimator(element="{element}", A={self.A1}, B={self.A2}, C={self.B1})'
+        return f'Collimator(element="{self.element}", A={self.A1}, B={self.A2}, C={self.B1})'
 
     def get_coordinates(self) -> np.ndarray:
         """Returns the collimator and vector front-back coordinates for the specified element and closing side."""
@@ -225,5 +227,5 @@ if __name__ == "__main__":
                 fig.add_mesh(col.A2, color="blue", point_size=10)
         fig.show()
 
-    # plot_all_collimators()
+    plot_all_collimators()
     plot_one_collimator()
