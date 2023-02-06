@@ -41,7 +41,6 @@ class Collimator:
         self.closing_side = closing_side
         self.loaded_file = read_json_file()
         self.collimator, self.vector_front_back = self.get_coordinates()
-        print(self.vector_front_back)
 
         self.vector_top_bottom = np.array(self.collimator["vector_top_bottom"])
         self.A1 = np.array(self.collimator["vertex"]["A1"])
@@ -89,29 +88,6 @@ class Collimator:
         ).reshape(8, 3)
 
         return collim_vertices_with_depth
-
-    def check_in_hull(
-        self, points: np.ndarray, vertices_coordinates: np.ndarray
-    ) -> np.ndarray:
-        """
-        Check if the given points are within the space defined by the vertices coordinates (its convex hull).
-
-        Parameters
-        ----------
-        points : numpy.ndarray
-            A 2D array of shape (n_points, n_dims) representing the points to be checked.
-        vertices_coordinates : numpy.ndarray
-            A 2D array of shape (n_vertices, n_dims) representing the coordinates of the vertices that define the space.
-
-        Returns
-        -------
-        numpy.ndarray
-            A 1D array of shape (n_points,) with the result of the in/out check for each point. The value is 1 if the point is inside the hull, -1 if outside and 0 if on the hull.
-        """
-        collim_vertices_with_depth = self.spatial_colimator(vertices_coordinates)
-        hull = Delaunay(collim_vertices_with_depth)
-
-        return hull.find_simplex(points) >= 0
 
     def read_colim_coord(self):
         """
