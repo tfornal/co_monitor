@@ -6,7 +6,7 @@ from json_reader import read_json_file
 from rotation_matrix import rotation_matrix
 
 
-class PlasmaMesh:
+class CuboidMesh:
     """Creates mesh of the observed plasma volume. Nominally the interval used for plasma meshing is 10 mm.
 
     As a first step it creates the representation of a plasma vertices out of the
@@ -223,4 +223,4 @@ class PlasmaMesh:
 if __name__ == "__main__":
     distance_between_points = 10
     cuboid_dimensions = [1350, 800, 250]
-    PlasmaMesh(distance_between_points, cuboid_dimensions, plot=True, savetxt=True)
+    CuboidMesh(distance_between_points, cuboid_dimensions, plot=True, savetxt=True)
