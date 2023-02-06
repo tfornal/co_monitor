@@ -50,45 +50,17 @@ class Simulation:
         self.crystal_length_step = crystal_length_step
         self.plot = plot
 
-        # generate outer cuboid coordinates
-        self.cuboid_block_coord = self.generate_cuboid_coordinates()
+        self._init_cuboid_coordinates()
+        self._init_collimator()
+        self._init_dispersive_element()
+        self._init_port()
+        self._init_detector()
 
-        # retrieves collimator coordinates
-        self.collim = Collimator(self.element, "top closing side", self.slits_number)
-        (
-            self.collimator_spatial,
-            self.slit_coord_crys_side,
-            self.slit_coord_plasma_side,
-        ) = self.collim.read_colim_coord()
-
-        # initiate all necessary data related to the respective dispersive element
-        de = DispersiveElement(
-            self.element, self.crystal_height_step, self.crystal_length_step
-        )
-        self.disp_elem = de.make_curved_crystal()
-        self.AOI = de.AOI
-        self.max_reflectivity = de.max_reflectivity
-        self.radius_central_point = de.radius_central_point
-        self.B = de.B
-        self.C = de.C
-
-        self.crystal_point_area = self.calculate_crystal_area()
-        self.crystal_coordinates = da.from_array(self.disp_elem, chunks=(2000, 3))
-
-        ### PORT
-        self.port_vertices_coordinates = Port().vertices_coordinates
-        self.port_orientation_vector = Port().orientation_vector
-
-        ### DETECTOR
-        self.detector_vertices_coordinates = Detector(self.element).vertices
-        self.detector_orientation_vector = Detector(self.element).orientation_vector
-
-        ### CALCULATE REFLECTION
+        # calculate ray reflection
         (
             self.reflected_points_location,
             self.full_input_array,
         ) = self.calculate_radiation_reflection()
-
         self.selected_intersections = self.check_ray_transmission()
         self.selected_indices = self.calculate_indices()
         self.plas_points_indices = self.calculate_plasma_points_indices()
@@ -99,15 +71,53 @@ class Simulation:
         if savetxt:
             self.save_to_file()
 
+    def _init_cuboid_coordinates(self):
+        """Generate outer cuboid coordinates."""
+        self.cuboid_coordin = self.generate_cuboid_coordinates()
+
+    def _init_collimator(self):
+        """Retrieve collimator coordinates."""
+        self.collim = Collimator(self.element, "top closing side", self.slits_number)
+        (
+            self.collimator_spatial,
+            self.slit_coord_crys_side,
+            self.slit_coord_plasma_side,
+        ) = self.collim.read_colim_coord()
+
+    def _init_dispersive_element(self):
+        """Initiate data related to the respective dispersive element."""
+        de = DispersiveElement(
+            self.element, self.crystal_height_step, self.crystal_length_step
+        )
+        self.disp_elem = de.make_curved_crystal()
+        self.AOI = de.AOI
+        self.max_reflectivity = de.max_reflectivity
+        self.radius_central_point = de.radius_central_point
+        self.B = de.B
+        self.C = de.C
+
+        self.crystal_point_area = self.calculate_crystal_point_area()
+        self.crystal_coordinates = da.from_array(self.disp_elem, chunks=(2000, 3))
+
+    def _init_port(self):
+        """Initiate port coordinates."""
+        self.port_vertices_coordinates = Port().vertices_coordinates
+        self.port_orientation_vector = Port().orientation_vector
+
+    def _init_detector(self):
+        """Initiate detector coordinates."""
+        self.detector_vertices_coordinates = Detector(self.element).vertices
+        self.detector_orientation_vector = Detector(self.element).orientation_vector
+
     def generate_cuboid_coordinates(self):
         """
         Generate the block of points covering the volume of a plasma observed by each spectroscopic channel.
         """
         cm = CuboidMesh(self.distance_between_points)
-        loaded_coordinates = cm.outer_cube_mesh
-        return da.from_array(loaded_coordinates, chunks=(2000, 3))
+        cuboid_coordinates = cm.outer_cube_mesh
+        return da.from_array(cuboid_coordinates, chunks=(2000, 3))
 
-    def calculate_crystal_area(self):
+    def calculate_crystal_point_area(self):
         """
         Returns the value of the area on the crystal which represents the fraction
         of surface on which the radiation from one plasma points is directed.
@@ -122,10 +132,7 @@ class Simulation:
     def line_plane_collision(
         plane_normal, plane_point, ray_direction, ray_point, epsilon=1e-6
     ):
-        """
-        Calculates cross section points of line and plane.
-        """
-        """_summary_
+        """Calculates cross section points of line and plane.
 
         Returns:
             _type_: _description_
@@ -221,7 +228,7 @@ class Simulation:
             result = a + da.dot(ap, ab) / da.dot(ab, ab) * ab
             return result
 
-        plasma_coordinates = self.cuboid_block_coord.reshape(-1, 1, 3)
+        plasma_coordinates = self.cuboid_coordin.reshape(-1, 1, 3)
         crystal_coordinates = self.crystal_coordinates.reshape(1, -1, 3)
 
         ### calculate reflection angle
@@ -341,7 +348,7 @@ class Simulation:
         selected_intersections = selected_intersections.any(axis=0)
         krysztal_pkt = self.crystal_height_step * self.crystal_length_step
         selected_intersections = selected_intersections.reshape(
-            -1, len(self.cuboid_block_coord), krysztal_pkt
+            -1, len(self.cuboid_coordin), krysztal_pkt
         )
 
         selected_intersections = da.concatenate(
@@ -383,7 +390,7 @@ class Simulation:
             )  ### reflected plasma
 
             fig.add_mesh(
-                self.cuboid_block_coord.compute().flatten().reshape(-1, 3),
+                self.cuboid_coordin.compute().flatten().reshape(-1, 3),
                 color="yellow",
                 opacity=0.3,
                 render_points_as_spheres=True,
@@ -415,16 +422,16 @@ class Simulation:
         """
         Returns percentage transmission of amount of observable plasma points in reference to all used for calculation
         """
-        all_plas_crys_combinations = len(self.cuboid_block_coord) * len(
+        all_plas_crys_combinations = len(self.cuboid_coordin) * len(
             self.crystal_coordinates
         )
         indices = da.arange(all_plas_crys_combinations).reshape(
-            len(self.cuboid_block_coord), len(self.crystal_coordinates)
+            len(self.cuboid_coordin), len(self.crystal_coordinates)
         )
         selected_indices = indices[self.selected_intersections]
         transmission = round(
             len(selected_indices.compute())
-            / (len(self.cuboid_block_coord) * len(self.crystal_coordinates))
+            / (len(self.cuboid_coordin) * len(self.crystal_coordinates))
             * 100,  ### TODO zahardkodowane wartosci;
             2,
         )
@@ -578,9 +585,9 @@ class Simulation:
         ddf = ddf.groupby("idx_sel_plas_points").sum().reset_index()
 
         indices = ddf["idx_sel_plas_points"].values
-        ddf["plasma_x"] = self.cuboid_block_coord[indices][:, 0]
-        ddf["plasma_y"] = self.cuboid_block_coord[indices][:, 1]
-        ddf["plasma_z"] = self.cuboid_block_coord[indices][:, 2]
+        ddf["plasma_x"] = self.cuboid_coordin[indices][:, 0]
+        ddf["plasma_y"] = self.cuboid_coordin[indices][:, 1]
+        ddf["plasma_z"] = self.cuboid_coordin[indices][:, 2]
         ddf = ddf[
             [
                 "idx_sel_plas_points",
