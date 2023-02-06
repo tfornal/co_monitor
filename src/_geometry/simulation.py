@@ -20,9 +20,9 @@ from opt_einsum import contract
 import pyvista as pv
 from scipy.spatial import ConvexHull, Delaunay
 
-from collimator import Collimator  # funkcja make_hull
+from collimator import Collimator
 from detector import Detector
-from dispersive_element import DispersiveElement  # funkcja make_curved_crystal
+from dispersive_element import DispersiveElement
 from mesh_calculation import CuboidMesh
 from port import Port
 
