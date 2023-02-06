@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def rotation_matrix(theta, axis):
+def rotation_matrix(theta, axis) -> np.array:
     """
     Returns the rotation matrix for a given angle `theta` and rotation `axis`.
 

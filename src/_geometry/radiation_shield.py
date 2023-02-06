@@ -25,11 +25,16 @@ class RadiationShield:
         self.selected_shield = selected_shield
         self.loaded_file = read_json_file()
         self.shields_coordinates = self.get_coordinates()
+        self._init_shield_coord()
+        self.vertices_coordinates = self.make_cyllinder()
+        self.radiation_shield = self.make_shield()
+
+    def _init_shield_coord(self):
+        """Retrieve radiation shield's coordinates."""
+
         self.radius_central_point = self.shields_coordinates["central point"]
         self.radius = self.shields_coordinates["radius"]
         self.orientation_vector = self.shields_coordinates["orientation vector"]
-        self.vertices_coordinates = self.make_cyllinder()
-        self.radiation_shield = self.make_shield()
 
     def get_coordinates(self) -> np.ndarray:
         """
