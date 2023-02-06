@@ -23,7 +23,6 @@ class Collimator:
         """
         Constructs the 3D representation of a collimator based on its cartesian coordinates.
 
-
         Parameters
         ----------
         element : str
@@ -41,14 +40,16 @@ class Collimator:
         self.closing_side = closing_side
         self.loaded_file = read_json_file()
         self.collimator, self.vector_front_back = self.get_coordinates()
+        self._init_collim_coord()
+        if plot:
+            self.visualization()
 
+    def _init_collim_coord(self):
         self.vector_top_bottom = np.array(self.collimator["vector_top_bottom"])
         self.A1 = np.array(self.collimator["vertex"]["A1"])
         self.A2 = np.array(self.collimator["vertex"]["A2"])
         self.B1 = np.array(self.collimator["vertex"]["B1"])
         self.B2 = np.array(self.collimator["vertex"]["B2"])
-        if plot:
-            self.visualization()
 
     def __repr__(self, *args, **kwargs):
         return f'Collimator(element="{self.element}", A={self.A1}, B={self.A2}, C={self.B1})'
