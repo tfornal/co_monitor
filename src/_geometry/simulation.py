@@ -1,18 +1,27 @@
-import numpy as np
-import dask.array as da
-import pyvista as pv
+"""
+Kod musi pobierac dane z pliku wyjsciowego uzyskanego za pomoca rest api.
+Step 1 - wyznaczenie objetosci jaka obserwowalby kazdy kanal.
+Step 2 - Nastepnie kazdy punkt sprawdzany bylby modulem ponizej.
+TODO - reflectivity readout -> not a gaussian but experimental profile
+"""
+
 from functools import reduce
-import matplotlib.pyplot as plt
-import time
-from opt_einsum import contract
-from mesh_calculation import PlasmaMesh
-from collimator import Collimator  # funkcja make_hull
-from dispersive_element import DispersiveElement  # funkcja make_curved_crystal
-import dask.dataframe as dd
-from port import Port
-from detector import Detector
-from scipy.spatial import ConvexHull, Delaunay
 from pathlib import Path
+import time
+
+import dask.array as da
+import dask.dataframe as dd
+import matplotlib.pyplot as plt
+import numpy as np
+from opt_einsum import contract
+import pyvista as pv
+from scipy.spatial import ConvexHull, Delaunay
+
+from collimator import Collimator  # funkcja make_hull
+from detector import Detector
+from dispersive_element import DispersiveElement  # funkcja make_curved_crystal
+from mesh_calculation import CuboidMesh
+from port import Port
 
 
 class Simulation:
@@ -23,7 +32,6 @@ class Simulation:
         distance_between_points=10,
         crystal_height_step=20,
         crystal_length_step=80,
-        plasma_volume=None,
         savetxt=False,
         plot=True,
     ):
@@ -35,54 +43,37 @@ class Simulation:
         """
         print(f"\nInitializing element {element}.")
 
-        self.plot = plot
         self.element = element
+        self.slits_number = slits_number
         self.distance_between_points = distance_between_points
         self.crystal_height_step = crystal_height_step
         self.crystal_length_step = crystal_length_step
-        self.slits_number = slits_number
-        """TODO - poprawic inicjowanie plazmy - zalozyc jeden glowny obszar plazmy i tyle, 
-        oborocic ja zgodnie z wektorem patrzenia diagnostyki"""
+        self.plot = plot
 
-        ### PLASMA COORDINATES
-        if plasma_volume is not None:
-            self.plasma_coordinates = plasma_volume
-        else:
-            self.plasma_coordinates = self.load_plasma()
+        # generate outer cuboid coordinates
+        self.cuboid_block_coord = self.generate_cuboid_coordinates()
 
-        ### COLLIMATOR
-        self.colim = Collimator(self.element, "top closing side", self.slits_number)
+        # retrieves collimator coordinates
+        self.collim = Collimator(self.element, "top closing side", self.slits_number)
         (
-            self.colimator_spatial,
+            self.collimator_spatial,
             self.slit_coord_crys_side,
             self.slit_coord_plasma_side,
-        ) = self.colim.read_colim_coord()
-        crystal = DispersiveElement(
+        ) = self.collim.read_colim_coord()
+
+        # initiate all necessary data related to the respective dispersive element
+        de = DispersiveElement(
             self.element, self.crystal_height_step, self.crystal_length_step
-        ).make_curved_crystal()
-        """TODO - poprawic odczytywanie info z plikow optics coordinates i dispersive element, odczytywanie reflectivity"""
-        ### DISPERSIVE ELEMENT
-        self.AOI = DispersiveElement(
-            self.element, self.crystal_height_step, self.crystal_length_step
-        ).AOI
-        self.max_reflectivity = DispersiveElement(
-            self.element, self.crystal_height_step, self.crystal_length_step
-        ).max_reflectivity
-        self.crystal_central_point = DispersiveElement(
-            self.element, self.crystal_height_step, self.crystal_length_step
-        ).crystal_central_point
-        self.radius_central_point = DispersiveElement(
-            self.element, self.crystal_height_step, self.crystal_length_step
-        ).radius_central_point
-        self.B = DispersiveElement(
-            self.element, self.crystal_height_step, self.crystal_length_step
-        ).B
-        self.C = DispersiveElement(
-            self.element, self.crystal_height_step, self.crystal_length_step
-        ).C
+        )
+        self.disp_elem = de.make_curved_crystal()
+        self.AOI = de.AOI
+        self.max_reflectivity = de.max_reflectivity
+        self.radius_central_point = de.radius_central_point
+        self.B = de.B
+        self.C = de.C
 
         self.crystal_point_area = self.calculate_crystal_area()
-        self.crystal_coordinates = da.from_array(crystal, chunks=(2000, 3))
+        self.crystal_coordinates = da.from_array(self.disp_elem, chunks=(2000, 3))
 
         ### PORT
         self.port_vertices_coordinates = Port().vertices_coordinates
@@ -108,13 +99,12 @@ class Simulation:
         if savetxt:
             self.save_to_file()
 
-    def load_plasma(self):
+    def generate_cuboid_coordinates(self):
         """
-        Loads plasma coordinates.
+        Generate the block of points covering the volume of a plasma observed by each spectroscopic channel.
         """
-        pm = PlasmaMesh(self.distance_between_points)
-        loaded_coordinates = pm.outer_cube_mesh
-
+        cm = CuboidMesh(self.distance_between_points)
+        loaded_coordinates = cm.outer_cube_mesh
         return da.from_array(loaded_coordinates, chunks=(2000, 3))
 
     def calculate_crystal_area(self):
@@ -126,12 +116,11 @@ class Simulation:
             20 * 80 / self.crystal_height_step / self.crystal_length_step, 2
         )
         print(f"\nCrystal area per investigated point is: {crystal_point_area} mm^2.")
-
         return crystal_point_area
 
     @staticmethod
     def line_plane_collision(
-        planeNormal, planePoint, rayDirection, rayPoint, epsilon=1e-6
+        plane_normal, plane_point, ray_direction, ray_point, epsilon=1e-6
     ):
         """
         Calculates cross section points of line and plane.
@@ -141,12 +130,12 @@ class Simulation:
         Returns:
             _type_: _description_
         """
-        ndotu = np.tensordot(planeNormal, rayDirection, axes=(0, 2))
+        ndotu = np.tensordot(plane_normal, ray_direction, axes=(0, 2))
         ndotu[np.abs(ndotu) < epsilon] = np.nan
-        w = rayPoint - planePoint
-        x = np.tensordot(planeNormal, w, axes=(0, 2))
+        w = ray_point - plane_point
+        x = np.tensordot(plane_normal, w, axes=(0, 2))
         si = -(x / ndotu)[:, :, np.newaxis]
-        Psi = w + si * rayDirection + planePoint
+        Psi = w + si * ray_direction + plane_point
         return Psi
 
     def find_intersection_points_basic(self, p1, p2, p3, plasma, crystal):
@@ -191,14 +180,16 @@ class Simulation:
     ############## tutaj koniec
     ############## tutaj koniec
 
-    def check_in_hull(self, intersection_points, hull_points):
+    def check_in_hull(
+        self, intersection_points: da.array, hull_vertices: np.ndarray
+    ) -> da.array:
         """
-        Checks whether intersection points are inside hull given.
+        Checks whether intersection points are inside the hull defined by its vertices.
         """
         tested_in_hull = da.map_blocks(
-            self.colim.check_in_hull,
+            self.collim.check_in_hull,
             intersection_points,
-            hull_points,
+            hull_vertices,
             dtype=bool,
             drop_axis=2,
         )
@@ -220,7 +211,8 @@ class Simulation:
 
         return tested_in_hull
 
-    def calculate_radiation_reflection(self, save=False):
+    def calculate_radiation_reflection(self):
+
         print("\n--- Calculating reflected beam ---")
 
         def closest_point_on_line(a, b, p):
@@ -229,7 +221,7 @@ class Simulation:
             result = a + da.dot(ap, ab) / da.dot(ab, ab) * ab
             return result
 
-        plasma_coordinates = self.plasma_coordinates.reshape(-1, 1, 3)
+        plasma_coordinates = self.cuboid_block_coord.reshape(-1, 1, 3)
         crystal_coordinates = self.crystal_coordinates.reshape(1, -1, 3)
 
         ### calculate reflection angle
@@ -349,7 +341,7 @@ class Simulation:
         selected_intersections = selected_intersections.any(axis=0)
         krysztal_pkt = self.crystal_height_step * self.crystal_length_step
         selected_intersections = selected_intersections.reshape(
-            -1, len(self.plasma_coordinates), krysztal_pkt
+            -1, len(self.cuboid_block_coord), krysztal_pkt
         )
 
         selected_intersections = da.concatenate(
@@ -391,7 +383,7 @@ class Simulation:
             )  ### reflected plasma
 
             fig.add_mesh(
-                self.plasma_coordinates.compute().flatten().reshape(-1, 3),
+                self.cuboid_block_coord.compute().flatten().reshape(-1, 3),
                 color="yellow",
                 opacity=0.3,
                 render_points_as_spheres=True,
@@ -423,16 +415,16 @@ class Simulation:
         """
         Returns percentage transmission of amount of observable plasma points in reference to all used for calculation
         """
-        all_plas_crys_combinations = len(self.plasma_coordinates) * len(
+        all_plas_crys_combinations = len(self.cuboid_block_coord) * len(
             self.crystal_coordinates
         )
         indices = da.arange(all_plas_crys_combinations).reshape(
-            len(self.plasma_coordinates), len(self.crystal_coordinates)
+            len(self.cuboid_block_coord), len(self.crystal_coordinates)
         )
         selected_indices = indices[self.selected_intersections]
         transmission = round(
             len(selected_indices.compute())
-            / (len(self.plasma_coordinates) * len(self.crystal_coordinates))
+            / (len(self.cuboid_block_coord) * len(self.crystal_coordinates))
             * 100,  ### TODO zahardkodowane wartosci;
             2,
         )
@@ -586,9 +578,9 @@ class Simulation:
         ddf = ddf.groupby("idx_sel_plas_points").sum().reset_index()
 
         indices = ddf["idx_sel_plas_points"].values
-        ddf["plasma_x"] = self.plasma_coordinates[indices][:, 0]
-        ddf["plasma_y"] = self.plasma_coordinates[indices][:, 1]
-        ddf["plasma_z"] = self.plasma_coordinates[indices][:, 2]
+        ddf["plasma_x"] = self.cuboid_block_coord[indices][:, 0]
+        ddf["plasma_y"] = self.cuboid_block_coord[indices][:, 1]
+        ddf["plasma_z"] = self.cuboid_block_coord[indices][:, 2]
         ddf = ddf[
             [
                 "idx_sel_plas_points",
@@ -603,7 +595,6 @@ class Simulation:
     def save_to_file(self):
         """Save dataframe with plasma coordinates and calculated radiation intensity fractions"""
         """TODO - zapis do bazy danych (sql???? czy cos innego?) a nie csv!!!!!!"""
-        print(Path(__file__).parent.parent.resolve())
         self.ddf.to_csv(
             Path(__file__).parent.parent.resolve()
             / "_Input_files"
@@ -620,19 +611,20 @@ class Simulation:
 #### TODO zahardkodowane nazwy do poprawienia
 ### TODO zrobic testy dla slits number closing top i bottom # for slit in slits_number:
 
-elements_list = ["N"]
+# elements_list = ["B", "C", "N", "O"]
+elements_list = ["C"]
+
 testing_settings = dict(
     slits_number=10,
-    distance_between_points=50,
-    crystal_height_step=5,
-    crystal_length_step=5,
-    savetxt=True,
+    distance_between_points=80,
+    crystal_height_step=3,
+    crystal_length_step=3,
+    savetxt=False,
     plot=False,
 )
 
 start = time.time()
 if __name__ == "__main__":
-
     for element in elements_list:
         simul = Simulation(element, **testing_settings)
 

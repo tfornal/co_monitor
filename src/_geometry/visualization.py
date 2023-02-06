@@ -8,7 +8,7 @@ from collimator import Collimator
 from detector import Detector
 from port import Port
 from pathlib import Path
-from mesh_calculation import PlasmaMesh
+from mesh_calculation import CuboidMesh
 from radiation_shield import RadiationShield
 from scipy.spatial import ConvexHull
 
@@ -37,7 +37,7 @@ def make_cuboid():
     Returns:
         _type_: _description_
     """
-    pm = PlasmaMesh(distance_between_points=100, cuboid_dimensions=[1800, 800, 2000])
+    pm = CuboidMesh(distance_between_points=100, cuboid_dimensions=[1800, 800, 2000])
     reduced_cuboid_coordinates = pm.outer_cube_mesh
     print("Cuboid generated!")
     return reduced_cuboid_coordinates
