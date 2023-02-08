@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Feb  8 15:51:23 2023
-
-@author: t_fornal
-"""
-
 """
 Kod musi pobierac dane z pliku wyjsciowego uzyskanego za pomoca rest api.
 Step 1 - wyznaczenie objetosci jaka obserwowalby kazdy kanal.
@@ -344,9 +337,7 @@ class Simulation:
         selected_intersections : da.ndarray
             2D array with all plasma points (rows) and all crystal points (columns).
         """
-        
 
-        """TODO odseparowac poszczegolne elementy z mozliwoscia ich 'wylaczenia' """
         plasma_side_in_hull = []
         crys_side_in_hull = []
         # check the transmission through collimator
@@ -369,7 +360,7 @@ class Simulation:
             all_intersection_points_plasma_side = self.find_intersection_points(
                 p4, p5, p6, self.crys_plas_data_arr[0], self.crys_plas_data_arr[1]
             )
-            plasma_side_in_hull .append(
+            plasma_side_in_hull.append(
                 self.check_in_hull(
                     all_intersection_points_plasma_side,
                     self.slit_coord_plasma_side[slit],
@@ -382,25 +373,33 @@ class Simulation:
         all_intersection_points_port = self.find_intersection_points(
             p7, p8, p9, self.crys_plas_data_arr[0], self.crys_plas_data_arr[1]
         )
-        port_pts_in_hull = [self.check_in_hull(
-            all_intersection_points_port,
-            self.port_vertices_coordinates,
-            self.port_orientation_vector,
-        )]
-        
+        port_pts_in_hull = da.array(
+            [
+                self.check_in_hull(
+                    all_intersection_points_port,
+                    self.port_vertices_coordinates,
+                    self.port_orientation_vector,
+                )
+            ]
+        )
+
         # check the transmission through port
         p10, p11, p12 = self.detector_vertices_coordinates[:3]
         all_intersetion_points_detector = self.find_intersection_points(
             p10, p11, p12, self.crys_plas_data_arr[2], self.crys_plas_data_arr[1]
         )
 
-        det_pts_in_hull = [self.check_in_hull(
-            all_intersetion_points_detector,
-            self.detector_vertices_coordinates,
-            self.detector_orientation_vector,
-        )]
-        
-        # checks the transmission of each ray over input/output of the collimators slits (all -> axis = 3);
+        det_pts_in_hull = da.array(
+            [
+                self.check_in_hull(
+                    all_intersetion_points_detector,
+                    self.detector_vertices_coordinates,
+                    self.detector_orientation_vector,
+                )
+            ]
+        )
+
+        # checks the transmission of all photons over input/output of the collimators slits (all -> axis = 3);
         # next checks whether there was transmission over any of the investigated slits (any -> axis = 2);
         # axis = 0 --> all plasma points
         # axis = 1 --> all crystal points
@@ -414,10 +413,19 @@ class Simulation:
         transmited_through_collim = transmited_through_collim.reshape(
             -1, len(self.cuboid_coordinates), crystal_point
         )
-        selected_intersections = da.concatenate(
-            (transmited_through_collim, da.array(det_pts_in_hull), da.array(port_pts_in_hull)),
-            axis=0,
-        ).rechunk("auto").all(axis=0)
+
+        selected_intersections = (
+            da.concatenate(
+                (
+                    transmited_through_collim,
+                    det_pts_in_hull,
+                    port_pts_in_hull,
+                ),
+                axis=0,
+            )
+            .rechunk("auto")
+            .all(axis=0)
+        )
 
         def plotter():
 
@@ -431,17 +439,17 @@ class Simulation:
                 self.crys_plas_data_arr.compute()[0].reshape(-1, 3),
                 color="red",
                 render_points_as_spheres=True,
-            )  ### plasma
+            )  # plasma
             fig.add_mesh(
                 self.crys_plas_data_arr.compute()[1].reshape(-1, 3),
                 color="blue",
                 render_points_as_spheres=True,
-            )  ### crystal
+            )  # crystal
             fig.add_mesh(
                 self.crys_plas_data_arr.compute()[2].reshape(-1, 3),
                 color="green",
                 render_points_as_spheres=True,
-            )  ### reflected plasma
+            )  # reflected plasma
 
             fig.add_mesh(
                 self.cuboid_coordinates.compute().flatten().reshape(-1, 3),
