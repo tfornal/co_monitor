@@ -22,11 +22,13 @@ from scipy.spatial import ConvexHull, Delaunay
 
 from collimator import Collimator
 from detector import Detector
+from decorators import timer
 from dispersive_element import DispersiveElement
 from mesh_calculation import CuboidMesh
 from port import Port
 
 
+@timer
 class Simulation:
     def __init__(
         self,
@@ -427,53 +429,6 @@ class Simulation:
             .all(axis=0)
         )
 
-        def plotter():
-
-            fig = pv.Plotter()
-            fig.set_background("black")
-            fig.add_mesh(self.detector_vertices_coordinates[:4], color="red")
-            detectors_surface = Detector(self.element).make_detectors_surface()
-            fig.add_mesh(detectors_surface, color="purple", opacity=0.4)
-
-            fig.add_mesh(
-                self.crys_plas_data_arr.compute()[0].reshape(-1, 3),
-                color="red",
-                render_points_as_spheres=True,
-            )  # plasma
-            fig.add_mesh(
-                self.crys_plas_data_arr.compute()[1].reshape(-1, 3),
-                color="blue",
-                render_points_as_spheres=True,
-            )  # crystal
-            fig.add_mesh(
-                self.crys_plas_data_arr.compute()[2].reshape(-1, 3),
-                color="green",
-                render_points_as_spheres=True,
-            )  # reflected plasma
-
-            fig.add_mesh(
-                self.cuboid_coordinates.compute().flatten().reshape(-1, 3),
-                color="yellow",
-                opacity=0.3,
-                render_points_as_spheres=True,
-            )
-            fig.add_mesh(
-                self.reflected_points_location.compute().flatten().reshape(-1, 3),
-                color="orange",
-                opacity=0.3,
-                render_points_as_spheres=True,
-            )
-            fig.add_points(
-                self.crystal_coordinates.compute(),
-                color="red",
-                point_size=10,
-                label="Crystal coordinates",
-                render_points_as_spheres=True,
-            )
-            fig.show()
-
-        if self.plot:
-            plotter()
         print("\n--- Ray transmission calculation finished ---")
 
         return selected_intersections
@@ -650,13 +605,13 @@ testing_settings = dict(
     crystal_height_step=3,
     crystal_length_step=3,
     savetxt=False,
-    plot=False,
+    plot=True,
 )
 
-start = time.time()
+# start = time.time()
 if __name__ == "__main__":
     for element in elements_list:
         simul = Simulation(element, **testing_settings)
 
 
-print(f"\nExecution time is {round((time.time() - start), 2)} s")
+# print(f"\nExecution time is {round((time.time() - start), 2)} s")
