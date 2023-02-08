@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Feb  8 15:51:23 2023
+
+@author: t_fornal
+"""
+
 """
 Kod musi pobierac dane z pliku wyjsciowego uzyskanego za pomoca rest api.
 Step 1 - wyznaczenie objetosci jaka obserwowalby kazdy kanal.
@@ -337,17 +344,11 @@ class Simulation:
         selected_intersections : da.ndarray
             2D array with all plasma points (rows) and all crystal points (columns).
         """
-        tests_crys_side = []
-        found_intersection_points_crys_side = []
-        tests_plasma_side = []
-        found_intersection_points_plasma_side = []
-        tests_port = []
-        found_intersection_points_port = []
-        tests_detector = []
-        found_intersection_points_detector = []
+        
 
         """TODO odseparowac poszczegolne elementy z mozliwoscia ich 'wylaczenia' """
-
+        plasma_side_in_hull = []
+        crys_side_in_hull = []
         # check the transmission through collimator
         for slit in range(self.slits_number):
             # check the collision with collimator's crystal side
@@ -355,10 +356,7 @@ class Simulation:
             all_intersection_points_crys_side = self.find_intersection_points(
                 p1, p2, p3, self.crys_plas_data_arr[0], self.crys_plas_data_arr[1]
             )
-            found_intersection_points_crys_side.append(
-                all_intersection_points_crys_side
-            )
-            tests_crys_side.append(
+            crys_side_in_hull.append(
                 self.check_in_hull(
                     all_intersection_points_crys_side,
                     self.slit_coord_crys_side[slit],
@@ -371,10 +369,7 @@ class Simulation:
             all_intersection_points_plasma_side = self.find_intersection_points(
                 p4, p5, p6, self.crys_plas_data_arr[0], self.crys_plas_data_arr[1]
             )
-            found_intersection_points_plasma_side.append(
-                all_intersection_points_plasma_side
-            )
-            tests_plasma_side.append(
+            plasma_side_in_hull .append(
                 self.check_in_hull(
                     all_intersection_points_plasma_side,
                     self.slit_coord_plasma_side[slit],
@@ -382,54 +377,47 @@ class Simulation:
                 )
             )
 
-        # check the collision with port
+        # check the transmission through port
         p7, p8, p9 = self.port_vertices_coordinates[:3]
         all_intersection_points_port = self.find_intersection_points(
             p7, p8, p9, self.crys_plas_data_arr[0], self.crys_plas_data_arr[1]
         )
-        found_intersection_points_port.append(all_intersection_points_port)
-        tested_in_hull = self.check_in_hull(
+        port_pts_in_hull = [self.check_in_hull(
             all_intersection_points_port,
             self.port_vertices_coordinates,
             self.port_orientation_vector,
-        )
-        tests_port.append(tested_in_hull)
-
-        # check the collision with detectors surface
+        )]
+        
+        # check the transmission through port
         p10, p11, p12 = self.detector_vertices_coordinates[:3]
         all_intersetion_points_detector = self.find_intersection_points(
             p10, p11, p12, self.crys_plas_data_arr[2], self.crys_plas_data_arr[1]
         )
 
-        found_intersection_points_detector.append(all_intersetion_points_detector)
-        tested_in_hull = self.check_in_hull(
+        det_pts_in_hull = [self.check_in_hull(
             all_intersetion_points_detector,
             self.detector_vertices_coordinates,
             self.detector_orientation_vector,
-        )
-        tests_detector.append(tested_in_hull)
-
+        )]
+        
         # checks the transmission of each ray over input/output of the collimators slits (all -> axis = 3);
         # next checks whether there was transmission over any of the investigated slits (any -> axis = 2);
         # axis = 0 --> all plasma points
         # axis = 1 --> all crystal points
         # dask_array (plasma points, crystal points) boolean array presenting
         # transmission of each plasma-crystal combination ()
-        selected_intersections = da.stack(
-            (da.array(tests_crys_side), da.array(tests_plasma_side)), axis=0
+        is_transmited_through_collim = da.stack(
+            (da.array(crys_side_in_hull), da.array(plasma_side_in_hull)), axis=0
         )
-        selected_intersections = selected_intersections.all(axis=0)
-        selected_intersections = selected_intersections.any(axis=0)
+        transmited_through_collim = is_transmited_through_collim.all(axis=0).any(axis=0)
         crystal_point = self.crystal_height_step * self.crystal_length_step
-        selected_intersections = selected_intersections.reshape(
+        transmited_through_collim = transmited_through_collim.reshape(
             -1, len(self.cuboid_coordinates), crystal_point
         )
-
         selected_intersections = da.concatenate(
-            (selected_intersections, da.array(tests_detector), da.array(tests_port)),
+            (transmited_through_collim, da.array(det_pts_in_hull), da.array(port_pts_in_hull)),
             axis=0,
-        ).rechunk("auto")
-        selected_intersections = selected_intersections.all(axis=0)
+        ).rechunk("auto").all(axis=0)
 
         def plotter():
 
@@ -646,8 +634,8 @@ class Simulation:
         print("\nFile successfully saved!")
 
 
-elements_list = ["B", "C", "N", "O"]
-# elements_list = ["C"]
+# elements_list = ["B", "C", "N", "O"]
+elements_list = ["C"]
 testing_settings = dict(
     slits_number=10,
     distance_between_points=50,
