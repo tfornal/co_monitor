@@ -45,6 +45,7 @@ class Collimator:
             self.visualization()
 
     def _init_collim_coord(self):
+        """Retrieve collimator coordinates."""
         self.vector_top_bottom = np.array(self.collimator["vector_top_bottom"])
         self.A1 = np.array(self.collimator["vertex"]["A1"])
         self.A2 = np.array(self.collimator["vertex"]["A2"])

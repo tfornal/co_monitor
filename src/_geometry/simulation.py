@@ -10,6 +10,7 @@ TODO - poprawić nazewnictwo zapisywanych plików!
 
 from functools import reduce
 from pathlib import Path
+import sys
 import time
 
 import dask.array as da
@@ -449,7 +450,13 @@ class Simulation:
             plas_points, crys_points
         )
         selected_indices = all_indices[self.selected_intersections]
-        selected_indices = dd.from_dask_array(selected_indices.compute_chunk_sizes())
+        try:
+            selected_indices = dd.from_dask_array(
+                selected_indices.compute_chunk_sizes()
+            )
+        except ValueError:
+            sys.exit("Not enough points to perform calculations!")
+
         selected_indices = selected_indices.to_frame().reset_index()
         print("\n--- Indices calculated ---")
 
@@ -579,6 +586,25 @@ class Simulation:
                 "total_intensity_fraction",
             ]
         ]
+
+        def plotter():
+            """Plots observed plasma volume including distribution of radiation intensity regions."""
+            fig = pv.Plotter()
+            fig.set_background("black")
+
+            df = ddf.compute()
+            intensity = df["total_intensity_fraction"]
+            plasma_coordinates = df.to_numpy()[:, 1:4]
+            point_cloud = pv.PolyData(plasma_coordinates)
+            point_cloud["Intensity"] = intensity
+            fig.add_mesh(
+                pv.PolyData(point_cloud), point_size=8, render_points_as_spheres=True
+            )
+            fig.show()
+
+        if self.plot:
+            plotter()
+
         return ddf
 
     def save_to_file(self):
@@ -601,17 +627,16 @@ class Simulation:
 elements_list = ["C"]
 testing_settings = dict(
     slits_number=10,
-    distance_between_points=50,
-    crystal_height_step=3,
-    crystal_length_step=3,
-    savetxt=False,
-    plot=True,
+    distance_between_points=10,
+    crystal_height_step=20,
+    crystal_length_step=60,
+    savetxt=True,
+    plot=False,
 )
 
-# start = time.time()
 if __name__ == "__main__":
     for element in elements_list:
-        simul = Simulation(element, **testing_settings)
-
-
-# print(f"\nExecution time is {round((time.time() - start), 2)} s")
+        for poinds_dist in [50, 45, 40, 35, 30, 25, 20, 15, 10]:
+            testing_settings["distance_between_points"] = poinds_dist
+            print(testing_settings)
+            simul = Simulation(element, **testing_settings)

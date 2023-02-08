@@ -80,6 +80,7 @@ if __name__ == "__main__":
     impurity_file_name = "20181011_012@5_5000_conv--100_diff-2000.0.csv"
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]
+        breakpoint()
         ce = Emissivity(
             reff_file_name,
             profile,
