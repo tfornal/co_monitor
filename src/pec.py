@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-import io, fnmatch
+import io
 from pathlib import Path
 from collections import namedtuple
 

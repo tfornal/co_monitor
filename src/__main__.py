@@ -1,5 +1,4 @@
 import numpy as np
-from pathlib import Path
 from collections import namedtuple
 from reader import Emissivity
 from kinetic_profiles import (
@@ -68,23 +67,20 @@ if __name__ == "__main__":
     All input files are stored in the "_Input_files" directory.
     """
 
-    ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
-    Te = [1870, 0, 0.155, 210, 0.38, 0.07]
+    n_e = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
+    T_e = [1870, 0, 0.155, 210, 0.38, 0.07]
 
-    ##  select profile type
-    # profile = experimental_prof()
-    # profile = predefined_profile(1)
-    profile = two_gauss_prof(ne, Te)
+    # Select kinetic profiles
+    # kinetic_profiles = experimental_prof()
+    # kinetic_profiles = predefined_profile(1)
+    kinetic_profiles = two_gauss_prof(n_e, T_e)
 
-    reff_file_name = "Reff_coordinates-10_mm"
-    impurity_file_name = "20181011_012@5_5000_conv--100_diff-2000.0.csv"
+    reff_magnetic_config = "Reff_coordinates-10_mm"
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]
-        breakpoint()
         ce = Emissivity(
-            reff_file_name,
-            profile,
-            impurity_file_name,
+            reff_magnetic_config,
+            kinetic_profiles,
             element,
             line.ion_state,
             line.wavelength,

@@ -10,6 +10,12 @@ import pandas as pd
 from scipy import interpolate
 
 
+class ImpurityProfile:
+    def __init__(self, ):
+        pass
+    
+    
+    
 def get_impurity_profile(
     file_name,
     range_and_nr_of_reff_points,
@@ -32,13 +38,12 @@ def get_impurity_profile(
         return interpolate.splev(x_point_range, tck)
 
     def integral_over_cylindrical_structure(point_range, curve_to_integrate):
-        x = point_range
         x_2d = []
-        for number, reff in enumerate(x):
+        for number, reff in enumerate(point_range):
             if number == 0:
                 x_2d.append(reff**2)
             else:
-                x_2d.append(x[number] ** 2 - x[number - 1] ** 2)
+                x_2d.append(point_range[number] ** 2 - point_range[number - 1] ** 2)
         wagi = x_2d
         integral_over_cylindrical_volume = round(
             sum(wagi * curve_to_integrate) / sum(wagi), 4
@@ -155,17 +160,15 @@ def get_impurity_profile(
         interpolated_ne["impurity_concentration"].to_numpy(), interpolated_ne["reff"]
     )
     # imp_density = integral_over_cylindrical_structure(df["reff"],df["impurity_density"])*1E6
-    if plot == True:
+    if plot:
         plot_results(imp_fraction)
-    else:
-        pass
 
     return interpolated_ne, imp_fraction, avg_density
 
 
 if __name__ == "__main__":
     ### Input files------------------
-    impurity_file_name = "20181009.016_4.8998ms.csv"
+    impurity_file_name = "20181011_012@5_5000_conv--100_diff-2000.0.csv"
     range_and_nr_of_reff_points = np.linspace(
         0.009, 0.518358, 100
     )  ### ten range jest kluczowy do okreslenia max reff;

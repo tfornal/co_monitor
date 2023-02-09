@@ -4,8 +4,7 @@ import matplotlib.pyplot as plt
 import time
 import pyvista as pv
 from pathlib import Path, PurePath
-from pyvistaqt import BackgroundPlotter
-from collections import Counter, OrderedDict, namedtuple
+from collections import namedtuple
 
 from pec import PEC
 from fractional_abundance import FractionalAbundance
@@ -21,9 +20,8 @@ class Emissivity:
     def __init__(
         self,
         # observed_plasma_volume,
-        reff_file_name,
+        reff_magnetic_config,
         plasma_profiles,
-        impurity_file_name,
         element,
         ion_state,
         wavelength,
@@ -62,8 +60,8 @@ class Emissivity:
         """
 
         self.plasma_profiles = plasma_profiles
-        self.imp_file_name = impurity_file_name
-        self.reff_coordinates = self.load_Reff(reff_file_name)
+        self.reff_magnetic_config = reff_magnetic_config
+        self.reff_coordinates = self.load_Reff()
         self.observed_plasma_volume = self.load_observed_plasma(element)
         self.reff_coordinates_with_radiation_fractions = (
             self.read_plasma_coordinates_with_radiation_fractions()
@@ -86,7 +84,7 @@ class Emissivity:
         )
         self.total_emissivity = self.calculate_total_emissivity()
 
-    def load_Reff(self, reff_file_name: str) -> pd.DataFrame:
+    def load_Reff(self) -> pd.DataFrame:
         """
         Load a file containing plasma coordinates and their calculated Reff value (if available).
 
@@ -107,7 +105,7 @@ class Emissivity:
             Path(__file__).parent.resolve()
             / "_Input_files"
             / "Reff"
-            / f"{reff_file_name}.txt"
+            / f"{self.reff_magnetic_config}.txt"
         )
 
         reff_coordinates = pd.read_csv(Reff_path, sep=" ")
@@ -460,67 +458,36 @@ class Emissivity:
 
 
 if __name__ == "__main__":
-    start = time.time()
-    reff_file_name = "Reff_coordinates-10_mm"
+        
+    lyman_alpha_lines = ["C", "B", "O", "N"]  #
+    Element = namedtuple("Element", "ion_state wavelength impurity_fraction")
 
-    def profile_maker():
-        ne1 = [7.03e13, 0.01, 0.36, 1.00e13, 0.47, 0.08]
-        ne2 = [1.96e13, 0, 0.37, 2.80e12, 0.45, 0.15]
+    lyman_alpha_line = {
+        "B": Element("Z4", 48.6, 0.02),
+        "C": Element("Z5", 33.7, 0.02),
+        "N": Element("Z6", 24.8, 0.02),
+        "O": Element("Z7", 19.0, 0.02),
+    }
+    transitions = ["EXCIT", "RECOM"]
+    n_e = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
+    T_e = [1870, 0, 0.155, 210, 0.38, 0.07]
 
-        Te1 = [1870, 0, 0.155, 210, 0.38, 0.07]
-        Te2 = [8029, 0, 0.155, 210, 0.38, 0.07]
-        ne = np.linspace(ne1, ne2, 1, endpoint=True)
-        Te = np.linspace(Te1, Te2, 1, endpoint=True)
+    # Select kinetic profiles
+    # kinetic_profiles = experimental_prof()
+    # kinetic_profiles = predefined_profile(1)
+    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profile_df
 
-        return ne, Te
-
-    ne, Te = profile_maker()
-    imp_conc_profiles = [
-        # "cxrs-peaked",
-        "cxrs-flat"
-    ]
-    impurity_file_name = "20181011_012@5_5000_conv--100_diff-2000.0.csv"
-    for number, profile in enumerate(imp_conc_profiles):
-        for idx_ne, _ in enumerate(ne):
-            for idx_te, _ in enumerate(Te):
-                plasma_profile = TwoGaussSumProfile(ne[idx_ne], Te[idx_te])
-                # plasma_profile.plot()
-                plasma_profile = plasma_profile.profile_df
-
-                lyman_alpha_lines = ["N"]
-
-                Element = namedtuple(
-                    "Element", "ion_state wavelength impurity_fraction"
-                )
-                transitions = ["EXCIT", "RECOM"]  # , "CHEXC"]
-                ### wpisac albo "cxrs" albof loat zawartosci
-                lyman_alpha_line = {
-                    "B": Element("Z4", 48.6, 2),
-                    "C": Element("Z5", 33.7, 1),
-                    "N": Element("Z6", 24.8, 2),
-                    "O": Element("Z7", 19.0, 1),
-                }
-
-                for element in lyman_alpha_lines:
-                    line = lyman_alpha_line[element]
-                    observed_plasma = (
-                        Path.cwd()
-                        / "src"
-                        / "_Input_files"
-                        / "Geometric_data"
-                        / f"{element}"
-                        / "top"
-                        / f"{element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
-                    )
-                    em = Emissivity(
-                        reff_file_name,
-                        plasma_profile,
-                        impurity_file_name,
-                        element,
-                        line.ion_state,
-                        line.wavelength,
-                        line.impurity_fraction,
-                        transitions,
-                    )
-
-    print(f"\nFinished within {round(time.time() - start, 2)}s")
+    reff_magnetic_config = "Reff_coordinates-10_mm"
+    for element in lyman_alpha_lines:
+        line = lyman_alpha_line[element]
+        ce = Emissivity(
+            reff_magnetic_config,
+            kinetic_profiles,
+            element,
+            line.ion_state,
+            line.wavelength,
+            line.impurity_fraction,
+            transitions,
+        )
+        # ce.savefile()
+        ce.plot(savefig=False)
