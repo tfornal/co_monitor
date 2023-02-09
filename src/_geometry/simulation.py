@@ -62,7 +62,6 @@ class Simulation:
         self._init_port()
         self._init_detector()
 
-        # calculate ray reflection
         (
             self.reflected_points_location,
             self.crys_plas_data_arr,
@@ -326,6 +325,7 @@ class Simulation:
             ),
             axis=0,
         ).rechunk("auto")
+        print("--- Reflected beam calculated ---")
         return reflected_points_location, crys_plas_data_arr
 
     def check_ray_transmission(self):
@@ -340,7 +340,8 @@ class Simulation:
         selected_intersections : da.ndarray
             2D array with all plasma points (rows) and all crystal points (columns).
         """
-
+        print("\n--- Calculating photon transmission ---")
+        
         plasma_side_in_hull = []
         crys_side_in_hull = []
         # check the transmission through collimator
@@ -430,7 +431,7 @@ class Simulation:
             .all(axis=0)
         )
 
-        print("\n--- Ray transmission calculation finished ---")
+        print("--- Photon transmission calculation finished ---")
 
         return selected_intersections
 
@@ -445,6 +446,7 @@ class Simulation:
             A dataframe containing the selected indices, with the index column reset.
 
         """
+        print("\n--- Calculating indices ---")
         plas_points, crys_points = self.selected_intersections.shape
         all_indices = da.arange(plas_points * crys_points).reshape(
             plas_points, crys_points
@@ -458,7 +460,7 @@ class Simulation:
             sys.exit("Not enough points to perform calculations!")
 
         selected_indices = selected_indices.to_frame().reset_index()
-        print("\n--- Indices calculated ---")
+        print("--- Indices calculated ---")
 
         return selected_indices
 
@@ -470,12 +472,15 @@ class Simulation:
         plas_points_indices : dd.DataFrame
             A dask.DataFrame containing the indices of the selected plasma points.
         """
+        print("\n--- Calculating indices of selected plasma points ---")
+        
         plas_points_indices = self.selected_indices
         plas_points_indices.columns = ["index", "idx_sel_plas_points"]
         plas_points_indices["idx_sel_plas_points"] = plas_points_indices[
             "idx_sel_plas_points"
         ] // len(self.crystal_coordinates)
-        print("\n--- Selected plasma points indices calculated ---")
+        
+        print("--- Selected plasma points indices calculated ---")
 
         return plas_points_indices
 
@@ -488,6 +493,8 @@ class Simulation:
         dd.Series
             Dask series containing the calculated distances.
         """
+        print("\n--- Calculating distances ---")
+        
         plasma_coordinates = self.crys_plas_data_arr[0]
         crystal_coordinates = self.crys_plas_data_arr[1]
         distance_vectors = plasma_coordinates - crystal_coordinates
@@ -496,7 +503,8 @@ class Simulation:
         ]
         distances = dd.from_dask_array(distances.compute_chunk_sizes())
         distances = distances.to_frame().reset_index()
-        print("\n--- Distances calculated ---")
+        print("--- Distances calculated ---")
+        
         return distances
 
     def calculate_angles(self) -> dd.Series:
@@ -508,6 +516,7 @@ class Simulation:
         dd.Series
             Dask series containing the calculated angles.
         """
+        print("\n--- Calculating angles ---")
         plasma, crystal, reflected_points = self.crys_plas_data_arr
 
         vector_plasma_to_crystal = plasma - crystal
@@ -526,7 +535,7 @@ class Simulation:
         ]
         angle_of_incident = dd.from_dask_array(angle_of_incident.compute_chunk_sizes())
         angle_of_incident = angle_of_incident.to_frame().reset_index()
-        print("\n--- Angles calculated ---")
+        print("--- Angles calculated ---")
 
         return angle_of_incident
 
@@ -625,18 +634,15 @@ class Simulation:
 
 
 if __name__ == "__main__":
-    elements_list = ["C", "B", "N", "O"]
+    elements_list = ["C"]#, "B", "N", "O"]
     # elements_list = ["C"]
     testing_settings = dict(
         slits_number=10,
-        distance_between_points=10,
-        crystal_height_step=20,
-        crystal_length_step=60,
-        savetxt=True,
+        distance_between_points=50,
+        crystal_height_step=5,
+        crystal_length_step=5,
+        savetxt=False,
         plot=False,
     )
     for element in elements_list:
-        for points_dist in [50, 45, 40, 35, 30, 25, 20, 15, 10]:
-            testing_settings["distance_between_points"] = points_dist
-            print(testing_settings)
             simul = Simulation(element, **testing_settings)

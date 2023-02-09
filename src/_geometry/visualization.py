@@ -14,14 +14,6 @@ from scipy.spatial import ConvexHull
 
 
 def make_hull(points):
-    """_summary_
-
-    Args:
-        points (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
     hull = ConvexHull(points)
     faces = np.column_stack(
         (3 * np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)
@@ -32,11 +24,6 @@ def make_hull(points):
 
 
 def make_cuboid():
-    """_summary_
-
-    Returns:
-        _type_: _description_
-    """
     pm = CuboidMesh(distance_between_points=100, cuboid_dimensions=[1800, 800, 2000])
     reduced_cuboid_coordinates = pm.outer_cube_mesh
     print("Cuboid generated!")
@@ -44,11 +31,6 @@ def make_cuboid():
 
 
 def read_Reff_coordinates():
-    """_summary_
-
-    Returns:
-        _type_: _description_
-    """
     Reff = (
         Path(__file__).parent.parent
         / "_Input_files"
@@ -56,21 +38,12 @@ def read_Reff_coordinates():
         / "Reff_coordinates-10_mm.txt"
     )
 
-    print(Reff)
     Reff_VMEC_calculated = np.loadtxt(Reff)  ### [mm]
 
     return Reff_VMEC_calculated
 
 
 def make_mapped_plasma_volume(Reff_VMEC_calculated):
-    """_summary_
-
-    Args:
-        Reff_VMEC_calculated (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
     mapped_plasma_volume = Reff_VMEC_calculated[
         ~np.isnan(Reff_VMEC_calculated).any(axis=1)
     ]
@@ -81,15 +54,6 @@ def make_mapped_plasma_volume(Reff_VMEC_calculated):
 
 
 def make_observed_plasma_volume(Reff_VMEC_calculated, element):
-    """_summary_
-
-    Args:
-        Reff_VMEC_calculated (_type_): _description_
-        element (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
     calculated_plasma_coordinates = (
         Path(__file__).parent.parent.resolve()
         / "_Input_files"
@@ -113,15 +77,6 @@ def make_observed_plasma_volume(Reff_VMEC_calculated, element):
     plasma_coordinates = observed_plasma_volume[:, 1:-1]
 
     def create_point_cloud(coordinates, reff):
-        """Creates the point cloud of the
-
-        Args:
-            coordinates (_type_): _description_
-            reff (_type_): _description_
-
-        Returns:
-            _type_: _description_
-        """
         point_cloud = pv.PolyData(coordinates)
         point_cloud["Reff [m]"] = reff
 
@@ -134,16 +89,6 @@ def make_observed_plasma_volume(Reff_VMEC_calculated, element):
 
 
 def polar2cart(r, theta, phi):
-    """_summary_
-
-    Args:
-        r (_type_): _description_
-        theta (_type_): _description_
-        phi (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
     x = r * math.sin(theta) * math.cos(phi)
     y = r * math.sin(theta) * math.sin(phi)
     z = r * math.cos(theta)
@@ -152,15 +97,6 @@ def polar2cart(r, theta, phi):
 
 
 def calculate_plasma_surfaces(phi, surface_number):
-    """_summary_
-
-    Args:
-        phi (_type_): _description_
-        surface_number (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
     plasma_surfaces = []
     W7X_surface = (
         Path(__file__).parent.parent
@@ -186,15 +122,6 @@ def calculate_plasma_surfaces(phi, surface_number):
 
 
 def make_plasma_surface(phi_range, layer_of_plasma_surface):
-    """_summary_
-
-    Args:
-        phi_range (_type_): _description_
-        layer_of_plasma_surface (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
     all_plasma_surfaces = []
     for phi in phi_range:
         local_plasma_surface = calculate_plasma_surfaces(phi, layer_of_plasma_surface)
@@ -206,14 +133,6 @@ def make_plasma_surface(phi_range, layer_of_plasma_surface):
 
 
 def make_axis(phi_range):
-    """_summary_
-
-    Args:
-        phi_range (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
     plasma_axis = []
     for phi in phi_range:
         local_axis_point = calculate_plasma_surfaces(phi, 0)[0]
@@ -223,9 +142,7 @@ def make_axis(phi_range):
 
     return plasma_axis
 
-
-if __name__ == "__main__":
-
+def plotter():
     fig = pv.Plotter()
     fig.set_background("black")
 
@@ -335,7 +252,7 @@ if __name__ == "__main__":
 
     ###########################################################################
 
-    elements_list = {"B": "red", "C": "blue", "N": "green", "O": "orange"}
+    list_of_elements = {"B": "red", "C": "blue", "N": "green", "O": "orange"}
     Reff_VMEC_calculated = read_Reff_coordinates()
     plot_W7X()
     plot_cuboid()
@@ -343,9 +260,9 @@ if __name__ == "__main__":
     port()
     radiation_shields()
 
-    for element in elements_list:
+    for element in list_of_elements:
         plot_observed_plasma(
-            Reff_VMEC_calculated, element, color=elements_list[element], polydata=False
+            Reff_VMEC_calculated, element, color=list_of_elements[element], polydata=True
         )
         dispersive_elements(element, 10, 40)
         collimators(element, closing_side="top closing side")
@@ -353,3 +270,6 @@ if __name__ == "__main__":
 
     ###########################################################################
     fig.show()
+    
+if __name__ == "__main__":
+    plotter()

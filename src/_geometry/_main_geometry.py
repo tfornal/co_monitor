@@ -6,16 +6,16 @@ from simulation import Simulation
 plasma volume observed by each spectroscopic channel.
 Requires to input list of elements (B, C, N or O)"""
 
-elements_list = ["B", "C"]  # , "C", "O"]
+elements_list = ["C"]#, "B" , "N", "O"]
 testing_settings = dict(
     slits_number=10,
-    distance_between_points=50,
-    crystal_height_step=5,
-    crystal_length_step=5,
+    distance_between_points=20,
+    crystal_height_step=15,
+    crystal_length_step=10,
     savetxt=False,
     plot=True,
 )
 
 if __name__ == "__main__":
     for element in elements_list:
-        simul = Simulation(element, **testing_settings)
+            simul = Simulation(element, **testing_settings)
