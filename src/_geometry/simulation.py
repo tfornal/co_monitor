@@ -11,15 +11,13 @@ TODO - poprawić nazewnictwo zapisywanych plików!
 from functools import reduce
 from pathlib import Path
 import sys
-import time
 
 import dask.array as da
 import dask.dataframe as dd
-import matplotlib.pyplot as plt
 import numpy as np
 from opt_einsum import contract
 import pyvista as pv
-from scipy.spatial import ConvexHull, Delaunay
+from scipy.spatial import Delaunay
 
 from collimator import Collimator
 from detector import Detector

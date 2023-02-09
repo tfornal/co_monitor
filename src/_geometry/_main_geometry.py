@@ -1,5 +1,3 @@
-import time
-
 from simulation import Simulation
 
 """Executes the simulation code in order to calculate 

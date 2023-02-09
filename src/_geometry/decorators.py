@@ -11,7 +11,7 @@ def timer(function):
         value = function(*args, **kwargs)
         end_time = time.time()
         run_time = end_time - start_time
-        print(f"Execution finished in {run_time: .2f}s")
+        print(f"\nExecution finished in {run_time: .2f}s")
         return value
 
     return wrapper
