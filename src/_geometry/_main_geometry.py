@@ -1,3 +1,5 @@
+__author__ = "T. Fornal"
+
 from simulation import Simulation
 
 """Executes the simulation code in order to calculate 

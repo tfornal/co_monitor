@@ -1,3 +1,5 @@
+__author__ = "T. Fornal"
+
 """
 Kod musi pobierac dane z pliku wyjsciowego uzyskanego za pomoca rest api.
 Step 1 - wyznaczenie objetosci jaka obserwowalby kazdy kanal.

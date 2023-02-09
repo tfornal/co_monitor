@@ -1,7 +1,3 @@
-import json
-from math import degrees
-from pathlib import Path
-
 import numpy as np
 import pyvista as pv
 

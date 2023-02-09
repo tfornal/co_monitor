@@ -1,6 +1,3 @@
-import json
-from pathlib import Path
-
 import numpy as np
 import pyvista as pv
 from scipy.spatial import ConvexHull

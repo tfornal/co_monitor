@@ -1,6 +1,7 @@
+__author__ = "T. Fornal"
+
 import functools
 import time
-
 
 def timer(function):
     """Prints the execution time of given function."""
