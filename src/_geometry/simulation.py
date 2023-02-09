@@ -623,18 +623,18 @@ class Simulation:
         print("\nFile successfully saved!")
 
 
-elements_list = ["C", "B", "N", "O"]
-# elements_list = ["C"]
-testing_settings = dict(
-    slits_number=10,
-    distance_between_points=10,
-    crystal_height_step=20,
-    crystal_length_step=60,
-    savetxt=True,
-    plot=False,
-)
 
 if __name__ == "__main__":
+    elements_list = ["C", "B", "N", "O"]
+    # elements_list = ["C"]
+    testing_settings = dict(
+        slits_number=10,
+        distance_between_points=10,
+        crystal_height_step=20,
+        crystal_length_step=60,
+        savetxt=True,
+        plot=False,
+    )
     for element in elements_list:
         for points_dist in [50, 45, 40, 35, 30, 25, 20, 15, 10]:
             testing_settings["distance_between_points"] = points_dist
