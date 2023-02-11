@@ -320,30 +320,34 @@ class Emissivity:
         for idx, value in enumerate(self.transitions_list.values()):
             pec = []
             for _, row in df_prof_frac_ab_pec.iterrows():
-                ne_idx = (np.abs(row["n_e"] - self.pec_data[idx, 0, 0, :])).argmin()
+                ne_idx = (np.abs(row["n_e"] - self.pec_data[idx, 0, :, :])).argmin()
                 te_idx = (
                     np.abs(row["T_e"] - self.pec_data[idx, 1, :, ne_idx])
                 ).argmin()
-                pec.append(self.interpolated_pec_df[idx, ne_idx, te_idx, 2])
+                # print(ne_idx, te_idx)
+                # breakpoint()
+                pec.append(
+                    self.pec_data[idx, 2, ne_idx, te_idx]
+                )  ### poprawic indexy!!!!!!
             df_prof_frac_ab_pec[f"pec_{value}"] = pec
         print(df_prof_frac_ab_pec["pec_EXCIT"])
         print(df_prof_frac_ab_pec["pec_RECOM"])
 
-        
-        df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
-        for idx, value in enumerate(self.transitions_list.values()):
-            pec = []
-            for i, row in df_prof_frac_ab_pec.iterrows():
-                ne_idx = (
-                    np.abs(row["n_e"] - self.interpolated_pec_df[idx, :, 0, 0])
-                ).argmin()
-                te_idx = (
-                    np.abs(row["T_e"] - self.interpolated_pec_df[idx, ne_idx, :, 1])
-                ).argmin()
-                pec.append(self.interpolated_pec_df[idx, ne_idx, te_idx, 2])
-            df_prof_frac_ab_pec[f"pec_{value}"] = pec
-        print(df_prof_frac_ab_pec["pec_EXCIT"])
-        print(df_prof_frac_ab_pec["pec_RECOM"])
+        # df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
+        # for idx, value in enumerate(self.transitions_list.values()):
+        #     pec = []
+        #     for i, row in df_prof_frac_ab_pec.iterrows():
+        #         ne_idx = (
+        #             np.abs(row["n_e"] - self.interpolated_pec_df[idx, :, 0, 0])
+        #         ).argmin()
+        #         te_idx = (
+        #             np.abs(row["T_e"] - self.interpolated_pec_df[idx, ne_idx, :, 1])
+        #         ).argmin()
+        #         pec.append(self.interpolated_pec_df[idx, ne_idx, te_idx, 2])
+        #     df_prof_frac_ab_pec[f"pec_{value}"] = pec
+        # print(df_prof_frac_ab_pec["pec_EXCIT"])
+        # print(df_prof_frac_ab_pec["pec_RECOM"])
+        # breakpoint()
         return df_prof_frac_ab_pec
 
     def calculate_intensity(self, impurity_concentration):
