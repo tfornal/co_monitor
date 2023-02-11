@@ -26,6 +26,7 @@ class PEC:
         self.total_pec_file = self.separate_pec_file()
         self.comments_df = self.read_pec_comments()
         self.transitions_list = self.select_radiation_type()
+        print(self.transitions_list)
         self.mesh_nodes = self.pec_mesh_nodes()
         self.interp_df_shape = self.calc_interp_df_shape()
         self.analyse_pec()

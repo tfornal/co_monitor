@@ -8,7 +8,7 @@ import numpy as np
 import scipy
 
 
-class PEC:
+class PEC2:
     def __init__(
         self,
         element,
@@ -24,10 +24,10 @@ class PEC:
         self.interp_step = interp_step
         self.file_path = self.get_file_path()
         self.head_idx, self.ne_nodes_nr, self.te_nodes_nr = self._get_basic_info()
-        self.pec_data_array, self.ne_nodes, self.te_nodes = self.read_data()
+        self.pec_data_array, self.ne_nodes, self.te_nodes = self._read_data()
         self.interpolated_pec = self.interpolation()
-        # if plot:
-        #     self.plotter()
+        if plot:
+            self.plot_pec_data()
 
     def get_file_path(self):
         pec_element_path = (
@@ -54,7 +54,7 @@ class PEC:
 
         return head_idx, int(ne_nodes_nr), int(te_nodes_nr)
 
-    def read_data(self):
+    def _read_data(self):
         nr_of_rows = int(
             np.ceil(self.ne_nodes_nr / 8)
             + np.ceil(self.te_nodes_nr / 8)
@@ -75,23 +75,25 @@ class PEC:
         return pec_data_array, ne_nodes, te_nodes
 
     def interpolation(self):
-
-        # ne, te = np.meshgrid(np.array(self.ne_nodes), np.array(self.te_nodes))
         fvals = self.pec_data_array.T
         func = interpolate.interp2d(self.ne_nodes, self.te_nodes, fvals, kind="linear")
-        ne_new = np.linspace(self.ne_nodes[0], self.ne_nodes[-1], self.interp_step)
-        te_new = np.linspace(self.te_nodes[0], self.te_nodes[-1], self.interp_step)
+        ne_new = np.linspace(
+            self.ne_nodes[0], self.ne_nodes[-1], self.interp_step, endpoint=True
+        )
+        te_new = np.linspace(
+            self.te_nodes[0], self.te_nodes[-1], self.interp_step, endpoint=True
+        )
         pec_new_arr = func(ne_new, te_new)
         ne_new_arr, te_new_arr = np.meshgrid(ne_new, te_new)
         interpolated_pec = np.stack((ne_new_arr, te_new_arr, pec_new_arr), axis=0)
-        print(interpolated_pec)
-        print(interpolated_pec.shape)
+
         return interpolated_pec
 
-    def plotter(self):
+    def plot_pec_data(self):
+        ne, te, pec = self.interpolated_pec
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
-        ax.plot_wireframe(self.interpolated_pec, te_new_arr, pec_new_arr, rstride=1)
+        ax.plot_wireframe(ne, te, pec, rstride=1)
         plt.title(f"PEC - {transition}")
         ax.set_xlabel("Ne [1/cm3]")
         ax.set_ylabel("Te [eV]")
@@ -100,9 +102,15 @@ class PEC:
 
 
 if __name__ == "__main__":
-    transitions_list = ["EXCIT"]  # , "RECOM"]
+    transitions_list = ["EXCIT", "RECOM"]
+    lista = []
     for transition in transitions_list:
-        pec = PEC("C", 33.7, transition, interp_step=10)
-        # pec = PEC("B", 194.3, transition)
-        # pec = PEC("O", 102.4, transition)
-        # pec = PEC("N", 133.8, transition)
+        pec = PEC("C", 33.7, transition, interp_step=10, plot=False)
+        trans = pec.interpolated_pec
+        lista.append(trans)
+        # pec = PEC("B", 194.3, transition, interp_step=10, plot=False)
+        # pec = PEC("O", 102.4, transition, interp_step=10, plot=False)
+        # pec = PEC("N", 133.8, transition, interp_step=10, plot=False)
+
+    x = np.array(lista)
+    print(x)
