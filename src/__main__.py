@@ -1,3 +1,10 @@
+"""
+Script runs  the plasma emissivity calculation. It requires to
+choose the profile type (calculated, experimental or theoretical), select
+lines of interest and emission type (EXCIT, RECOM, CHEXC).
+All input files are stored in the "_Input_files" directory.
+"""
+
 import numpy as np
 from collections import namedtuple
 from reader import Emissivity
@@ -60,12 +67,6 @@ def experimental_prof():
 
 
 if __name__ == "__main__":
-    """
-    Script runs  the plasma emissivity calculation. It requires to
-    choose the profile type (calculated, experimental or theoretical), select
-    lines of interest and emission type (EXCIT, RECOM, CHEXC).
-    All input files are stored in the "_Input_files" directory.
-    """
 
     n_e = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
     T_e = [1870, 0, 0.155, 210, 0.38, 0.07]

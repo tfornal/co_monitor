@@ -12,8 +12,8 @@ class PEC:
         element,
         wavelength,
         transitions,
-        ne_samples_amount=20,
-        Te_samples_amount=20,
+        ne_samples_amount=2,
+        Te_samples_amount=2,
         plot=False,
     ):
         self.element = element
@@ -31,7 +31,9 @@ class PEC:
         self.analyse_pec()
 
     def select_pec_file(self):
-        pec_element_path = Path(__file__).parent.resolve() / "_Input_files" / "PEC" / self.element
+        pec_element_path = (
+            Path(__file__).parent.resolve() / "_Input_files" / "PEC" / self.element
+        )
         pec_file_path = list(Path(pec_element_path).glob("*.dat"))[0]
 
         return pec_file_path
@@ -262,6 +264,7 @@ class PEC:
             X = interp_ne_te_pec[:, :, 0]
             Y = interp_ne_te_pec[:, :, 1]
             Z = interp_ne_te_pec[:, :, 2]
+            print(X)
             fig = plt.figure()
             ax = fig.add_subplot(111, projection="3d")
             # ax.plot_surface(X, Y, Z,cmap = "plasma", rstride = 1)
@@ -316,8 +319,8 @@ class PEC:
 ### correct the function calling, to namedtuple
 if __name__ == "__main__":
     element = "C"
-    transitions = ["EXCIT", "RECOM"]
-    pec = PEC(element, 33.7, transitions, plot=False)
+    transitions = ["EXCIT"]  # , "RECOM"]
+    pec = PEC(element, 33.7, transitions, plot=True)
     # pec = PEC("B", 48.6, transitions)
     # pec = PEC("O", 19.0, transitions)
     # pec = PEC("N", 24.8, transitions)

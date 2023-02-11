@@ -202,7 +202,7 @@ class CuboidMesh:
         fig.add_mesh(
             self.central_plasma_coord,
             color="red",
-            point_size=100,
+            point_size=50,
             render_points_as_spheres=True,
         )
         fig.show()
