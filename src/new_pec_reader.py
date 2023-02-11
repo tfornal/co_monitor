@@ -105,7 +105,7 @@ if __name__ == "__main__":
     transitions_list = ["EXCIT", "RECOM"]
     lista = []
     for transition in transitions_list:
-        pec = PEC("C", 33.7, transition, interp_step=10, plot=False)
+        pec = PEC2("C", 33.7, transition, interp_step=50, plot=True)
         trans = pec.interpolated_pec
         lista.append(trans)
         # pec = PEC("B", 194.3, transition, interp_step=10, plot=False)
@@ -114,3 +114,4 @@ if __name__ == "__main__":
 
     x = np.array(lista)
     print(x)
+    print(x.shape)

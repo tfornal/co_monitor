@@ -91,12 +91,11 @@ class Emissivity:
         lista = []
         for transition in self.transitions:
             self.interpolated_pec = PEC2(
-                "C", 33.7, transition, interp_step=10, plot=False
+                "C", 33.7, transition, interp_step=300, plot=False
             ).interpolated_pec
             lista.append(self.interpolated_pec)
 
         pec_interp = np.array(lista)
-        print(pec_interp)
         return pec_interp
 
     def load_Reff(self) -> pd.DataFrame:
@@ -317,6 +316,21 @@ class Emissivity:
 
         """  ### self.pec_data
         df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
+
+        for idx, value in enumerate(self.transitions_list.values()):
+            pec = []
+            for _, row in df_prof_frac_ab_pec.iterrows():
+                ne_idx = (np.abs(row["n_e"] - self.pec_data[idx, 0, 0, :])).argmin()
+                te_idx = (
+                    np.abs(row["T_e"] - self.pec_data[idx, 1, :, ne_idx])
+                ).argmin()
+                pec.append(self.interpolated_pec_df[idx, ne_idx, te_idx, 2])
+            df_prof_frac_ab_pec[f"pec_{value}"] = pec
+        print(df_prof_frac_ab_pec["pec_EXCIT"])
+        print(df_prof_frac_ab_pec["pec_RECOM"])
+
+        
+        df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
         for idx, value in enumerate(self.transitions_list.values()):
             pec = []
             for i, row in df_prof_frac_ab_pec.iterrows():
@@ -328,7 +342,8 @@ class Emissivity:
                 ).argmin()
                 pec.append(self.interpolated_pec_df[idx, ne_idx, te_idx, 2])
             df_prof_frac_ab_pec[f"pec_{value}"] = pec
-
+        print(df_prof_frac_ab_pec["pec_EXCIT"])
+        print(df_prof_frac_ab_pec["pec_RECOM"])
         return df_prof_frac_ab_pec
 
     def calculate_intensity(self, impurity_concentration):
@@ -474,7 +489,7 @@ class Emissivity:
 
 if __name__ == "__main__":
 
-    lyman_alpha_lines = ["C", "B", "O", "N"]  #
+    lyman_alpha_lines = ["C"]  # , "B", "O", "N"]  #
     Element = namedtuple("Element", "ion_state wavelength impurity_fraction")
 
     lyman_alpha_line = {
