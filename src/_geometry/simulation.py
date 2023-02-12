@@ -1,4 +1,5 @@
 __author__ = "T. Fornal"
+__email__ = "tomasz.fornal6@gmail.com"
 
 """
 Kod musi pobierac dane z pliku wyjsciowego uzyskanego za pomoca rest api.

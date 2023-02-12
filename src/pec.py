@@ -1,6 +1,7 @@
 __author__ = "T. Fornal"
 __email__ = "tomasz.fornal6@gmail.com"
 
+from collections import namedtuple
 from itertools import islice
 from pathlib import Path
 
@@ -166,10 +167,10 @@ class PEC:
         plt.show()
 
 
+lyman_alpha_lines = {"B": 48.6, "C": 33.7, "N": 24.8, "O": 19.0}
+
 if __name__ == "__main__":
     transitions_list = ["EXCIT", "RECOM"]
-    for transition in transitions_list:
-        pec = PEC("C", 33.7, transition, interp_step=50, plot=True)
-        # pec = PEC("B", 194.3, transition, interp_step=500, plot=True)
-        # pec = PEC("O", 102.4, transition, interp_step=10, plot=False)
-        # pec = PEC("N", 133.8, transition, interp_step=10, plot=False)
+    for element, wavelength in lyman_alpha_lines.items():
+        for transition in transitions_list:
+            PEC(element, wavelength, transition, interp_step=50, plot=False)

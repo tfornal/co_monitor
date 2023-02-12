@@ -1,3 +1,6 @@
+__author__ = "T. Fornal"
+__email__ = "tomasz.fornal6@gmail.com"
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -40,77 +43,15 @@ class Profile:
         """
         Saves generated profile to *.txt file.
         """
-        directory = Path(__file__).parent.resolve() / "src" / "results" / "plasma_profiles"
+        directory = (
+            Path(__file__).parent.resolve() / "src" / "results" / "plasma_profiles"
+        )
         if not Path.is_dir(directory):
             Path(directory).mkdir(parents=True, exist_ok=True)
-        np.savetxt(
-            PurePath(directory, "plasma_profile.txt"), profile_df, fmt="%.3e"
-        )
+        np.savetxt(PurePath(directory, "plasma_profile.txt"), profile_df, fmt="%.3e")
 
         print("Profile saved to file!")
 
-
-class PredefinedProfile(Profile):
-    """
-    The class is responsible for appropriate readout and interpolation of electron density and
-    temperature profiles predefined by Y. Turkin.
-
-    Parameters:
-        file_nr (int): file number representing particular file from a given directory
-        interval: (optional) precision of interpolation along Reff (e.g. step = 100
-        separates given range of Reff into 100 pieces)
-    """
-
-    def __init__(self, file_nr, interval=1000):
-        self.file_nr = file_nr
-        self.interval = interval
-        self.profile_df = self.make_interpolation()
-
-    def load_predefined_profiles(self):
-        """
-        Readout of electron temperature (Te) and electron density (ne)
-        from predefined file.
-
-        Returns:
-            R_raw: array of Reff values
-            ne_raw: array of Ne values for given Reff values [1/cm-3]
-            Te_raw: array of Te values for given Reff values [eV]
-        """
-        heating_scenario = Path(__file__).parent.resolve() / "_Input_files" / "Kinetic_profiles" / "Theoretical" / f"8MWECRH_{self.file_nr}.txt"
-        
-        read_file = np.loadtxt(heating_scenario, delimiter=" ")
-
-        Reff_raw, T_e_raw, n_e_raw = (
-            read_file[:, 0] / 1e2,  # cm -> m
-            read_file[:, 1],
-            read_file[:, 2],
-        )
-        return Reff_raw, T_e_raw, n_e_raw
-
-    def make_interpolation(self):
-        """
-        Interpolation of selected ne, te profiles.
-
-        Returns:
-            profile_array: array of interpolated values of Reff, ne [1/cm-3], Te [eV] with given precision
-        """
-        Reff_raw, T_e_raw, n_e_raw = self.load_predefined_profiles()
-        f1 = interpolate.interp1d(Reff_raw, T_e_raw)
-        f2 = interpolate.interp1d(Reff_raw, n_e_raw)
-
-        Reff = np.linspace(0, Reff_raw[-1], self.interval, endpoint=True)
-        T_e = f1(Reff)
-        n_e = f2(Reff)
-
-        profile_df = pd.DataFrame({"Reff": Reff.round(3), "T_e": T_e, "n_e": n_e})
-
-        return profile_df
-
-    def plot(self):
-        return super().plot(self.profile_df)
-
-    def save_txt(self):
-        return super().save_txt(self.profile_df)
 
 
 class TwoGaussSumProfile(Profile):
@@ -205,7 +146,6 @@ class ExperimentalProfile(Profile):
         self.interpolation_interval = interval
         self.max_Reff = max_Reff  # [m]
         self.profile_df = self.interpolate_raw_profile()
-
 
     def read_file_path(self):
         """

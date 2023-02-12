@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Apr 14 12:50:23 2021
+__author__ = "T. Fornal"
+__email__ = "tomasz.fornal6@gmail.com"
 
-@author: Tomek
-"""
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -11,11 +8,18 @@ from scipy import interpolate
 
 
 class ImpurityProfile:
-    def __init__(self, ):
+    def __init__(
+        self,
+        file_name,
+        range_and_nr_of_reff_points,
+        kinetic_profiles,
+        element,
+        plaski_rozklad=False,
+        plot=True,
+    ):
         pass
-    
-    
-    
+
+
 def get_impurity_profile(
     file_name,
     range_and_nr_of_reff_points,

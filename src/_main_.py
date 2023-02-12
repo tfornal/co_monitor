@@ -1,15 +1,17 @@
+__author__ = "T. Fornal"
+__email__ = "tomasz.fornal6@gmail.com"
+
 """
 Script runs  the plasma emissivity calculation. It requires to
-choose the profile type (calculated, experimental or theoretical), select
+choose the profile type (calculated or experimental), select
 lines of interest and emission type (EXCIT, RECOM, CHEXC).
 All input files are stored in the "_Input_files" directory.
 """
-
-import numpy as np
 from collections import namedtuple
+import numpy as np
+
 from reader import Emissivity
 from kinetic_profiles import (
-    PredefinedProfile,
     TwoGaussSumProfile,
     ExperimentalProfile,
 )
@@ -44,13 +46,6 @@ def calculate_coeficients(a, b, num):
     return list_of_array
 
 
-def predefined_profile(profile_file_number, plot=False):
-    """Runs routine to calculate plasma profiles from a given."""
-    profile = PredefinedProfile(profile_file_number).profile_df
-
-    return profile
-
-
 def two_gauss_prof(ne, Te):
     """Runs routine to calculate plasma profiles out of sum of two  Gaussian distributions."""
     profile = TwoGaussSumProfile(ne, Te).profile_df
@@ -73,7 +68,6 @@ if __name__ == "__main__":
 
     # Select kinetic profiles
     # kinetic_profiles = experimental_prof()
-    # kinetic_profiles = predefined_profile(1)
     kinetic_profiles = two_gauss_prof(n_e, T_e)
 
     reff_magnetic_config = "Reff_coordinates-10_mm"

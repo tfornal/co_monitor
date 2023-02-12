@@ -1,3 +1,6 @@
+__author__ = "T. Fornal"
+__email__ = "tomasz.fornal6@gmail.com"
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,21 +9,19 @@ import pyvista as pv
 from pathlib import Path, PurePath
 from collections import namedtuple
 
-# from pec import PEC
 from fractional_abundance import FractionalAbundance
 from kinetic_profiles import (
-    PredefinedProfile,
     TwoGaussSumProfile,
     ExperimentalProfile,
 )
-from impurity_profiles import get_impurity_profile
-from new_pec_reader import PEC2
+
+# from impurity_profiles import get_impurity_profile
+from pec import PEC
 
 
 class Emissivity:
     def __init__(
         self,
-        # observed_plasma_volume,
         reff_magnetic_config,
         plasma_profiles,
         element,
@@ -53,11 +54,6 @@ class Emissivity:
             Represents the impurity fraction in plasma.
         transitions : LIST OF STR
             Represents the transition types. Possibly "EXCIT", "RECOM" and "CHEXC".
-
-        Returns
-        -------
-        None.
-
         """
 
         self.plasma_profiles = plasma_profiles
@@ -87,7 +83,7 @@ class Emissivity:
     def _get_pec_data(self):
         lista = []
         for transition in self.transitions:
-            self.interpolated_pec = PEC2(
+            self.interpolated_pec = PEC(
                 "C", 33.7, transition, interp_step=2000, plot=False
             ).interpolated_pec
             lista.append(self.interpolated_pec)
@@ -467,7 +463,7 @@ class Emissivity:
 
 if __name__ == "__main__":
 
-    lyman_alpha_lines = ["C"]  # , "B", "O", "N"]  #
+    lyman_alpha_lines = ["O"]  # , "B", "O", "N"]  #
     Element = namedtuple("Element", "ion_state wavelength impurity_fraction")
 
     lyman_alpha_line = {
@@ -482,7 +478,6 @@ if __name__ == "__main__":
 
     # Select kinetic profiles
     # kinetic_profiles = experimental_prof()
-    # kinetic_profiles = predefined_profile(1)
     kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profile_df
 
     reff_magnetic_config = "Reff_coordinates-10_mm"

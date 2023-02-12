@@ -1,10 +1,15 @@
+__author__ = "T. Fornal"
+__email__ = "tomasz.fornal6@gmail.com"
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
 from scipy import interpolate
 from pathlib import Path
-#### TODO dolaczyc fractional abundance ze strahla!!!!!!!!
+
+# TODO dolaczyc fractional abundance ze strahla
+
 
 class FractionalAbundance:
     """
@@ -18,7 +23,7 @@ class FractionalAbundance:
         step (int): step of the interpolation - nominally 1 [eV] (optional)
     """
 
-    def __init__(self, element, ion_state, step=1, plot = False):
+    def __init__(self, element, ion_state, step=1, plot=False):
         self.element = element
         self.ion_state = ion_state
         self.step = step
@@ -27,7 +32,6 @@ class FractionalAbundance:
         self.df_interpolated_frac_ab = self.interpolated_fractional_abundance()
         if plot:
             self.plotter()
-        
 
     def read_file(self):
         """
@@ -89,7 +93,7 @@ class FractionalAbundance:
         df_interpolated_frac_ab = self.interpolated_fractional_abundance()
         np.savetxt(f"{element} {ion_state}.txt", df_interpolated_frac_ab)
         print(f"Fractional abundance of {element}-{ion_state} ion successfuly saved!")
-    
+
     def plotter(self):
         """
         Plots interpolated T_e [eV] and all fractional abundance [%].
@@ -109,5 +113,6 @@ class FractionalAbundance:
 
         plt.show()
 
+
 if __name__ == "__main__":
-    fa = FractionalAbundance("O", "Z7", plot = False)
+    fa = FractionalAbundance("O", "Z7", plot=False)
