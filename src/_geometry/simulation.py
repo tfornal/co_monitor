@@ -341,7 +341,7 @@ class Simulation:
             2D array with all plasma points (rows) and all crystal points (columns).
         """
         print("\n--- Calculating photon transmission ---")
-        
+
         plasma_side_in_hull = []
         crys_side_in_hull = []
         # check the transmission through collimator
@@ -473,13 +473,13 @@ class Simulation:
             A dask.DataFrame containing the indices of the selected plasma points.
         """
         print("\n--- Calculating indices of selected plasma points ---")
-        
+
         plas_points_indices = self.selected_indices
         plas_points_indices.columns = ["index", "idx_sel_plas_points"]
         plas_points_indices["idx_sel_plas_points"] = plas_points_indices[
             "idx_sel_plas_points"
         ] // len(self.crystal_coordinates)
-        
+
         print("--- Selected plasma points indices calculated ---")
 
         return plas_points_indices
@@ -494,7 +494,7 @@ class Simulation:
             Dask series containing the calculated distances.
         """
         print("\n--- Calculating distances ---")
-        
+
         plasma_coordinates = self.crys_plas_data_arr[0]
         crystal_coordinates = self.crys_plas_data_arr[1]
         distance_vectors = plasma_coordinates - crystal_coordinates
@@ -504,7 +504,7 @@ class Simulation:
         distances = dd.from_dask_array(distances.compute_chunk_sizes())
         distances = distances.to_frame().reset_index()
         print("--- Distances calculated ---")
-        
+
         return distances
 
     def calculate_angles(self) -> dd.Series:
@@ -632,9 +632,8 @@ class Simulation:
         print("\nFile successfully saved!")
 
 
-
 if __name__ == "__main__":
-    elements_list = ["C"]#, "B", "N", "O"]
+    elements_list = ["C"]  # , "B", "N", "O"]
     # elements_list = ["C"]
     testing_settings = dict(
         slits_number=10,
@@ -645,4 +644,4 @@ if __name__ == "__main__":
         plot=False,
     )
     for element in elements_list:
-            simul = Simulation(element, **testing_settings)
+        simul = Simulation(element, **testing_settings)
