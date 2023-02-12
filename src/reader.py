@@ -6,7 +6,7 @@ import pyvista as pv
 from pathlib import Path, PurePath
 from collections import namedtuple
 
-from pec import PEC
+# from pec import PEC
 from fractional_abundance import FractionalAbundance
 from kinetic_profiles import (
     PredefinedProfile,
@@ -14,6 +14,7 @@ from kinetic_profiles import (
     ExperimentalProfile,
 )
 from impurity_profiles import get_impurity_profile
+from new_pec_reader import PEC2
 
 
 class Emissivity:
@@ -66,6 +67,8 @@ class Emissivity:
         self.reff_coordinates_with_radiation_fractions = (
             self.read_plasma_coordinates_with_radiation_fractions()
         )
+        self.transitions = transitions
+        self.pec_data = self._get_pec_data()
         self.element = element
         self.impurity_concentration = impurity_fraction  # [%]
         self.ion_state = ion_state
@@ -75,14 +78,22 @@ class Emissivity:
         self.frac_ab = self.read_fractional_abundance()
         self.df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
 
-        self.interpolated_pec_df, self.transitions_list = PEC(
-            element, wavelength, transitions, 20, 20
-        ).analyse_pec()
         self.df_prof_frac_ab_pec = self.read_pec()
         self.df_prof_frac_ab_pec_emissivity = self.calculate_intensity(
             self.impurity_concentration
         )
         self.total_emissivity = self.calculate_total_emissivity()
+
+    def _get_pec_data(self):
+        lista = []
+        for transition in self.transitions:
+            self.interpolated_pec = PEC2(
+                "C", 33.7, transition, interp_step=2000, plot=False
+            ).interpolated_pec
+            lista.append(self.interpolated_pec)
+
+        pec_interp = np.array(lista)
+        return pec_interp
 
     def load_Reff(self) -> pd.DataFrame:
         """
@@ -301,18 +312,17 @@ class Emissivity:
             Dataframe with all infomation required to calculate the radiance intensity.
 
         """
+        # TODO przepisac do xarray, poprawic
         df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
-        for idx, value in enumerate(self.transitions_list.values()):
+        for idx, trans in enumerate(self.transitions):
             pec = []
             for i, row in df_prof_frac_ab_pec.iterrows():
-                ne_idx = (
-                    np.abs(row["n_e"] - self.interpolated_pec_df[idx, :, 0, 0])
-                ).argmin()
+                ne_idx = (np.abs(row["n_e"] - self.pec_data[idx, :, 0, 0])).argmin()
                 te_idx = (
-                    np.abs(row["T_e"] - self.interpolated_pec_df[idx, ne_idx, :, 1])
+                    np.abs(row["T_e"] - self.pec_data[idx, ne_idx, :, 1])
                 ).argmin()
-                pec.append(self.interpolated_pec_df[idx, ne_idx, te_idx, 2])
-            df_prof_frac_ab_pec[f"pec_{value}"] = pec
+                pec.append(self.pec_data[idx, ne_idx, te_idx, 2])
+            df_prof_frac_ab_pec[f"pec_{trans}"] = pec
 
         return df_prof_frac_ab_pec
 
@@ -420,10 +430,8 @@ class Emissivity:
         savefig : bool, optional
             True if the chart is to be saved. The default is False.
 
-        Returns
-        -------
-        None.
         """
+
         intensity_colname_list = [
             col for col in self.df_prof_frac_ab_pec.columns if "Emissivity" in col
         ]
@@ -459,7 +467,7 @@ class Emissivity:
 
 if __name__ == "__main__":
 
-    lyman_alpha_lines = ["C", "B", "O", "N"]  #
+    lyman_alpha_lines = ["C"]  # , "B", "O", "N"]  #
     Element = namedtuple("Element", "ion_state wavelength impurity_fraction")
 
     lyman_alpha_line = {
