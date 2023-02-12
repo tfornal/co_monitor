@@ -1,11 +1,15 @@
-import numpy as np
+__author__ = "T. Fornal"
+__email__ = "tomasz.fornal6@gmail.com"
 
 import time
-from mesh_calculation import PlasmaMesh
-from tqdm import tqdm
+
+import aiohttp
 import asyncio
 import nest_asyncio
-import aiohttp
+import numpy as np
+from tqdm import tqdm
+
+from mesh_calculation import PlasmaMesh
 
 
 class ReaderReffVMEC:

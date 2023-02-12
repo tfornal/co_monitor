@@ -4,6 +4,7 @@ __email__ = "tomasz.fornal6@gmail.com"
 
 """WORK IN PROGRESS
 TODO - implementation of radial impurity profile """
+
 # import numpy as np
 # import matplotlib.pyplot as plt
 # import pandas as pd

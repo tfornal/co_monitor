@@ -1,4 +1,5 @@
 __author__ = "T. Fornal"
+__email__ = "tomasz.fornal6@gmail.com"
 
 from simulation import Simulation
 

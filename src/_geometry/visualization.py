@@ -1,16 +1,22 @@
-import pyvista as pv
+__author__ = "T. Fornal"
+__email__ = "tomasz.fornal6@gmail.com"
+
+
+import json
+import math
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
-import math
-import json
-from dispersive_element import DispersiveElement
+import pyvista as pv
+from scipy.spatial import ConvexHull
+
 from collimator import Collimator
 from detector import Detector
-from port import Port
-from pathlib import Path
+from dispersive_element import DispersiveElement
 from mesh_calculation import CuboidMesh
+from port import Port
 from radiation_shield import RadiationShield
-from scipy.spatial import ConvexHull
 
 
 def make_hull(points):
@@ -142,6 +148,7 @@ def make_axis(phi_range):
 
     return plasma_axis
 
+
 def plotter():
     fig = pv.Plotter()
     fig.set_background("black")
@@ -262,7 +269,10 @@ def plotter():
 
     for element in list_of_elements:
         plot_observed_plasma(
-            Reff_VMEC_calculated, element, color=list_of_elements[element], polydata=True
+            Reff_VMEC_calculated,
+            element,
+            color=list_of_elements[element],
+            polydata=True,
         )
         dispersive_elements(element, 10, 40)
         collimators(element, closing_side="top closing side")
@@ -270,6 +280,7 @@ def plotter():
 
     ###########################################################################
     fig.show()
-    
+
+
 if __name__ == "__main__":
     plotter()
