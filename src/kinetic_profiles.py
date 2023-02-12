@@ -53,7 +53,6 @@ class Profile:
         print("Profile saved to file!")
 
 
-
 class TwoGaussSumProfile(Profile):
 
     """
@@ -346,13 +345,11 @@ class ExperimentalProfile(Profile):
 
 
 if __name__ == "__main__":
-    pp = PredefinedProfile(1)
-    pp.plot()
 
-    ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
-    Te = [1870, 0, 0.155, 210, 0.38, 0.07]
-    tgsp = TwoGaussSumProfile(ne, Te)
-    tgsp.plot()
+    # ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
+    # Te = [1870, 0, 0.155, 210, 0.38, 0.07]
+    # tgsp = TwoGaussSumProfile(ne, Te)
+    # tgsp.plot()
 
     ep = ExperimentalProfile("report_20181011_012@5_5000_v_1")
     ep.plot()

@@ -14,8 +14,6 @@ from kinetic_profiles import (
     TwoGaussSumProfile,
     ExperimentalProfile,
 )
-
-# from impurity_profiles import get_impurity_profile
 from pec import PEC
 
 
@@ -445,7 +443,7 @@ class Emissivity:
         plt.ylabel("Emissivity [ph/cm3/s]")
         plt.axvline(self.reff_boundary, ls="--", color="black")
 
-        def save():
+        def _save_fig():
             if savefig == True:
                 directory = Path.cwd() / "_Results" / "figures"
                 if not Path.is_dir(directory):
@@ -463,7 +461,7 @@ class Emissivity:
 
 if __name__ == "__main__":
 
-    lyman_alpha_lines = ["O"]  # , "B", "O", "N"]  #
+    lyman_alpha_lines = ["O"]  # , "B", "C", "N"]
     Element = namedtuple("Element", "ion_state wavelength impurity_fraction")
 
     lyman_alpha_line = {
