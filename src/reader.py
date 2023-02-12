@@ -1,13 +1,14 @@
 __author__ = "T. Fornal"
 __email__ = "tomasz.fornal6@gmail.com"
 
+from collections import namedtuple
+from pathlib import Path, PurePath
+import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import time
 import pyvista as pv
-from pathlib import Path, PurePath
-from collections import namedtuple
 
 from fractional_abundance import FractionalAbundance
 from kinetic_profiles import (
