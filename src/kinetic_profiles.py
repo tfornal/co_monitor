@@ -1,18 +1,22 @@
 __author__ = "T. Fornal"
 __email__ = "tomasz.fornal6@gmail.com"
 
-import numpy as np
-import matplotlib.pyplot as plt
-import os
-import pandas as pd
 from pathlib import Path, PurePath
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from scipy import interpolate
 
 
 class Profile:
     def plot(self, profile_df):
         """
-        Plots interpolated Reff, n_e and T_e.
+        Plot the electron temperature and density profiles.
+            Parameters
+        ----------
+        profile_df : pd.DataFrame
+            DataFrame containing Reff, n_e, and T_e columns.
         """
         Reff = profile_df["Reff"]
         n_e = profile_df["n_e"]
@@ -25,7 +29,6 @@ class Profile:
         ax1.set_ylabel("Te [eV]", color=color)
         ax1.plot(Reff, T_e, color=color)
         ax1.tick_params(axis="y", labelcolor=color)
-        # ax1.set_ylim(0, 25000)
 
         ax2 = ax1.twinx()
 
@@ -34,14 +37,18 @@ class Profile:
         ax2.set_ylabel("ne [1/cm-3]", color=color)
         ax2.plot(Reff, n_e, color=color)
         ax2.tick_params(axis="y", labelcolor=color)
-        # ax2.set_ylim(0, 1.2E14)
         fig.tight_layout()
 
         plt.show()
 
-    def save_txt(self, profile_df):
+    def save_to_txt(self, profile_df):
         """
-        Saves generated profile to *.txt file.
+        Save the generated profile to a text file.
+
+        Parameters
+        ----------
+        profile_df : pd.DataFrame
+            DataFrame containing the profile information to be saved.
         """
         directory = (
             Path(__file__).parent.resolve() / "src" / "results" / "plasma_profiles"
@@ -54,48 +61,41 @@ class Profile:
 
 
 class TwoGaussSumProfile(Profile):
-
     """
-    The class is responsible for calculation of the electron temperature (Te)
-    and density (ne) using sum of two Gauss profiles.
+    A class that calculates a two-Gaussian sum profile of electron temperature (te) and density (ne).
 
-    Parameters:
-        ne_equation_coefficients (tuple): takes tuple of 6 values (A1, A2, x1, x2, w1, w2) in
-            as an input for the calculations  - ne [cm3]
-            e.g. parameters from discharge 201011.012 from W7-X)
-            #n_e - A1 (max_density1) = 7E13, x1 = 0, w1 = 0.37, A2 (max_density2) = 9.8E12, x2 = 0.5, w2 = 0.11
-        Te_equation_coefficients (tuple): takes tuple of 6 values (A1, A2, x1, x2, w1, w2)
-            as an input for the calculations - Te [eV]
-            e.g. parameters from discharge 201011.012 from W7-X)
-            #T_e - A1 (max_temp1) = 1870, x1 = 0, w1 = 0.155, A2 (max_temp2) = 210, x2 = 0.38, w2 = 0.07
-
-        max_Reff (float): takes float number representing the maximum value of Reff
-        for which the calculations are going to be performed
-        ne (bool): True if ne profile should be calculated, False if not; nominally "True"
-        Te (bool): True if Te profile should be calculated, False if not; nominally "True"
+    Parameters
+    ----------
+    ne_equation_coefficients : list of float
+        A list of six coefficients used to define the two-Gaussian sum equation for the electron density profile.
+    Te_equation_coefficients : list of float
+        A list of six coefficients used to define the two-Gaussian sum equation for the electron temperature profile.
+    max_Reff : float, optional
+        Maximum value of radial position Reff [m], by default 0.539
     """
 
-    def __init__(
-        self, ne_equation_coefficients, Te_equation_coefficients, max_Reff=0.539
-    ):
+    def __init__(self, ne_coeff, te_coeff, max_Reff=0.539, plot=False):
         self.max_Reff = max_Reff  # [m]
         self.Reff = np.arange(0, self.max_Reff, 0.001)
-        self.ne_equation_coefficients = ne_equation_coefficients
-        self.Te_equation_coefficients = Te_equation_coefficients
-        self.profile_df = self.calculate_profiles()
+        self.ne_coeff = ne_coeff
+        self.te_coeff = te_coeff
+        self.profile_df = self.create_df()
+        if plot:
+            self.plot()
 
-    def profile_equation(self, two_gauss_coefficients):
+    def profile_equation(self, two_gauss_coefficients) -> np.ndarray:
         """
-        This function is a sum of two gaussian distributions. It calculates the
-        value of electron density (n_e) for given Reff. This approach allows for
-        accurate simulation of electron density profile in W7-X plasmas.
+        The function calculates a two-Gaussian sum equation.
 
-        Parameters:
-            gauss_coefficients (tuple): takes tuple of 6 values (A1, A2, x1, x2, w1, w2)
-            as an input for the calculations
+        Parameters
+        ----------
+        two_gauss_coefficients : list of float
+            A list of six coefficients used to define the two-Gaussian sum equation.
 
-        Returns:
-            profile (np.array): returns array of investigated Te and ne profiles
+        Returns
+        -------
+        np.ndarray
+            Profile calculated from the two-Gaussian sum equation.
         """
         A1, x1, w1, A2, x2, w2 = two_gauss_coefficients
         profile = A1 * np.exp(-((self.Reff - x1) ** 2) / (2 * w1**2)) + A2 * np.exp(
@@ -104,15 +104,17 @@ class TwoGaussSumProfile(Profile):
 
         return profile
 
-    def calculate_profiles(self):
+    def create_df(self):
         """
-        Creates dataframe with Reff, Te and ne arrays.
+        Creates dataframe with Reff, Te and ne datasets.
 
-        Returns:
-            profile_array: array of interpolated values of Reff, Te [eV], ne [1/cm-3], with given precision
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame containing the radial position Reff [m], electron temperature T_e [eV], and electron density n_e [1/cm-3].
         """
-        ne_profile = self.profile_equation(self.ne_equation_coefficients)
-        Te_profile = self.profile_equation(self.Te_equation_coefficients)
+        ne_profile = self.profile_equation(self.ne_coeff)
+        Te_profile = self.profile_equation(self.te_coeff)
 
         profile_df = pd.DataFrame(data=[self.Reff, Te_profile, ne_profile]).T
         profile_df = profile_df.rename(columns={0: "Reff", 1: "T_e", 2: "n_e"})
@@ -127,9 +129,18 @@ class TwoGaussSumProfile(Profile):
 
 
 class ExperimentalProfile(Profile):
+    """The class creates an object repesenting
+    experimental kinetic profiles registerd during experimental campaign.
+
+    Parameters
+    ----------
+    Profile : _type_
+        _description_
+
     """
-    The class creates an object repesenting
-    temperature profiles from predefined theoretical profiles given by Y. Turkin.
+
+    """
+    
 
     Parameters:
         file_name: file name with fitted experimental data;
@@ -137,16 +148,19 @@ class ExperimentalProfile(Profile):
         separates given range of Reff into 100 pieces)
     """
 
-    def __init__(self, file_name, max_Reff=1, interval=10000):
+    def __init__(self, file_name, max_Reff=1, interval=10000, plot=False):
+        super().__init__()
         self.file_name = file_name
-        self.file_path = self.read_file_path()
-        self.te_idx_range, self.ne_idx_range = self.read_index_ranges()
+        self.file_path = self._get_file_path()
+        self.te_idx_range, self.ne_idx_range = self._get_index_ranges()
         self.raw_profile_df = self.create_raw_profile_df()
         self.interpolation_interval = interval
         self.max_Reff = max_Reff  # [m]
         self.profile_df = self.interpolate_raw_profile()
+        if plot:
+            self.plot()
 
-    def read_file_path(self):
+    def _get_file_path(self):
         """
         Readout of electron temperature (T_e) and electron density (n_e)
         profiles with experimental data stored in "..\_Input_files\Kinetic_profiles\Experimental" directory;
@@ -165,59 +179,56 @@ class ExperimentalProfile(Profile):
 
         return file_path
 
-    def read_index_ranges(self):
-        """
-        Selects indexes of all T_e and n_e profiles in the readed file. Since, the
-        fitted profiles are stored in the files on the last position, only the indexes
-        corresponding to those profiles are stored.
+    def _get_index_ranges(self):
+        """Selects indexes of the fitted T_e and n_e profiles in the read file.
 
-        Returns:
-            te_idx_range: indexes of the beginning and end of the fitted T_e section
-            ne_idx_range: indexes of the beginning and end of the fitted n_e section
+        Returns
+        -------
+        te_idx_range : list of int
+            The indexes of the beginning and end of the fitted T_e section.
+        ne_idx_range : list of int
+        The indexes of the beginning and end of the fitted n_e section.
         """
-        te_all_indexes = []
-        ne_all_indexes = []
+        te_index = -1
+        ne_index = -1
 
         with open(self.file_path, "r") as file:
-            # finds indexes of the all T_e and n_e profiles
+            # finds indexes of the fitted T_e and n_e profiles
             for idx, line in enumerate(file):
                 if "T_e (keV)" in line:
-                    te_all_indexes.append(idx - 1)
+                    te_index = idx - 1
                 if "n_e (10^{19}m^{-3})" in line:
-                    ne_all_indexes.append(idx - 1)
+                    ne_index = idx - 1
 
-            # select indexes of the last fitted profiles of T_e and n_e
-            try:
-                te_last_idx = te_all_indexes[-1]
+        if te_index == -1:
+            print("No T_e profile available!")
+            return [], []
+        if ne_index == -1:
+            print("No n_e profile available!")
+            return [], []
 
-            except:
-                print("No T_e profile available!")
+        number_of_lines = ne_index - te_index
 
-            try:
-                ne_last_idx = ne_all_indexes[-1]
-            except:
-                print("No n_e profile available!")
-            number_of_lines = ne_last_idx - te_last_idx
-
-            # creates the range of investigated file indexes of fitted T_e and n_e
-            te_idx_range = [te_last_idx, ne_last_idx]
-            ne_idx_range = [ne_last_idx, ne_last_idx + number_of_lines]
+        # creates the range of investigated file indexes of fitted T_e and n_e
+        te_idx_range = [te_index, ne_index]
+        ne_idx_range = [ne_index, ne_index + number_of_lines]
 
         return te_idx_range, ne_idx_range
 
     def read_file_sections(self):
         """
-        Opens the file with fitted profiles and reads the separated section with
-        specified index ranges both for T_e and n_e.
+        Reads the specified sections from the file containing fitted T_e and n_e profiles.
 
         Returns:
-            te_section: separated T_e section of the readed file with given T_e index range
-            ne_section: separated n_e section of the readed file with given n_e index range
+        -------
+        te_section : list of strings
+            Separated T_e section of the read file with given T_e index range.
+        ne_section : list of strings
+            Separated n_e section of the read file with given n_e index range.
         """
         te_section = []
         ne_section = []
-        file_path = self.read_file_path()
-        with open(file_path, "r") as file:
+        with open(self.file_path, "r") as file:
             for idx, line in enumerate(file):
                 if idx >= self.te_idx_range[0]:
                     te_section.append(line)
@@ -231,7 +242,7 @@ class ExperimentalProfile(Profile):
                     break
         return te_section, ne_section
 
-    def remove_comments(self, array):
+    def _remove_comments(self, array):
         """
         Removes comments lines from the input array. Only raw values are left.
         """
@@ -288,10 +299,10 @@ class ExperimentalProfile(Profile):
         Returns:
             profile_df: dataframe with [Reff, n_e, T_e]
         """
-        te_idx_range, ne_idx_range = self.read_index_ranges()
+        # te_idx_range, self.ne_idx_range = self._get_index_ranges()
         te_section, ne_section = self.read_file_sections()
 
-        te, ne = self.remove_comments(te_section), self.remove_comments(ne_section)
+        te, ne = self._remove_comments(te_section), self._remove_comments(ne_section)
         te, ne = self.replace_delimiter(te), self.replace_delimiter(ne)
         ne = self.split_to_columns(ne)
         te = self.split_to_columns(te)
@@ -346,10 +357,8 @@ class ExperimentalProfile(Profile):
 
 if __name__ == "__main__":
 
-    # ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
-    # Te = [1870, 0, 0.155, 210, 0.38, 0.07]
-    # tgsp = TwoGaussSumProfile(ne, Te)
-    # tgsp.plot()
+    ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
+    Te = [1870, 0, 0.155, 210, 0.38, 0.07]
+    tgsp = TwoGaussSumProfile(ne, Te, plot=True)
 
-    ep = ExperimentalProfile("report_20181011_012@5_5000_v_1")
-    ep.plot()
+    ep = ExperimentalProfile("report_20181011_012@5_5000_v_1", plot=True)
