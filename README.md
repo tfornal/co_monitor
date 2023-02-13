@@ -4,6 +4,7 @@
 
 ## ---The code is currently under intensive development and is constantly being improved---
 
+The code requires Python v.> 3.9.
 The code was created to perform various calculations of potential C/O monitor signals and validate experimental data of the Lyman-alpha lines measurement of hydrogen like ions of B, C, N and O. The code calculates only the line intensities of the given transitions but does not calculate the background radiation (at least not for now). It includes all the obstacles such as W7-X Port, ECRH shields, collimators, curvatures of dispersive elements and position od detectors. 
 
 TBC
