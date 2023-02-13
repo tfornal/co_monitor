@@ -5,6 +5,7 @@ vertex and orientation vector, where vertex is further described with
 its x,y,z coordinates in a 3D space."""
 
 import json
+from pathlib import Path
 
 diagnostic_coordinates = {
     "detector": {
@@ -250,6 +251,7 @@ diagnostic_coordinates = {
     },
 }
 
-
-with open("coordinates.json", "w") as outfile:
+    
+target_file = Path(__file__).parent.resolve() / "coordinates.json"
+with open(target_file, "w") as outfile:
     json.dump(diagnostic_coordinates, outfile)
