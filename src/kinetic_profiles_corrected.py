@@ -300,9 +300,7 @@ class ExperimentalProfile(Profile):
         n_e_interp = f1_te_interp(Reff_interp) / 1e6
 
         profiles_df = pd.DataFrame(data=[Reff_interp, T_e_interp, n_e_interp]).T
-        profiles_df = profiles_df.rename(
-            columns={0: "Reff [m]", 1: "T_e [eV]", 2: "n_e [m-3]"}
-        )
+        profiles_df = profiles_df.rename(columns={0: "Reff", 1: "T_e", 2: "n_e"})
         return profiles_df
 
     def plot(self):

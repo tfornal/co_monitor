@@ -478,7 +478,8 @@ if __name__ == "__main__":
     # Select kinetic profiles
     # kinetic_profiles = experimental_prof()
     kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profile_df
-
+    print(kinetic_profiles)
+    breakpoint()
     reff_magnetic_config = "Reff_coordinates-10_mm"
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]

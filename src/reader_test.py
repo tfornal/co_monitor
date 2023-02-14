@@ -477,8 +477,9 @@ if __name__ == "__main__":
 
     # Select kinetic profiles
     kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
-    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
-
+    # kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
+    print(kinetic_profiles)
+    # breakpoint()
     reff_magnetic_config = "Reff_coordinates-10_mm"
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]
