@@ -102,7 +102,7 @@ class PEC:
             + np.ceil(self.te_nodes_nr / 8)
             + self.ne_nodes_nr * (np.ceil(self.te_nodes_nr / 8))
         )
-        with open(self.file_path) as file:
+        with open(self.file_path, "r") as file:
             readed_data = [
                 val
                 for line in islice(file, self.head_idx, self.head_idx + nr_of_rows)
@@ -173,4 +173,4 @@ if __name__ == "__main__":
     transitions_list = ["EXCIT", "RECOM"]
     for element, wavelength in lyman_alpha_lines.items():
         for transition in transitions_list:
-            PEC(element, wavelength, transition, interp_step=50, plot=False)
+            PEC(element, wavelength, transition, interp_step=50, plot=True)

@@ -18,15 +18,15 @@ class Profile:
         profile_df : pd.DataFrame
             DataFrame containing Reff, n_e, and T_e columns.
         """
-        Reff = profile_df["Reff"]
-        n_e = profile_df["n_e"]
-        T_e = profile_df["T_e"]
+        Reff = profile_df["Reff [m]"]
+        n_e = profile_df["n_e [m-3]"]
+        T_e = profile_df["T_e [eV]"]
 
         fig, ax1 = plt.subplots()
         plt.title("Electron temperature and density profiles")
         color = "red"
         ax1.set_xlabel("Reff [m]")
-        ax1.set_ylabel("Te [eV]", color=color)
+        ax1.set_ylabel("T_e [eV]", color=color)
         ax1.plot(Reff, T_e, color=color)
         ax1.tick_params(axis="y", labelcolor=color)
 
@@ -34,7 +34,7 @@ class Profile:
 
         color = "blue"
         ax2.set_xlabel("Reff [m]")
-        ax2.set_ylabel("ne [1/cm-3]", color=color)
+        ax2.set_ylabel("n_e [m-3]", color=color)
         ax2.plot(Reff, n_e, color=color)
         ax2.tick_params(axis="y", labelcolor=color)
         fig.tight_layout()
@@ -79,7 +79,7 @@ class TwoGaussSumProfile(Profile):
         self.Reff = np.arange(0, self.max_Reff, 0.001)
         self.ne_coeff = ne_coeff
         self.te_coeff = te_coeff
-        self.profile_df = self.create_df()
+        self.profiles_df = self.create_df()
         if plot:
             self.plot()
 
@@ -116,16 +116,18 @@ class TwoGaussSumProfile(Profile):
         ne_profile = self.profile_equation(self.ne_coeff)
         Te_profile = self.profile_equation(self.te_coeff)
 
-        profile_df = pd.DataFrame(data=[self.Reff, Te_profile, ne_profile]).T
-        profile_df = profile_df.rename(columns={0: "Reff", 1: "T_e", 2: "n_e"})
+        profiles_df = pd.DataFrame(data=[self.Reff, Te_profile, ne_profile]).T
+        profiles_df = profiles_df.rename(
+            columns={0: "Reff [m]", 1: "T_e [eV]", 2: "n_e [m-3]"}
+        )
 
-        return profile_df
+        return profiles_df
 
     def plot(self):
-        return super().plot(self.profile_df)
+        return super().plot(self.profiles_df)
 
     def save_txt(self):
-        return super().save_txt(self.profile_df)
+        return super().save_txt(self.profiles_df)
 
 
 class ExperimentalProfile(Profile):
@@ -137,26 +139,36 @@ class ExperimentalProfile(Profile):
     Profile : _type_
         _description_
 
-    """
-
-    """
-    
-
     Parameters:
         file_name: file name with fitted experimental data;
         interval: (optional) precision of interpolation along Reff (e.g. step = 100
         separates given range of Reff into 100 pieces)
     """
 
-    def __init__(self, file_name, max_Reff=1, interval=10000, plot=False):
+    def __init__(self, file_name, max_Reff=0.539, interval=10000, plot=False):
+        """The class creates an object repesenting
+        experimental kinetic profiles registerd during experimental campaign.
+
+        Parameters
+        ----------
+        file_name : _type_
+            _description_
+        max_Reff : int, optional
+            _description_, by default 1
+        interval : int, optional
+            _description_, by default 10000
+        plot : bool, optional
+            _description_, by default False
+        """
         super().__init__()
         self.file_name = file_name
+        self.max_Reff = max_Reff  # [m]
+        self.interpolation_interval = interval
+
         self.file_path = self._get_file_path()
         self.te_idx_range, self.ne_idx_range = self._get_index_ranges()
-        self.raw_profile_df = self.create_raw_profile_df()
-        self.interpolation_interval = interval
-        self.max_Reff = max_Reff  # [m]
-        self.profile_df = self.interpolate_raw_profile()
+        self.te_section, self.ne_section = self._get_data_from_file()
+        self.profiles_df = self._interpolate()
         if plot:
             self.plot()
 
@@ -189,7 +201,7 @@ class ExperimentalProfile(Profile):
         ne_idx_range : list of int
         The indexes of the beginning and end of the fitted n_e section.
         """
-        
+
         te_index = -1
         ne_index = -1
         with open(self.file_path, "r") as file:
@@ -206,19 +218,16 @@ class ExperimentalProfile(Profile):
         if ne_index == -1:
             print("No electron density (n_e) profile available!")
             return [], []
-        
+
         number_of_lines = abs(ne_index - te_index)
+
         # creates the range of investigated file indexes of fitted T_e and n_e
         te_idx_range = [te_index, ne_index]
         ne_idx_range = [ne_index, ne_index + number_of_lines]
-        
-        self.te_idx_range = te_idx_range
-        self.ne_idx_range = ne_idx_range
-        print(te_idx_range, ne_idx_range)
+
         return te_idx_range, ne_idx_range
 
-    def read_file_sections(self):
-        print("tak")
+    def _get_data_from_file(self):
         """
         Reads the specified sections from the file containing fitted T_e and n_e profiles.
 
@@ -231,70 +240,23 @@ class ExperimentalProfile(Profile):
         """
         te_section = []
         ne_section = []
+
         with open(self.file_path, "r") as file:
             for idx, line in enumerate(file):
-                if idx >= self.te_idx_range[0]:
-                    te_section.append(line)
-                if idx == self.te_idx_range[1]:
-                    break
-            file.seek(0)
-            for idx, line in enumerate(file):
-                if idx >= self.ne_idx_range[0]:
-                    ne_section.append(line)
-                if idx == self.ne_idx_range[1]:
-                    break
-        # print(te_section)
+                if self.te_idx_range[0] <= idx <= self.te_idx_range[1]:
+                    if line.startswith("#"):
+                        pass
+                    else:
+                        te_section.append(line.split())
+                if self.ne_idx_range[0] <= idx <= self.ne_idx_range[1]:
+                    if line.startswith("#"):
+                        pass
+                    else:
+                        ne_section.append(line.split())
+
         return te_section, ne_section
 
-    def _remove_comments(self, array):
-        """
-        Removes comments lines from the input array. Only raw values are left.
-        """
-        for line in array[:]:
-            if line.startswith("#"):
-                array.remove(line)
-
-        return array
-
-    def replace_delimiter(self, array):
-        """
-        Replaces all delimiters to spacebar.
-        """
-        array = np.asarray(array)
-        for i in range(len(array)):
-            array[i] = array[i].replace(" \n", "")
-            array[i] = array[i].replace("   ", " ")
-            array[i] = array[i].replace("  ", " ")
-
-        return array
-
-    def split_to_columns(self, array):
-        """
-        Splits readed array of Reff and profile of interest into separated columns.
-        This is both [Reff, n_e] and [Reff T_e].
-        """
-        df = pd.Series(array)
-        df = df.str.split(" ", expand=True)
-        df.columns = ["Reff", "-", "-", "profile", "-", "-", "-", "-", "-", "-"]
-        df = df.astype({"Reff": float, "profile": float})
-        df = df.loc[:, df.columns.intersection(["Reff", "profile"])]
-
-        return df
-
-    def concat_profile_df(self, file_name, arr1, arr2):
-        """
-        Concatenates two data frames [Reff, n_e] and [Reff, T_e] into one [Reff, n_e, T_e].
-        """
-        df = pd.concat([arr1, arr2], axis=1)
-        df.columns = ["Reff", "n_e", "Reff", "T_e"]
-        df = df.loc[:, ~df.columns.duplicated()]
-        df["Reff"] = df["Reff"]  # [m]
-        df["n_e"] = 1e19 * df["n_e"]  # [1/m-3]
-        df["T_e"] = 1e3 * df["T_e"]  # [eV]
-
-        return df
-
-    def create_raw_profile_df(self):
+    def _merge_to_df(self):
         """
         Designation of the final data frame containing Reff, n_e and T_e profiles.
         This module calls subsequent functions - each next function takes as an argument
@@ -303,60 +265,51 @@ class ExperimentalProfile(Profile):
         Returns:
             profile_df: dataframe with [Reff, n_e, T_e]
         """
-        # te_idx_range, self.ne_idx_range = self._get_index_ranges()
-        te_section, ne_section = self.read_file_sections()
+        te_arr = np.array(self.te_section)[:, [0, 3]]
+        ne_arr = np.array(self.ne_section)[:, 3].reshape(-1, 1)
+        all_data = np.concatenate((te_arr, ne_arr), axis=1).astype(float)
+        df = pd.DataFrame(all_data)
+        df.columns = ["Reff [m]", "T_e [eV]", "n_e [m-3]"]
+        df["T_e [eV]"] = df["T_e [eV]"] * 1e3
+        df["n_e [m-3]"] = df["n_e [m-3]"] * 1e19
 
-        te, ne = self._remove_comments(te_section), self._remove_comments(ne_section)
-        te, ne = self.replace_delimiter(te), self.replace_delimiter(ne)
-        ne = self.split_to_columns(ne)
-        te = self.split_to_columns(te)
-        profile_df = self.concat_profile_df(self.file_name, ne, te)
+        return df
 
-        return profile_df
-
-    def interpolate_raw_profile(self):
+    def _interpolate(self):
         """
         Interpolation of selected ne, te profiles.
 
         Returns:
             interpolated_profiles: array of interpolated values of Reff, ne, Te with given precision
         """
-
-        Reff = self.raw_profile_df["Reff"]
-        n_e = self.raw_profile_df["n_e"]
-        T_e = self.raw_profile_df["T_e"]
+        df = self._merge_to_df()
+        Reff = df["Reff [m]"]
+        n_e = df["n_e [m-3]"]
+        T_e = df["T_e [eV]"]
         f1_te_interp = interpolate.interp1d(Reff, n_e)
         f2_te_interp = interpolate.interp1d(Reff, T_e)
 
-        def find_index():
-            idx = 0
-            for i, j in enumerate(Reff):
-                if j > self.max_Reff:
-                    idx = i
-                    break
-                else:
-                    idx = len(Reff) - 1  ########## TODO łopatoligicznie, poprawic!!!!!!
-                    break
-            return idx
-
-        max_reff_idx = find_index()
-        Reff = np.linspace(
-            0, Reff[max_reff_idx], self.interpolation_interval, endpoint=True
+        shortened_prof_df = df.drop(df[df["Reff [m]"] > self.max_Reff].index)
+        Reff_interp = np.linspace(
+            0,
+            shortened_prof_df["Reff [m]"].max(),
+            self.interpolation_interval,
+            endpoint=True,
         )
+        T_e_interp = f2_te_interp(Reff_interp)
+        n_e_interp = f1_te_interp(Reff_interp) / 1e6
 
-        n_e = f1_te_interp(Reff) / 1e6
-        T_e = f2_te_interp(Reff)
-
-        profile_df = pd.DataFrame(data=[Reff, T_e, n_e]).T
-        profile_df = profile_df.rename(columns={0: "Reff", 1: "T_e", 2: "n_e"})
-        # print(profile_df)
-        return profile_df
+        profiles_df = pd.DataFrame(data=[Reff_interp, T_e_interp, n_e_interp]).T
+        profiles_df = profiles_df.rename(
+            columns={0: "Reff [m]", 1: "T_e [eV]", 2: "n_e [m-3]"}
+        )
+        return profiles_df
 
     def plot(self):
-        return super().plot(self.profile_df)
+        return super().plot(self.profiles_df)
 
     def save_txt(self):
-        return super().save_txt(self.profile_df)
+        return super().save_txt(self.profiles_df)
 
 
 if __name__ == "__main__":
