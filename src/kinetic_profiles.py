@@ -145,25 +145,23 @@ class ExperimentalProfile(Profile):
         separates given range of Reff into 100 pieces)
     """
 
-    def __init__(self, file_name, max_Reff=0.539, interval=10000, plot=False):
-        """The class creates an object repesenting
-        experimental kinetic profiles registerd during experimental campaign.
-
+    def __init__(self, file_name, max_Reff=0.539, interp_step=10000, plot=False):
+        """
         Parameters
         ----------
-        file_name : _type_
-            _description_
+        file_name : str
+            Name of the loaded file contaitning kinetic data.
         max_Reff : int, optional
             _description_, by default 1
-        interval : int, optional
-            _description_, by default 10000
+        interp_step : int, optional
+            Defines the precision of kinetic profiles interpolation, by default 10000
         plot : bool, optional
             _description_, by default False
         """
         super().__init__()
         self.file_name = file_name
         self.max_Reff = max_Reff  # [m]
-        self.interpolation_interval = interval
+        self.interp_step = interp_step
 
         self.file_path = self._get_file_path()
         self.te_idx_range, self.ne_idx_range = self._get_index_ranges()
@@ -293,7 +291,7 @@ class ExperimentalProfile(Profile):
         Reff_interp = np.linspace(
             0,
             shortened_prof_df["Reff [m]"].max(),
-            self.interpolation_interval,
+            self.interp_step,
             endpoint=True,
         )
         T_e_interp = f2_te_interp(Reff_interp)
