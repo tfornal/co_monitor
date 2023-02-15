@@ -1,6 +1,6 @@
 
 
-# The C/O monitor code for comprehensive data analysis
+# The C/O monitor code for signal's simulations
 
 ## ---The code is currently under intensive development and is constantly being improved---
 
