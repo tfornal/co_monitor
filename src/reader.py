@@ -22,7 +22,7 @@ class Emissivity:
     def __init__(
         self,
         reff_magnetic_config,
-        plasma_profiles,
+        kinetic_profiles,
         element,
         ion_state,
         wavelength,
@@ -40,7 +40,7 @@ class Emissivity:
         ----------
         reff_file_name : STR
             Name of file containing Reff values.
-        plasma_profiles : 2D array (N, 3)
+        kinetic_profiles : 2D array (N, 3)
             2D array containing Reff [m], ne [cm3], Te[eV].
         element : STR
             Investigated element.
@@ -55,11 +55,7 @@ class Emissivity:
             Represents the transition types. Possibly "EXCIT", "RECOM" and "CHEXC".
         """
 
-        self.plasma_profiles = plasma_profiles#.rename(index={0: "Reff", 1: "T_e", 2: "n_e"})
-        # self.plasma_profiles.columns = ["Reff [m]","T_e [eV]", "n_e [m-3]"]
-        # df.columns = ["Reff [m]", "T_e [eV]", "n_e [m-3]"]
-        # print(self.plasma_profiles)
-        
+        self.kinetic_profiles = kinetic_profiles
         self.reff_magnetic_config = reff_magnetic_config
         self.reff_coordinates = self.load_Reff()
         self.observed_plasma_volume = self.load_observed_plasma(element)
@@ -199,30 +195,25 @@ class Emissivity:
         plasma_with_parameters : pd.DataFrame
             A DataFrame containing the observed plasma volume for each spectroscopic channel.
         """
-        plasma_params = pd.DataFrame(
-            self.plasma_profiles, columns=["Reff [m]", "n_e [m-3]", "T_e [eV]"]
-        )
-
-        indexes = []
-        rounded_Reff = plasma_params["Reff [m]"].round(3)
-
+        
         def cutoff_Reff_above_max_boundary():
             max_mapped_reff = self.reff_coordinates_with_radiation_fractions[
                 "Reff [m]"
             ].max()
-            max_profiles_reff = plasma_params["Reff [m]"].max()
+            max_profiles_reff = self.kinetic_profiles["Reff [m]"].max()
             reff_boundary = min(max_mapped_reff, max_profiles_reff)
             print(f"\nMax reff from mapped vmec: {max_mapped_reff}")
             print(f"\nMax reff from profiles: {reff_boundary}")
             return reff_boundary
 
         reff_boundary = cutoff_Reff_above_max_boundary()
-
+        
+        indexes = []
         for Reff in self.reff_coordinates_with_radiation_fractions["Reff [m]"]:
-            idx = (rounded_Reff - Reff).abs().idxmin()
+            idx = (self.kinetic_profiles["Reff [m]"] - Reff).abs().idxmin()
             indexes.append(idx)
 
-        selected_plasma_parameters = plasma_params.iloc[indexes]
+        selected_plasma_parameters = self.kinetic_profiles.iloc[indexes]
         selected_plasma_parameters = selected_plasma_parameters[["n_e [m-3]", "T_e [eV]"]]
 
         selected_plasma_parameters.reset_index(drop=True, inplace=True)
