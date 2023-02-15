@@ -85,7 +85,7 @@ class PEC:
         ne_nodes_nr, te_nodes_nr = map(int, (head[2], head[3]))
         return head_idx, ne_nodes_nr, te_nodes_nr
 
-    def _read_data(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def _read_data(self) -> tuple:
         """Read and process the data from the file.
 
         Returns

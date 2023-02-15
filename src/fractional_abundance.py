@@ -85,7 +85,7 @@ class FractionalAbundance:
         df_interpolated_frac_ab = np.array(list_of_interp_ionisation_states).T
 
         df_interpolated_frac_ab = pd.DataFrame(df_interpolated_frac_ab)
-        df_interpolated_frac_ab.insert(0, "Te", Te)
+        df_interpolated_frac_ab.insert(0, "T_e [eV]", Te)
         df_interpolated_frac_ab.columns = column_names
 
         return df_interpolated_frac_ab

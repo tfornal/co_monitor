@@ -55,7 +55,12 @@ class Emissivity:
             Represents the transition types. Possibly "EXCIT", "RECOM" and "CHEXC".
         """
 
-        self.plasma_profiles = plasma_profiles
+        self.plasma_profiles = plasma_profiles#.rename(index={0: "Reff", 1: "T_e", 2: "n_e"})
+        self.plasma_profiles.columns = ["Reff [m]","T_e [eV]", "n_e [m-3]"]
+        # df.columns = ["Reff [m]", "T_e [eV]", "n_e [m-3]"]
+        print(self.plasma_profiles)
+        # breakpoint()
+        
         self.reff_magnetic_config = reff_magnetic_config
         self.reff_coordinates = self.load_Reff()
         self.observed_plasma_volume = self.load_observed_plasma(element)
@@ -78,7 +83,7 @@ class Emissivity:
             self.impurity_concentration
         )
         self.total_emissivity = self.calculate_total_emissivity()
-
+        
     def _get_pec_data(self):
         lista = []
         for transition in self.transitions:
@@ -115,9 +120,9 @@ class Emissivity:
         )
 
         reff_coordinates = pd.read_csv(Reff_path, sep=" ")
-        reff_coordinates.columns = ["idx_plasma", "x", "y", "z", "Reff"]
+        reff_coordinates.columns = ["idx_plasma", "x", "y", "z", "Reff [m]"]
         reff_coordinates = reff_coordinates.astype(
-            {"idx_plasma": int, "x": float, "y": float, "z": float, "Reff": float}
+            {"idx_plasma": int, "x": float, "y": float, "z": float, "Reff [m]": float}
         )
         return reff_coordinates
 
@@ -155,13 +160,13 @@ class Emissivity:
 
         idx_list = df["idx_sel_plas_points"].tolist()
         plasma_points_po_indeksowaniu = self.reff_coordinates.iloc[idx_list]
-        Reff = plasma_points_po_indeksowaniu["Reff"]
-        Reff = plasma_points_po_indeksowaniu["Reff"].tolist()
-        df["Reff"] = Reff
+        Reff = plasma_points_po_indeksowaniu["Reff [m]"]
+        Reff = plasma_points_po_indeksowaniu["Reff [m]"].tolist()
+        df["Reff [m]"] = Reff
         df = df.dropna()
 
         def plotter():
-            reff = df["Reff"]
+            reff = df["Reff [m]"]
             intensity = df["total_intensity_fraction"]
             plasma_coordinates = df.to_numpy()[:, 1:4]
 
@@ -196,17 +201,17 @@ class Emissivity:
             A DataFrame containing the observed plasma volume for each spectroscopic channel.
         """
         plasma_params = pd.DataFrame(
-            self.plasma_profiles, columns=["Reff", "n_e", "T_e"]
+            self.plasma_profiles, columns=["Reff [m]", "n_e [m-3]", "T_e [eV]"]
         )
 
         indexes = []
-        rounded_Reff = plasma_params["Reff"].round(3)
+        rounded_Reff = plasma_params["Reff [m]"].round(3)
 
         def cutoff_Reff_above_max_boundary():
             max_mapped_reff = self.reff_coordinates_with_radiation_fractions[
-                "Reff"
+                "Reff [m]"
             ].max()
-            max_profiles_reff = plasma_params["Reff"].max()
+            max_profiles_reff = plasma_params["Reff [m]"].max()
             reff_boundary = min(max_mapped_reff, max_profiles_reff)
             print(f"\nMax reff from mapped vmec: {max_mapped_reff}")
             print(f"\nMax reff from profiles: {reff_boundary}")
@@ -214,12 +219,12 @@ class Emissivity:
 
         reff_boundary = cutoff_Reff_above_max_boundary()
 
-        for Reff in self.reff_coordinates_with_radiation_fractions["Reff"]:
+        for Reff in self.reff_coordinates_with_radiation_fractions["Reff [m]"]:
             idx = (rounded_Reff - Reff).abs().idxmin()
             indexes.append(idx)
 
         selected_plasma_parameters = plasma_params.iloc[indexes]
-        selected_plasma_parameters = selected_plasma_parameters[["n_e", "T_e"]]
+        selected_plasma_parameters = selected_plasma_parameters[["n_e [m-3]", "T_e [eV]"]]
 
         selected_plasma_parameters.reset_index(drop=True, inplace=True)
         self.reff_coordinates_with_radiation_fractions.reset_index(
@@ -234,7 +239,7 @@ class Emissivity:
         )
 
         plasma_with_parameters = plasma_with_parameters[
-            ~(plasma_with_parameters["Reff"] >= reff_boundary)
+            ~(plasma_with_parameters["Reff [m]"] >= reff_boundary)
         ].reset_index(drop=True)
 
         return plasma_with_parameters, reff_boundary
@@ -246,7 +251,7 @@ class Emissivity:
         fa = FractionalAbundance(self.element, self.ion_state)
         frac_ab = fa.df_interpolated_frac_ab
         emission_types = list(self.transitions)
-        fa_column_names = ["Te"]
+        fa_column_names = ["T_e [eV]"]
 
         selected_fractional_abundances = []
         if len(emission_types) >= 1 and "RECOM" not in emission_types:
@@ -266,7 +271,7 @@ class Emissivity:
         selected_fractional_abundances = np.array(selected_fractional_abundances).T
         Te = frac_ab["T"]
         frac_ab = pd.DataFrame(selected_fractional_abundances)
-        frac_ab.insert(0, "Te", Te)
+        frac_ab.insert(0, "T_e [eV]", Te)
         frac_ab.columns = fa_column_names
 
         return frac_ab
@@ -278,7 +283,7 @@ class Emissivity:
         """
         all_min_indexes = []
         for i, plasma_point_temp in self.ne_te_profiles.iterrows():
-            index = (plasma_point_temp["T_e"] - self.frac_ab["Te"]).abs().idxmin()
+            index = (plasma_point_temp["T_e [eV]"] - self.frac_ab["T_e [eV]"]).abs().idxmin()
             all_min_indexes.append(index)
 
         return all_min_indexes
@@ -289,7 +294,7 @@ class Emissivity:
         """
         all_min_indexes = self.find_index_of_closest_temperature()
         frac_ab = self.frac_ab.iloc[all_min_indexes]
-        frac_ab = frac_ab.drop(columns=["Te"])
+        frac_ab = frac_ab.drop(columns=["T_e [eV]"])
         frac_ab.reset_index(drop=True, inplace=True)  # reset indexes
         df_prof_frac_ab = pd.concat(
             [self.ne_te_profiles, frac_ab], axis=1
@@ -312,9 +317,9 @@ class Emissivity:
         for idx, trans in enumerate(self.transitions):
             pec = []
             for i, row in df_prof_frac_ab_pec.iterrows():
-                ne_idx = (np.abs(row["n_e"] - self.pec_data[idx, :, 0, 0])).argmin()
+                ne_idx = (np.abs(row["n_e [m-3]"] - self.pec_data[idx, :, 0, 0])).argmin()
                 te_idx = (
-                    np.abs(row["T_e"] - self.pec_data[idx, ne_idx, :, 1])
+                    np.abs(row["T_e [eV]"] - self.pec_data[idx, ne_idx, :, 1])
                 ).argmin()
                 pec.append(self.pec_data[idx, ne_idx, te_idx, 2])
             df_prof_frac_ab_pec[f"pec_{trans}"] = pec
@@ -334,7 +339,7 @@ class Emissivity:
         """
 
         pec_cols = [col for col in self.df_prof_frac_ab_pec.columns if "pec" in col]
-        ne = self.df_prof_frac_ab_pec["n_e"]
+        ne = self.df_prof_frac_ab_pec["n_e [m-3]"]
 
         ### TODO !!!!!!!!!!!!!!
         ### wyprowadzic to na gore funkcji!!!!!
@@ -365,7 +370,7 @@ class Emissivity:
         self.df_prof_frac_ab_pec["Emissivity_TOTAL"] = self.df_prof_frac_ab_pec[
             intensity_cols
         ].sum(axis=1)
-        self.df_prof_frac_ab_pec.sort_values("Reff", inplace=True)
+        self.df_prof_frac_ab_pec.sort_values("Reff [m]", inplace=True)
         df_prof_frac_ab_pec_emissivity = self.df_prof_frac_ab_pec
 
         return df_prof_frac_ab_pec_emissivity
@@ -430,7 +435,7 @@ class Emissivity:
         intensity_colname_list = [
             col for col in self.df_prof_frac_ab_pec.columns if "Emissivity" in col
         ]
-        Reff = self.df_prof_frac_ab_pec["Reff"]
+        Reff = self.df_prof_frac_ab_pec["Reff [m]"]
         plt.figure(figsize=(8, 5), dpi=100)
         plt.title(f"Emissivity radial distribution ({self.element} - {self.ion_state})")
         for col_name in intensity_colname_list:
@@ -476,10 +481,9 @@ if __name__ == "__main__":
     T_e = [1870, 0, 0.155, 210, 0.38, 0.07]
 
     # Select kinetic profiles
-    # kinetic_profiles = experimental_prof()
-    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profile_df
-    print(kinetic_profiles)
-    breakpoint()
+    # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
+    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
+    
     reff_magnetic_config = "Reff_coordinates-10_mm"
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]
