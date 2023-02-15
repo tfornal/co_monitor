@@ -442,8 +442,6 @@ class Emissivity:
             plt.plot(
                 Reff, self.df_prof_frac_ab_pec[f"{col_name}"], label=f"{col_name[-5:]}"
             )
-
-        # plt.yscale('log')
         plt.legend()
         plt.xlabel("Reff [m]")
         plt.ylabel("Emissivity [ph/cm3/s]")
@@ -481,8 +479,8 @@ if __name__ == "__main__":
     T_e = [1870, 0, 0.155, 210, 0.38, 0.07]
 
     # Select kinetic profiles
-    # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
-    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
+    kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
+    # kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
     
     reff_magnetic_config = "Reff_coordinates-10_mm"
     for element in lyman_alpha_lines:
