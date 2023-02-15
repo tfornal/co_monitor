@@ -584,9 +584,10 @@ class Simulation:
         ddf = ddf.groupby("idx_sel_plas_points").sum().reset_index()
 
         indices = ddf["idx_sel_plas_points"].values
-        ddf["plasma_x"] = self.cuboid_coordinates[indices][:, 0]
-        ddf["plasma_y"] = self.cuboid_coordinates[indices][:, 1]
-        ddf["plasma_z"] = self.cuboid_coordinates[indices][:, 2]
+        ddf["plasma_x"] = self.cuboid_coordinates[indices][:, 0].round(1)
+        ddf["plasma_y"] = self.cuboid_coordinates[indices][:, 1].round(1)
+        ddf["plasma_z"] = self.cuboid_coordinates[indices][:, 2].round(1)
+        # rearrange columns in dask dataframe
         ddf = ddf[
             [
                 "idx_sel_plas_points",
@@ -638,10 +639,10 @@ if __name__ == "__main__":
     # elements_list = ["C"]
     testing_settings = dict(
         slits_number=10,
-        distance_between_points=50,
-        crystal_height_step=5,
-        crystal_length_step=5,
-        savetxt=False,
+        distance_between_points=10,
+        crystal_height_step=20,
+        crystal_length_step=40,
+        savetxt=True,
         plot=False,
     )
     for element in elements_list:

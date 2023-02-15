@@ -21,13 +21,13 @@ from pec import PEC
 class Emissivity:
     def __init__(
         self,
-        reff_magnetic_config,
-        kinetic_profiles,
         element,
         ion_state,
         wavelength,
-        impurity_fraction,
+        impurity_concentration,
         transitions,
+        reff_magnetic_config,
+        kinetic_profiles,
         plot=False,
     ):
         """
@@ -54,21 +54,22 @@ class Emissivity:
         transitions : LIST OF STR
             Represents the transition types. Possibly "EXCIT", "RECOM" and "CHEXC".
         """
-
-        self.kinetic_profiles = kinetic_profiles
+        self.element = element
+        self.ionization_state = ion_state
+        self.wavelength = wavelength
+        self.transitions = transitions
+        self.impurity_concentration = impurity_concentration  # [%]
         self.reff_magnetic_config = reff_magnetic_config
+        self.kinetic_profiles = kinetic_profiles
+
         self.reff_coordinates = self.load_Reff()
-        self.observed_plasma_volume = self.load_observed_plasma(element)
+        self.observed_plasma_volume = self.load_observed_plasma()
         self.reff_coordinates_with_radiation_fractions = (
             self.read_plasma_coordinates_with_radiation_fractions()
         )
         self.transitions = transitions
         self.pec_data = self._get_pec_data()
-        self.element = element
-        self.impurity_concentration = impurity_fraction  # [%]
-        self.ion_state = ion_state
-        self.wavelength = wavelength
-        self.transitions = transitions
+
         self.ne_te_profiles, self.reff_boundary = self.read_ne_te()
         self.frac_ab = self.read_fractional_abundance()
         self.df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
@@ -78,7 +79,7 @@ class Emissivity:
             self.impurity_concentration
         )
         self.total_emissivity = self.calculate_total_emissivity()
-        
+
     def _get_pec_data(self):
         lista = []
         for transition in self.transitions:
@@ -119,9 +120,10 @@ class Emissivity:
         reff_coordinates = reff_coordinates.astype(
             {"idx_plasma": int, "x": float, "y": float, "z": float, "Reff [m]": float}
         )
+
         return reff_coordinates
 
-    def load_observed_plasma(self, element: str) -> pd.DataFrame:
+    def load_observed_plasma(self) -> pd.DataFrame:
         """
         Load a file containing observed plasma volume for each spectroscopic channel.
 
@@ -139,12 +141,12 @@ class Emissivity:
             Path(__file__).parent.resolve()
             / "_Input_files"
             / "Geometric_data"
-            / f"{element}"
+            / f"{self.element}"
+            # / f"{self.element}_plasma_coordinates-10_mm_spacing-height_20-length_40-slit_100.dat"  #### testowo
             / "top"
-            / f"{element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
+            / f"{self.element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
         )
         observed_plasma_volume = pd.read_csv(observed_plasma, sep=";")
-
         return observed_plasma_volume
 
     def read_plasma_coordinates_with_radiation_fractions(self):
@@ -195,7 +197,7 @@ class Emissivity:
         plasma_with_parameters : pd.DataFrame
             A DataFrame containing the observed plasma volume for each spectroscopic channel.
         """
-        
+
         def cutoff_Reff_above_max_boundary():
             max_mapped_reff = self.reff_coordinates_with_radiation_fractions[
                 "Reff [m]"
@@ -207,14 +209,16 @@ class Emissivity:
             return reff_boundary
 
         reff_boundary = cutoff_Reff_above_max_boundary()
-        
+
         indexes = []
         for Reff in self.reff_coordinates_with_radiation_fractions["Reff [m]"]:
             idx = (self.kinetic_profiles["Reff [m]"] - Reff).abs().idxmin()
             indexes.append(idx)
 
         selected_plasma_parameters = self.kinetic_profiles.iloc[indexes]
-        selected_plasma_parameters = selected_plasma_parameters[["n_e [m-3]", "T_e [eV]"]]
+        selected_plasma_parameters = selected_plasma_parameters[
+            ["n_e [m-3]", "T_e [eV]"]
+        ]
 
         selected_plasma_parameters.reset_index(drop=True, inplace=True)
         self.reff_coordinates_with_radiation_fractions.reset_index(
@@ -238,21 +242,21 @@ class Emissivity:
         """
         Assigns fractional abundance to each Reff value.
         """
-        fa = FractionalAbundance(self.element, self.ion_state)
+        fa = FractionalAbundance(self.element, self.ionization_state)
         frac_ab = fa.df_interpolated_frac_ab
         emission_types = list(self.transitions)
         fa_column_names = ["T_e [eV]"]
 
         selected_fractional_abundances = []
         if len(emission_types) >= 1 and "RECOM" not in emission_types:
-            df = frac_ab[self.ion_state]
+            df = frac_ab[self.ionization_state]
             selected_fractional_abundances.append(df)
-            fa_column_names.append(self.ion_state)
+            fa_column_names.append(self.ionization_state)
 
         elif len(emission_types) >= 1 and "RECOM" in emission_types:
-            df = frac_ab[self.ion_state]
+            df = frac_ab[self.ionization_state]
             selected_fractional_abundances.append(df)
-            fa_column_names.append(self.ion_state)
+            fa_column_names.append(self.ionization_state)
 
             df = frac_ab.iloc[:, -1]
             selected_fractional_abundances.append(df)
@@ -273,7 +277,11 @@ class Emissivity:
         """
         all_min_indexes = []
         for i, plasma_point_temp in self.ne_te_profiles.iterrows():
-            index = (plasma_point_temp["T_e [eV]"] - self.frac_ab["T_e [eV]"]).abs().idxmin()
+            index = (
+                (plasma_point_temp["T_e [eV]"] - self.frac_ab["T_e [eV]"])
+                .abs()
+                .idxmin()
+            )
             all_min_indexes.append(index)
 
         return all_min_indexes
@@ -307,7 +315,9 @@ class Emissivity:
         for idx, trans in enumerate(self.transitions):
             pec = []
             for i, row in df_prof_frac_ab_pec.iterrows():
-                ne_idx = (np.abs(row["n_e [m-3]"] - self.pec_data[idx, :, 0, 0])).argmin()
+                ne_idx = (
+                    np.abs(row["n_e [m-3]"] - self.pec_data[idx, :, 0, 0])
+                ).argmin()
                 te_idx = (
                     np.abs(row["T_e [eV]"] - self.pec_data[idx, ne_idx, :, 1])
                 ).argmin()
@@ -349,7 +359,7 @@ class Emissivity:
                 )
             else:
                 self.df_prof_frac_ab_pec[f"Emissivity_{pec[4:]}"] = (
-                    self.df_prof_frac_ab_pec[self.ion_state]
+                    self.df_prof_frac_ab_pec[self.ionization_state]
                     * self.df_prof_frac_ab_pec[f"{pec}"]
                     * ne**2
                     * impurity_concentration
@@ -403,7 +413,7 @@ class Emissivity:
         np.savetxt(
             PurePath(
                 directory,
-                f"Emissivity ({self.element} - {self.ion_state} - file).dat",
+                f"Emissivity ({self.element} - {self.ionization_state} - file).dat",
             ),
             self.df_prof_frac_ab_pec,
             header=f"{self.df_prof_frac_ab_pec.columns} \n Total emissivity: {self.total_emissivity}",
@@ -427,7 +437,9 @@ class Emissivity:
         ]
         Reff = self.df_prof_frac_ab_pec["Reff [m]"]
         plt.figure(figsize=(8, 5), dpi=100)
-        plt.title(f"Emissivity radial distribution ({self.element} - {self.ion_state})")
+        plt.title(
+            f"Emissivity radial distribution ({self.element} - {self.ionization_state})"
+        )
         for col_name in intensity_colname_list:
             plt.plot(
                 Reff, self.df_prof_frac_ab_pec[f"{col_name}"], label=f"{col_name[-5:]}"
@@ -444,7 +456,8 @@ class Emissivity:
                     Path(directory).mkdir(parents=True, exist_ok=True)
                 plt.savefig(
                     PurePath(
-                        directory, f"Emissivity ({self.element} - {self.ion_state})"
+                        directory,
+                        f"Emissivity ({self.element} - {self.ionization_state})",
                     )
                 )
             else:
@@ -455,8 +468,8 @@ class Emissivity:
 
 if __name__ == "__main__":
 
-    lyman_alpha_lines = ["O"]  # , "B", "C", "N"]
-    Element = namedtuple("Element", "ion_state wavelength impurity_fraction")
+    lyman_alpha_lines = ["C"]  # , "B", "C", "N"]
+    Element = namedtuple("Element", "ion_state wavelength impurity_concentration")
 
     lyman_alpha_line = {
         "B": Element("Z4", 48.6, 0.02),
@@ -471,18 +484,18 @@ if __name__ == "__main__":
     # Select kinetic profiles
     # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
     kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
-    
+
     reff_magnetic_config = "Reff_coordinates-10_mm"
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]
         ce = Emissivity(
-            reff_magnetic_config,
-            kinetic_profiles,
             element,
             line.ion_state,
             line.wavelength,
-            line.impurity_fraction,
+            line.impurity_concentration,
             transitions,
+            reff_magnetic_config,
+            kinetic_profiles,
         )
         # ce.savefile()
         ce.plot(savefig=False)
