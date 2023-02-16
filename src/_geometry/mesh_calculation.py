@@ -222,5 +222,5 @@ class CuboidMesh:
 
 if __name__ == "__main__":
     distance_between_points = 10
-    cuboid_dimensions = [1350, 800, 250]
+    cuboid_dimensions = [1350, 800, 50]
     CuboidMesh(distance_between_points, cuboid_dimensions, plot=True, savetxt=True)
