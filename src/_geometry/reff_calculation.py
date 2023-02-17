@@ -110,7 +110,6 @@ class ReffVMEC:
                     List of GET requests for the plasma points in the current chunk.
                 """
                 tasks = []
-                print(self.cuboid_coordinates)
                 for plas_point in self.cuboid_coordinates[
                     chunk * self.chunk_size : (chunk + 1) * self.chunk_size
                 ]:
