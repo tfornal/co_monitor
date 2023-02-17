@@ -15,7 +15,6 @@ df.columns = [
     "plasma_z",
     "total_intensity_fraction",
 ]
-print(df)
 """Plots observed plasma volume including distribution of radiation intensity regions."""
 fig = pv.Plotter()
 fig.set_background("black")
