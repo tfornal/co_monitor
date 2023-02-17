@@ -10,9 +10,10 @@ from pathlib import Path
 from mesh_calculation import CuboidMesh
 import pandas as pd
 
+
 class ReffVMEC:
     URL = "http://svvmec1.ipp-hgw.mpg.de:8080/vmecrest/v1/geiger/w7x/1000_1000_1000_1000_+0000_+0000/01/00/reff.json?x={}&y={}&z={}"
-    
+
     def __init__(
         self,
         distance_between_points: int = 10,
@@ -33,18 +34,18 @@ class ReffVMEC:
         self.distance_between_points = distance_between_points
         self.cuboid_size = cuboid_size
         self.chunk_size = chunk_size
-        
-        self.cuboid_coordinates = self._get_plasma_coordinates()/1000
+
+        self.cuboid_coordinates = self._get_plasma_coordinates() / 1000
         self.reff_df = self.read_reff_calculated()
         if save:
             self._save_to_file()
-    
+
     def _get_plasma_coordinates(self):
         cm = CuboidMesh(self.distance_between_points, self.cuboid_size)
         cuboid_mesh = cm.outer_cube_mesh
-        
-        return cuboid_mesh 
-    
+
+        return cuboid_mesh
+
     def read_reff_calculated(self):
 
         """
@@ -52,7 +53,7 @@ class ReffVMEC:
         accepts coordinates in meters.
         """
         reff = []
-        
+
         # async
         def calc_chunks_nr():
             #            if chunk_size == 0:
@@ -66,7 +67,7 @@ class ReffVMEC:
         chunks_nr = calc_chunks_nr()
         print(f"\nNumber of chunks: {chunks_nr}")
         print(f"Chunk size: {self.chunk_size}")
-        
+
         for chunk in tqdm(range(chunks_nr)):
 
             def get_tasks(session):
@@ -94,7 +95,7 @@ class ReffVMEC:
 
         reff_array = np.zeros([len(self.cuboid_coordinates), 3])
         reff_array = self.cuboid_coordinates[:, :3].round(4)
-        
+
         df = pd.DataFrame()
         df["idx"] = np.arange(len(self.cuboid_coordinates))
         df["x [m]"] = reff_array[:, 0]
@@ -103,15 +104,20 @@ class ReffVMEC:
         df["Reff [m]"] = np.array(reff).astype(float).round(3)
         print(df)
         return df
-        
+
     def _save_to_file(self):
-        self.reff_df.to_csv(f"Reff_coordinates-{self.distance_between_points}mm.dat", sep = ";", index = False, na_rep='NaN')
+        path = Path(__file__).parent.parent.resolve() / "_Input_files" / "Reff"
+        self.reff_df.to_csv(
+            path / f"Reff_coordinates-{self.distance_between_points}_mm.dat",
+            sep=";",
+            index=False,
+            na_rep="NaN",
+        )
 
 
 if __name__ == "__main__":
-    for precision in [30,25,20,15,10]:
+    for precision in [30, 25, 20, 15, 10]:
         try:
-            print(precision)
-            ReffVMEC(precision, cuboid_size=[1350, 800, 250], save = True)
+            ReffVMEC(precision, cuboid_size=[1350, 800, 250], save=True)
         except:
             pass

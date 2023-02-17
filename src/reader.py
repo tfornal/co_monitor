@@ -60,9 +60,10 @@ class Emissivity:
         self.transitions = transitions
         self.impurity_concentration = impurity_concentration  # [%]
         self.reff_magnetic_config = reff_magnetic_config
+        print(self.reff_magnetic_config)
         self.kinetic_profiles = kinetic_profiles
 
-        self.reff_coordinates = self.load_Reff()
+        self.reff_coordinates = self._get_Reff()
         self.observed_plasma_volume = self.load_observed_plasma()
         self.reff_coordinates_with_radiation_fractions = (
             self.read_plasma_coordinates_with_radiation_fractions()
@@ -91,7 +92,7 @@ class Emissivity:
         pec_interp = np.array(lista)
         return pec_interp
 
-    def load_Reff(self) -> pd.DataFrame:
+    def _get_Reff(self) -> pd.DataFrame:
         """
         Load a file containing plasma coordinates and their calculated Reff value (if available).
 
@@ -112,10 +113,10 @@ class Emissivity:
             Path(__file__).parent.resolve()
             / "_Input_files"
             / "Reff"
-            / f"{self.reff_magnetic_config}.txt"
+            / f"{self.reff_magnetic_config}.dat"
         )
 
-        reff_coordinates = pd.read_csv(Reff_path, sep=" ")
+        reff_coordinates = pd.read_csv(Reff_path, sep=";")
         reff_coordinates.columns = ["idx_plasma", "x", "y", "z", "Reff [m]"]
         reff_coordinates = reff_coordinates.astype(
             {"idx_plasma": int, "x": float, "y": float, "z": float, "Reff [m]": float}
@@ -142,7 +143,7 @@ class Emissivity:
             / "_Input_files"
             / "Geometric_data"
             / f"{self.element}"
-            / f"{self.element}_plasma_coordinates-20_mm_spacing-height_10-length_10-slit_100.dat"  #### testowo
+            / f"{self.element}_plasma_coordinates-10_mm_spacing-height_30-length_10-slit_100.dat"  #### testowo
             # / "top"
             # / f"{self.element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
         )

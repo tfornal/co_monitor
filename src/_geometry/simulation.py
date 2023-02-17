@@ -639,9 +639,9 @@ if __name__ == "__main__":
     # elements_list = ["C"]
     testing_settings = dict(
         slits_number=10,
-        distance_between_points=10,
+        distance_between_points=20,
         crystal_height_step=20,
-        crystal_length_step=40,
+        crystal_length_step=20,
         savetxt=True,
         plot=False,
     )
