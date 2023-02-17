@@ -254,52 +254,63 @@ class ExperimentalProfile(Profile):
 
         return te_section, ne_section
 
-    def _merge_to_df(self):
-        """
-        Designation of the final data frame containing Reff, n_e and T_e profiles.
-        This module calls subsequent functions - each next function takes as an argument
-        returned values by funcions called previously.
+    def _merge_to_df(self) -> pd.DataFrame:
+        """Designate the final data frame containing Reff, n_e, and T_e profiles.
 
-        Returns:
-            profile_df: dataframe with [Reff, n_e, T_e]
+        Returns
+        -------
+        pd.DataFrame
+            A pandas DataFrame with the following columns:
+            - "Reff [m]": Effective radius values in meters.
+            - "T_e [eV]": Electron temperature values in electron volts (eV).
+            - "n_e [m-3]": Electron density values in meters^-3.
+
         """
         te_arr = np.array(self.te_section)[:, [0, 3]]
         ne_arr = np.array(self.ne_section)[:, 3].reshape(-1, 1)
+
+        # Combine the columns into a single 2D array and convert to a DataFrame.
         all_data = np.concatenate((te_arr, ne_arr), axis=1).astype(float)
-        df = pd.DataFrame(all_data)
-        df.columns = ["Reff [m]", "T_e [eV]", "n_e [m-3]"]
+        df = pd.DataFrame(all_data, columns=["Reff [m]", "T_e [eV]", "n_e [m-3]"])
+
+        # Convert temperature and density units and return the DataFrame.
         df["T_e [eV]"] = df["T_e [eV]"] * 1e3
         df["n_e [m-3]"] = df["n_e [m-3]"] * 1e19
-
         return df
 
-    def _interpolate(self):
-        """
-        Interpolation of selected ne, te profiles.
+    def _interpolate(self) -> pd.DataFrame:
+        """Interpolate selected ne and Te profiles.
 
-        Returns:
-            interpolated_profiles: array of interpolated values of Reff, ne, Te with given precision
+        Returns
+        -------
+        pd.DataFrame
+            A pandas DataFrame with the following columns:
+            - "Reff [m]": Effective radius values in meters.
+            - "T_e [eV]": Interpolated electron temperature values in electron volts (eV).
+            - "n_e [m-3]": Interpolated electron density values in meters^-3.
+
         """
+        # Merge the ne and Te profiles into a single DataFrame.
         df = self._merge_to_df()
+
+        # Interpolate the ne and Te profiles.
         Reff = df["Reff [m]"]
         n_e = df["n_e [m-3]"]
         T_e = df["T_e [eV]"]
         f1_te_interp = interpolate.interp1d(Reff, n_e)
         f2_te_interp = interpolate.interp1d(Reff, T_e)
 
+        # Create a new DataFrame with the interpolated profiles.
         shortened_prof_df = df.drop(df[df["Reff [m]"] > self.max_Reff].index)
         Reff_interp = np.linspace(
-            0,
-            shortened_prof_df["Reff [m]"].max(),
-            self.interp_step,
-            endpoint=True,
+            0, shortened_prof_df["Reff [m]"].max(), self.interp_step, endpoint=True
         )
         T_e_interp = f2_te_interp(Reff_interp)
         n_e_interp = f1_te_interp(Reff_interp) / 1e6
-
-        profiles_df = pd.DataFrame(data=[Reff_interp, T_e_interp, n_e_interp]).round(3).T
-        profiles_df = profiles_df.rename(columns={0: "Reff [m]", 1: "T_e [eV]", 2: "n_e [m-3]"})
-        print(profiles_df)
+        profiles_df = (
+            pd.DataFrame(data=[Reff_interp, T_e_interp, n_e_interp]).round(3).T
+        )
+        profiles_df.columns = ["Reff [m]", "T_e [eV]", "n_e [m-3]"]
         return profiles_df
 
     def plot(self):
