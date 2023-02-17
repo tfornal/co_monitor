@@ -34,9 +34,12 @@ class ReffVMEC:
         self.distance_between_points = distance_between_points
         self.cuboid_size = cuboid_size
         self.chunk_size = chunk_size
-
-        self.cuboid_coordinates = self._get_plasma_coordinates() / 1000
-        self.reff_df = self.read_reff_calculated()
+        self.cuboid_coordinates = (
+            self._get_plasma_coordinates() / 1000
+        )  # conversion from [mm] to [m]
+        self.chunks_nr = self._calc_chunks_nr()
+        self.reff_array = self._retrieve_from_API()
+        self.reff_df = self.create_df()
         if save:
             self._save_to_file()
 
@@ -46,29 +49,25 @@ class ReffVMEC:
 
         return cuboid_mesh
 
-    def read_reff_calculated(self):
+    def _calc_chunks_nr(self):
+        if len(self.cuboid_coordinates) > self.chunk_size:
+            chunks_number = len(self.cuboid_coordinates) // self.chunk_size + 1
+        else:
+            chunks_number = 1
 
+        print(f"\nNumber of chunks: {chunks_number}")
+        print(f"Chunk size: {self.chunk_size}")
+
+        return chunks_number
+
+    def _retrieve_from_API(self):
         """
         Reads values of Reff corresponding to the cartesian coordinates. VMEC
         accepts coordinates in meters.
         """
+
         reff = []
-
-        # async
-        def calc_chunks_nr():
-            #            if chunk_size == 0:
-            #                chunks_number = 1
-            if len(self.cuboid_coordinates) > self.chunk_size:
-                chunks_number = len(self.cuboid_coordinates) // self.chunk_size + 1
-            else:
-                chunks_number = 1
-            return chunks_number
-
-        chunks_nr = calc_chunks_nr()
-        print(f"\nNumber of chunks: {chunks_nr}")
-        print(f"Chunk size: {self.chunk_size}")
-
-        for chunk in tqdm(range(chunks_nr)):
+        for chunk in tqdm(range(self.chunks_nr)):
 
             def get_tasks(session):
                 tasks = []
@@ -93,16 +92,17 @@ class ReffVMEC:
             nest_asyncio.apply()
             asyncio.run(get_reff_points())
 
-        reff_array = np.zeros([len(self.cuboid_coordinates), 3])
-        reff_array = self.cuboid_coordinates[:, :3].round(4)
+        return np.array(reff)
 
+    def create_df(self):
+        rounded_cuboid_coordinates = self.cuboid_coordinates.round(4)
         df = pd.DataFrame()
         df["idx"] = np.arange(len(self.cuboid_coordinates))
-        df["x [m]"] = reff_array[:, 0]
-        df["y [m]"] = reff_array[:, 1]
-        df["z [m]"] = reff_array[:, 2]
-        df["Reff [m]"] = np.array(reff).astype(float).round(3)
-        print(df)
+        df["x [m]"] = rounded_cuboid_coordinates[:, 0]
+        df["y [m]"] = rounded_cuboid_coordinates[:, 1]
+        df["z [m]"] = rounded_cuboid_coordinates[:, 2]
+        df["Reff [m]"] = self.reff_array.astype(float).round(3)
+
         return df
 
     def _save_to_file(self):
@@ -117,7 +117,4 @@ class ReffVMEC:
 
 if __name__ == "__main__":
     for precision in [30, 25, 20, 15, 10]:
-        try:
-            ReffVMEC(precision, cuboid_size=[1350, 800, 250], save=True)
-        except:
-            pass
+        ReffVMEC(precision, cuboid_size=[1350, 800, 250], save=True)
