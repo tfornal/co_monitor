@@ -624,8 +624,9 @@ class Simulation:
         self.ddf.to_csv(
             Path(__file__).parent.parent.resolve()
             / "_Input_files"
-            / "Geometric_data"
-            / f"{self.element}"  ####  +top/bottom closing side -resolve
+            / "Geometry"
+            / "Observed_plasma_volume"
+            / f"{self.element}"
             / f"{self.element}_plasma_coordinates-{self.distance_between_points}_mm_spacing-height_{self.crystal_height_step}-length_{self.crystal_length_step}-slit_{self.slits_number}*.dat",
             sep=";",
             header=True,
@@ -638,7 +639,7 @@ if __name__ == "__main__":
     elements_list = ["C", "B", "N", "O"]
     testing_settings = dict(
         slits_number=10,
-        distance_between_points=10,
+        distance_between_points=50,
         crystal_height_step=40,
         crystal_length_step=20,
         savetxt=True,

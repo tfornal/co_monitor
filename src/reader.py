@@ -112,6 +112,7 @@ class Emissivity:
         Reff_path = (
             Path(__file__).parent.resolve()
             / "_Input_files"
+            / "Geometry"
             / "Reff"
             / f"{self.reff_magnetic_config}.dat"
         )
@@ -141,7 +142,8 @@ class Emissivity:
         observed_plasma = (
             Path(__file__).parent.resolve()
             / "_Input_files"
-            / "Geometric_data"
+            / "Geometry"
+            / "Observed_plasma_volume"
             / f"{self.element}"
             / f"{self.element}_plasma_coordinates-10_mm_spacing-height_30-length_20-slit_100.dat"  #### testowo
             # / "top"
