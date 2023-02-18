@@ -6,7 +6,7 @@ import pathlib
 
 cwd = pathlib.Path(__file__).parent.resolve()
 
-path = cwd / "C_plasma_coordinates-10_mm_spacing-height_20-length_20-slit_100.dat"
+path = cwd / "C_plasma_coordinates-10_mm_spacing-height_30-length_20-slit_100.dat"
 df = pd.read_csv(path, delimiter=";")
 df.columns = [
     "idx_sel_plas_points",

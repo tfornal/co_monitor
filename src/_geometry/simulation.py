@@ -635,12 +635,11 @@ class Simulation:
 
 
 if __name__ == "__main__":
-    elements_list = ["C"]  # , "B", "N", "O"]
-    # elements_list = ["C"]
+    elements_list = ["C", "B", "N", "O"]
     testing_settings = dict(
         slits_number=10,
-        distance_between_points=20,
-        crystal_height_step=20,
+        distance_between_points=10,
+        crystal_height_step=40,
         crystal_length_step=20,
         savetxt=True,
         plot=False,

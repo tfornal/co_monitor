@@ -143,7 +143,7 @@ class Emissivity:
             / "_Input_files"
             / "Geometric_data"
             / f"{self.element}"
-            / f"{self.element}_plasma_coordinates-10_mm_spacing-height_30-length_10-slit_100.dat"  #### testowo
+            / f"{self.element}_plasma_coordinates-10_mm_spacing-height_30-length_20-slit_100.dat"  #### testowo
             # / "top"
             # / f"{self.element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
         )
