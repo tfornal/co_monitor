@@ -5,9 +5,6 @@ __email__ = "tomasz.fornal6@gmail.com"
 Kod musi pobierac dane z pliku wyjsciowego uzyskanego za pomoca rest api.
 Step 1 - wyznaczenie objetosci jaka obserwowalby kazdy kanal.
 Step 2 - Nastepnie kazdy punkt sprawdzany bylby modulem ponizej.
-TODO - reflectivity readout -> not a gaussian but experimental profile
-TODO - zapis do bazy danych (sql???? czy cos innego?) a nie csv!!!!!!
-TODO - testy dla slits number closing top i bottom # for slit in slits_number:
 TODO - poprawić nazewnictwo zapisywanych plików!
 """
 
