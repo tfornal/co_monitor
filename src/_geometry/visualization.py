@@ -33,6 +33,7 @@ def make_cuboid():
     pm = CuboidMesh(distance_between_points=100, cuboid_dimensions=[1800, 800, 2000])
     reduced_cuboid_coordinates = pm.outer_cube_mesh
     print("Cuboid generated!")
+
     return reduced_cuboid_coordinates
 
 
@@ -41,10 +42,13 @@ def read_Reff_coordinates():
         Path(__file__).parent.parent
         / "_Input_files"
         / "Reff"
-        / "Reff_coordinates-10_mm.txt"
+        / "Reff_coordinates-10_mm.dat"
     )
 
-    Reff_VMEC_calculated = np.loadtxt(Reff)  ### [mm]
+    Reff_VMEC_calculated = (
+        np.loadtxt(Reff, delimiter=";", skiprows=1) * 1000
+    )  # convert from [m] to [mm]
+    Reff_VMEC_calculated = Reff_VMEC_calculated * 1000  #
 
     return Reff_VMEC_calculated
 
@@ -63,13 +67,13 @@ def make_observed_plasma_volume(Reff_VMEC_calculated, element):
     calculated_plasma_coordinates = (
         Path(__file__).parent.parent.resolve()
         / "_Input_files"
-        / "__Visualization"
-        / f"{element}_plasma_coordinates.csv"
+        / "Geometric_data"
+        / f"{element}"
+        / f"{element}_plasma_coordinates-10_mm_spacing-height_30-length_20-slit_100.dat"
     )
 
     df = pd.read_csv(calculated_plasma_coordinates, sep=";")
     indexes = df.iloc[:, 0].values
-
     Reff_VMEC_calculated_with_idx = np.zeros((len(Reff_VMEC_calculated), 5))
     Reff_VMEC_calculated_with_idx[:, 0] = np.arange(len(Reff_VMEC_calculated))
     Reff_VMEC_calculated_with_idx[:, 1:] = Reff_VMEC_calculated[:, 1:]
@@ -191,7 +195,8 @@ def plotter():
         plasma_coordinates, pc = make_observed_plasma_volume(
             Reff_VMEC_calculated, element
         )
-        if polydata == True:
+        print(Reff_VMEC_calculated)
+        if polydata:
             fig.add_mesh(
                 pv.PolyData(pc), point_size=8, render_points_as_spheres=True
             )  # , opacity = 0.8)
