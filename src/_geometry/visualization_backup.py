@@ -19,15 +19,6 @@ from port import Port
 from radiation_shield import RadiationShield
 
 
-# class Cuboid:
-#     def __init__(self):
-
-
-# class Visualization:
-#     def __init__(self):
-#         pass
-
-
 def make_hull(points):
     hull = ConvexHull(points)
     faces = np.column_stack(
@@ -79,16 +70,13 @@ def make_observed_plasma_volume(Reff_VMEC_calculated, element):
         / f"{element}_plasma_coordinates-10_mm_spacing-height_30-length_20-slit_100.dat"
     )
 
-    observed_cuboid_coords = np.loadtxt(
-        calculated_plasma_coordinates, delimiter=";", skiprows=1
-    )
-    idx_observed_cuboid_coords = observed_cuboid_coords[:, 0].astype(int)
+    df = pd.read_csv(calculated_plasma_coordinates, sep=";")
+    indexes = df.iloc[:, 0].values
     Reff_VMEC_calculated_with_idx = np.zeros((len(Reff_VMEC_calculated), 5))
     Reff_VMEC_calculated_with_idx[:, 0] = np.arange(len(Reff_VMEC_calculated))
     Reff_VMEC_calculated_with_idx[:, 1:] = Reff_VMEC_calculated[:, 1:]
-    Reff_VMEC_calculated_with_idx = Reff_VMEC_calculated_with_idx[
-        idx_observed_cuboid_coords
-    ]
+
+    Reff_VMEC_calculated_with_idx = Reff_VMEC_calculated_with_idx[indexes]
     observed_plasma_volume = Reff_VMEC_calculated_with_idx[
         ~np.isnan(Reff_VMEC_calculated_with_idx).any(axis=1)
     ]
