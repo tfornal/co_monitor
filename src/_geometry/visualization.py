@@ -1,7 +1,6 @@
 __author__ = "T. Fornal"
 __email__ = "tomasz.fornal6@gmail.com"
 
-
 import json
 import math
 from pathlib import Path
@@ -22,10 +21,12 @@ from radiation_shield import RadiationShield
 class PlasmaVolume:
     def __init__(self, element):
         self.element = element
-        self.Reff_VMEC_calculated = self.get_Reff_coordinates()
-        self.plasma_coordinates, self.point_cloud = self.make_observed_plasma_volume()
+        self.observed_cuboid_coords = self._get_plasma_coordinates()
+        self.Reff_VMEC_calculated = self._get_Reff_coordinates()
+        self.observed_plasma_volume = self._assign_indexes()
+        self.point_cloud = self._create_point_cloud()
 
-    def get_Reff_coordinates(self):
+    def _get_Reff_coordinates(self):
         Reff = (
             Path(__file__).parent.parent
             / "_Input_files"
@@ -39,7 +40,7 @@ class PlasmaVolume:
         )  # convert from [m] to [mm]
         return Reff_VMEC_calculated
 
-    def make_observed_plasma_volume(self):
+    def _get_plasma_coordinates(self):
         calculated_plasma_coordinates = (
             Path(__file__).parent.parent.resolve()
             / "_Input_files"
@@ -52,30 +53,28 @@ class PlasmaVolume:
         observed_cuboid_coords = np.loadtxt(
             calculated_plasma_coordinates, delimiter=";", skiprows=1
         )
-        idx_observed_cuboid_coords = observed_cuboid_coords[:, 0].astype(int)
+        return observed_cuboid_coords
+
+    def _assign_indexes(self):
+        indexes = self.observed_cuboid_coords[:, 0].astype(int)
         Reff_VMEC_calculated_with_idx = np.zeros((len(self.Reff_VMEC_calculated), 5))
         Reff_VMEC_calculated_with_idx[:, 0] = np.arange(len(self.Reff_VMEC_calculated))
         Reff_VMEC_calculated_with_idx[:, 1:] = self.Reff_VMEC_calculated[:, 1:]
-        Reff_VMEC_calculated_with_idx = Reff_VMEC_calculated_with_idx[
-            idx_observed_cuboid_coords
-        ]
+        Reff_VMEC_calculated_with_idx = Reff_VMEC_calculated_with_idx[indexes]
         observed_plasma_volume = Reff_VMEC_calculated_with_idx[
             ~np.isnan(Reff_VMEC_calculated_with_idx).any(axis=1)
         ]
-        reff = observed_plasma_volume[:, -1]
-        reff = reff
-        plasma_coordinates = observed_plasma_volume[:, 1:-1]
-
-        def create_point_cloud(coordinates, reff):
-            point_cloud = pv.PolyData(coordinates)
-            point_cloud["Reff [m]"] = reff
-
-            return point_cloud
-
-        point_cloud = create_point_cloud(plasma_coordinates, reff)
         print(f"Observed plasma volume of {self.element} generated!")
 
-        return plasma_coordinates, point_cloud
+        return observed_plasma_volume
+
+    def _create_point_cloud(self):
+        plasma_coordinates = self.observed_plasma_volume[:, 1:-1]
+        reff = self.observed_plasma_volume[:, -1]
+        point_cloud = pv.PolyData(plasma_coordinates)
+        point_cloud["Reff [m]"] = reff
+
+        return point_cloud
 
 
 class W7X:
@@ -171,9 +170,9 @@ class Visualization:
 
         for element in self.elements_list:
             plas_vol = PlasmaVolume(element)
-            self.plasma_coordinates = plas_vol.plasma_coordinates
+            self.observed_plasma_volume = plas_vol.observed_plasma_volume
             self.point_clouds.append(plas_vol.point_cloud)
-            self.observed_plasmas.append(self.plasma_coordinates)
+            self.observed_plasmas.append(self.observed_plasma_volume)
 
     def _init_port(self):
         pt = Port()
@@ -294,15 +293,24 @@ class Visualization:
                 )
         else:
             for observed_plasma_volume in self.observed_plasmas:
-                points = self._make_hull(self.plasma_coordinates)
+                # points = self._make_hull(observed_plasma_volume[:, 1:-1])
                 fig.add_mesh(
-                    observed_plasma_volume,
+                    observed_plasma_volume[:, 1:-1],
                     point_size=8,
                     render_points_as_spheres=True,
                     color=np.random.rand(
                         3,
                     ),
                 )
+                points = self._make_hull(observed_plasma_volume[:, 1:-1])
+                fig.add_mesh(
+                    points,
+                    color=np.random.rand(
+                        3,
+                    ),
+                    opacity=0.1,
+                )
+
         fig.show()
 
 
