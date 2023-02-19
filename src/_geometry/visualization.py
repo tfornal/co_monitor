@@ -170,9 +170,9 @@ class Visualization:
 
         for element in self.elements_list:
             plas_vol = PlasmaVolume(element)
-            self.observed_plasma_volume = plas_vol.observed_plasma_volume
+            observed_plasma_volume = plas_vol.observed_plasma_volume
             self.point_clouds.append(plas_vol.point_cloud)
-            self.observed_plasmas.append(self.observed_plasma_volume)
+            self.observed_plasmas.append(observed_plasma_volume)
 
     def _init_port(self):
         pt = Port()
