@@ -19,20 +19,6 @@ from port import Port
 from radiation_shield import RadiationShield
 
 
-class Cuboid:
-    def __init__(self):
-        self.cuboid_coordinates = self.make_cuboid()
-
-    def make_cuboid(self):
-        pm = CuboidMesh(
-            distance_between_points=100, cuboid_dimensions=[1800, 800, 2000]
-        )
-        cuboid_coordinates = pm.outer_cube_mesh
-        print("Cuboid generated!")
-
-        return cuboid_coordinates
-
-
 class PlasmaVolume:
     def __init__(self, element):
         self.element = element
@@ -52,15 +38,6 @@ class PlasmaVolume:
             np.loadtxt(Reff, delimiter=";", skiprows=1) * 1000
         )  # convert from [m] to [mm]
         return Reff_VMEC_calculated
-
-    def make_mapped_plasma_volume(self):
-        mapped_plasma_volume = self.self.Reff_VMEC_calculated[
-            ~np.isnan(self.Reff_VMEC_calculated).any(axis=1)
-        ]
-        mapped_plasma_volume = mapped_plasma_volume[:, 1:4]
-        print("Mapped plasma volume generated!")
-
-        return mapped_plasma_volume
 
     def make_observed_plasma_volume(self):
         calculated_plasma_coordinates = (
@@ -160,13 +137,79 @@ class W7X:
 
 
 class Visualization:
-    def __init__(self):
-        self.w7x = self._init_W7X()
-        self.plasma_axis = self.w7x.plasma_axis
-        self.plasma_surfaces = self.w7x.plasma_surfaces
+    def __init__(self, elements_list):
+        self.elements_list = elements_list
+        self._init_W7X()
+        self._init_cuboid()
+        self._init_plasma_volume()
+
+        self._init_port()
+        self._init_radiation_shield()
+        self._init_collimator()
+        self._init_dispersive_element()
+        self._init_detector()
+        self.plotter()
 
     def _init_W7X(self):
-        return W7X
+        w7x = W7X()
+        self.plasma_axis = w7x.plasma_axis
+        self.plasma_surfaces = w7x.plasma_surfaces
+        self.phi_range = w7x.plasma_surfaces
+
+    def _init_cuboid(self):
+        cub = CuboidMesh(
+            distance_between_points=100, cuboid_dimensions=[1800, 800, 2000]
+        )
+        self.cuboid_coordinates = cub.outer_cube_mesh
+        print("Cuboid generated!")
+
+    def _init_plasma_volume(self):
+        for element in self.elements_list:
+            plas_vol = PlasmaVolume(element)
+            self.Reff_VMEC_calculated = plas_vol.Reff_VMEC_calculated
+            self.plasma_coordinates = plas_vol.plasma_coordinates
+            self.pc = plas_vol.pc
+
+    def _init_port(self):
+        pt = Port()
+        self.port_hull = pt.port_hull
+
+    def _init_radiation_shield(self):
+        self.radiation_shields = []
+        protection_shields = {
+            "upper chamber": ["1st shield", "2nd shield"],
+            "bottom chamber": ["1st shield", "2nd shield"],
+        }
+
+        for chamber, value in protection_shields.items():
+            for shield_nr in value:
+                rs = RadiationShield(chamber, shield_nr)
+                self.radiation_shields.append(rs)
+
+    def _init_collimator(self, closing_side="top closing side", slits_number=10):
+        self.collimators = []
+        for element in self.elements_list:
+            col = Collimator(element, closing_side, slits_number)
+            for slit in range(col.slits_number):
+                (
+                    colimator_spatial,
+                    slit_coord_crys_side,
+                    slit_coord_plasma_side,
+                ) = col.read_colim_coord()
+                self.collimators.append(col.make_collimator(colimator_spatial[slit]))
+
+    def _init_dispersive_element(self, crystal_height=20, crystal_length=80):
+        self.dispersive_elements = []
+        for element in self.elements_list:
+            de = DispersiveElement(element, crystal_height, crystal_length)
+            crystal_surface = de.crystal_points
+            self.dispersive_elements.append(crystal_surface)
+
+    def _init_detector(self):
+        self.detectors = []
+        for element in self.elements_list:
+            det = Detector(element)
+            self.detectors.append(det.poly_det)
 
     def _make_hull(self, points):
         hull = ConvexHull(points)
@@ -181,44 +224,61 @@ class Visualization:
         fig = pv.Plotter()
         fig.set_background("black")
 
-        def plot_W7X():
-            phi_range = np.arange(0, 360, 1)
+        # W7-X surface visualization
+        x, y, z = (
+            self.plasma_surfaces[:, 0],
+            self.plasma_surfaces[:, 1],
+            self.plasma_surfaces[:, 2],
+        )
+        fig.add_mesh(
+            pv.StructuredGrid(x, y, z),
+            line_width=3,
+            color="grey",
+            opacity=0.5,
+        )
 
-            ### W7-X
-            fig.add_mesh(
-                pv.Spline(self.plasma_axis, 400),
-                line_width=3,
-                color="gold",
-                opacity=0.7,
-            )
-            fig.add_mesh(
-                pv.StructuredGrid(
-                    self.plasma_surfaces[:, 0],
-                    self.plasma_surfaces[:, 1],
-                    self.plasma_surfaces[:, 2],
-                ),
-                line_width=3,
-                color="grey",
-                opacity=0.5,
-            )
+        # W7-X axis visualization
+        fig.add_mesh(
+            pv.Spline(self.plasma_axis, 400),
+            line_width=3,
+            color="gold",
+            opacity=0.7,
+        )
 
-        def plot_cuboid(self):
-            reduced_cuboid_coordinates = make_cuboid()
+        # cuboid visualization
+        fig.add_mesh(
+            self._make_hull(self.cuboid_coordinates), color="white", opacity=0.1
+        )
+
+        # port hull visualization
+        fig.add_mesh(self.port_hull, color="purple", opacity=0.9)
+
+        # detector hull visualization
+        for detector in self.detectors:
+            fig.add_mesh(detector, color="red", opacity=1)
+
+        # radiation shields points and hull visualization
+        for shield in self.radiation_shields:
             fig.add_mesh(
-                reduced_cuboid_coordinates,
-                point_size=8,
-                color="white",
+                shield.vertices_coordinates,
+                color="blue",
+                opacity=0.9,
                 render_points_as_spheres=True,
-                opacity=0.005,
             )
-            points = self._make_hull(reduced_cuboid_coordinates)
-            fig.add_mesh(points, color="white", opacity=0.1)
+            fig.add_mesh(
+                shield.radiation_shield,
+                color="green",
+                opacity=0.9,
+            )
+        # collimators' hull visualization
+        for collimator in self.collimators:
+            fig.add_mesh(collimator, color="yellow", opacity=0.9)
 
-        def plot_mapped_plasma(selfReff_VMEC_calculated):
-            mapped_plasma_volume = make_mapped_plasma_volume(Reff_VMEC_calculated)
-            points = self._make_hull(mapped_plasma_volume)
-            # fig.add_mesh(points, color='yellow', opacity = 0.3)
-            # fig.add_mesh(mapped_plasma_volume, point_size = 8, render_points_as_spheres = True, color = "yellow", opacity = 0.02)
+        # dispersive elements' hull visualization
+        for disp_elem in self.dispersive_elements:
+            fig.add_mesh(
+                disp_elem, color="blue", point_size=3, render_points_as_spheres=True
+            )
 
         def plot_observed_plasma(Reff_VMEC_calculated, element, color, polydata=False):
             plasma_coordinates, pc = make_observed_plasma_volume(
@@ -238,84 +298,9 @@ class Visualization:
                     color=color,
                 )
 
-        def port():
-            pt = Port()
-            port = pt.make_port_hull()
-            fig.add_mesh(port, color="purple", opacity=0.9)
-
-        def radiation_shields():
-            protection_shields = {
-                "upper chamber": ["1st shield", "2nd shield"],
-                "bottom chamber": ["1st shield", "2nd shield"],
-            }
-
-            for key, value in protection_shields.items():
-                for shield_nr in value:
-                    protective_shield = RadiationShield(key, shield_nr)
-                    fig.add_mesh(
-                        protective_shield.vertices_coordinates,
-                        color="blue",
-                        opacity=0.9,
-                    )
-                    fig.add_mesh(
-                        protective_shield.radiation_shield,
-                        color="green",
-                        opacity=0.9,
-                    )
-
-        def collimators(element, closing_side):
-            # col = Collimator(element, 10, plot = False)
-            col = Collimator(element, closing_side, slits_number=10, plot=False)
-            for slit in range(col.slits_number):
-                (
-                    colimator_spatial,
-                    slit_coord_crys_side,
-                    slit_coord_plasma_side,
-                ) = col.read_colim_coord()
-                collimator = col.make_collimator(colimator_spatial[slit])
-                fig.add_mesh(collimator, color="yellow", opacity=0.9)
-                fig.add_mesh(col.A1, color="red", point_size=10)
-                fig.add_mesh(col.A2, color="blue", point_size=10)
-
-        def dispersive_elements(element, crystal_height=20, crystal_length=80):
-            disp_elem = DispersiveElement(element, crystal_height, crystal_length)
-            crys = disp_elem.make_curved_crystal()
-            fig.add_mesh(disp_elem.crystal_central_point, color="yellow", point_size=10)
-            vertices = np.concatenate(
-                (disp_elem.A, disp_elem.B, disp_elem.C, disp_elem.D), axis=0
-            ).reshape(4, 3)
-            fig.add_mesh(vertices, color="red", point_size=10)
-            fig.add_mesh(crys, color="blue")
-
-        def detectors(element: str):
-            det = Detector(element, plot=False)
-            detector = det.make_detectors_surface()
-            fig.add_mesh(detector, color="red", opacity=1)
-
-        ###########################################################################
-
-        list_of_elements = {"B": "red", "C": "blue", "N": "green", "O": "orange"}
-        Reff_VMEC_calculated = read_Reff_coordinates()
-        plot_W7X()
-        plot_cuboid()
-        plot_mapped_plasma(Reff_VMEC_calculated)
-        port()
-        radiation_shields()
-
-        for element in list_of_elements:
-            plot_observed_plasma(
-                Reff_VMEC_calculated,
-                element,
-                color=list_of_elements[element],
-                polydata=True,
-            )
-            dispersive_elements(element, 10, 40)
-            collimators(element, closing_side="top closing side")
-            detectors(element)
-
-        ###########################################################################
         fig.show()
 
 
 if __name__ == "__main__":
-    vis = Visualization
+    elements = ["B", "C", "N", "O"]
+    vis = Visualization(elements)

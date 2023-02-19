@@ -28,8 +28,10 @@ class DispersiveElement:
         self.loaded_file = read_json_file()
         self.disp_elem_coord = self.read_coord_from_file()
         self._init_crys_coordinates()
+        self.crystal_points = self._make_curved_crystal()
 
     def _init_crys_coordinates(self):
+        """Constructor of other coordinates and parameters od respective dispersice element"""
         self.max_reflectivity = self.disp_elem_coord["max reflectivity"]
         self.crystal_central_point = np.array(
             self.disp_elem_coord["crystal central point"]
@@ -106,7 +108,7 @@ class DispersiveElement:
         )
         return angle
 
-    def make_curved_crystal(self):
+    def _make_curved_crystal(self):
         """
         Creates a curved dispersive element/crystal with the given parameters.
 

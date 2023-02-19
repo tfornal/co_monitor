@@ -75,8 +75,16 @@ class Simulation:
             self.save_to_file()
 
     def _init_cuboid_coordinates(self):
-        """Generate outer cuboid coordinates."""
-        self.cuboid_coordinates = self.generate_cuboid_coordinates()
+        """Generate the block of points covering the volume of a plasma observed by each spectroscopic channel.
+
+        Returns
+        -------
+        cuboid_coordinates : da.array, shape=(n_points, 3)
+            Array of points covering the volume of a plasma.
+        """
+        cm = CuboidMesh(self.distance_between_points)
+        cuboid_coordinates = cm.outer_cube_mesh
+        self.cuboid_coordinates = da.from_array(cuboid_coordinates, chunks=(2000, 3))
 
     def _init_collimator(self):
         """Retrieve collimator coordinates."""
@@ -94,7 +102,7 @@ class Simulation:
         de = DispersiveElement(
             self.element, self.crystal_height_step, self.crystal_length_step
         )
-        self.disp_elem_coord = de.make_curved_crystal()
+        self.disp_elem_coord = de.crystal_points
         self.AOI = de.AOI
         self.max_reflectivity = de.max_reflectivity
         self.radius_central_point = de.radius_central_point
@@ -106,25 +114,15 @@ class Simulation:
 
     def _init_port(self):
         """Initiate port coordinates."""
-        self.port_vertices_coordinates = Port().vertices_coordinates
-        self.port_orientation_vector = Port().orientation_vector
+        port = Port()
+        self.port_vertices_coordinates = port.vertices_coordinates
+        self.port_orientation_vector = port.orientation_vector
 
     def _init_detector(self):
         """Initiate detector coordinates."""
-        self.detector_vertices_coordinates = Detector(self.element).vertices
-        self.detector_orientation_vector = Detector(self.element).orientation_vector
-
-    def generate_cuboid_coordinates(self) -> da.array:
-        """Generate the block of points covering the volume of a plasma observed by each spectroscopic channel.
-
-        Returns
-        -------
-        cuboid_coordinates : da.array, shape=(n_points, 3)
-            Array of points covering the volume of a plasma.
-        """
-        cm = CuboidMesh(self.distance_between_points)
-        cuboid_coordinates = cm.outer_cube_mesh
-        return da.from_array(cuboid_coordinates, chunks=(2000, 3))
+        det = Detector(self.element)
+        self.detector_vertices_coordinates = det.vertices
+        self.detector_orientation_vector = det.orientation_vector
 
     def calculate_crystal_point_area(self) -> float:
         """
@@ -637,9 +635,9 @@ if __name__ == "__main__":
     testing_settings = dict(
         slits_number=10,
         distance_between_points=50,
-        crystal_height_step=40,
+        crystal_height_step=20,
         crystal_length_step=20,
-        savetxt=True,
+        savetxt=False,
         plot=False,
     )
     for element in elements_list:
