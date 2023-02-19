@@ -23,6 +23,8 @@ class Detector:
         self.vertices = self.get_vertices(self.element)
         self.orientation_vector = self.get_orientation_vector(self.element)
         self.spatial_det_coordinates = self.create_thick_det(self.vertices)
+        self.poly_det = self.make_detectors_surface()
+
         if plot:
             self.plotter()
 
