@@ -23,7 +23,7 @@ class PlasmaVolume:
     def __init__(self, element):
         self.element = element
         self.Reff_VMEC_calculated = self.get_Reff_coordinates()
-        self.plasma_coordinates, self.pc = self.make_observed_plasma_volume()
+        self.plasma_coordinates, self.point_cloud = self.make_observed_plasma_volume()
 
     def get_Reff_coordinates(self):
         Reff = (
@@ -72,10 +72,10 @@ class PlasmaVolume:
 
             return point_cloud
 
-        pc = create_point_cloud(plasma_coordinates, reff)
+        point_cloud = create_point_cloud(plasma_coordinates, reff)
         print(f"Observed plasma volume of {self.element} generated!")
 
-        return plasma_coordinates, pc
+        return plasma_coordinates, point_cloud
 
 
 class W7X:
@@ -137,17 +137,19 @@ class W7X:
 
 
 class Visualization:
-    def __init__(self, elements_list):
+    def __init__(self, elements_list, polydata=True):
         self.elements_list = elements_list
+        self.polydata = polydata
+
         self._init_W7X()
         self._init_cuboid()
         self._init_plasma_volume()
-
         self._init_port()
         self._init_radiation_shield()
         self._init_collimator()
         self._init_dispersive_element()
         self._init_detector()
+
         self.plotter()
 
     def _init_W7X(self):
@@ -164,11 +166,14 @@ class Visualization:
         print("Cuboid generated!")
 
     def _init_plasma_volume(self):
+        self.observed_plasmas = []
+        self.point_clouds = []
+
         for element in self.elements_list:
             plas_vol = PlasmaVolume(element)
-            self.Reff_VMEC_calculated = plas_vol.Reff_VMEC_calculated
             self.plasma_coordinates = plas_vol.plasma_coordinates
-            self.pc = plas_vol.pc
+            self.point_clouds.append(plas_vol.point_cloud)
+            self.observed_plasmas.append(self.plasma_coordinates)
 
     def _init_port(self):
         pt = Port()
@@ -280,27 +285,27 @@ class Visualization:
                 disp_elem, color="blue", point_size=3, render_points_as_spheres=True
             )
 
-        def plot_observed_plasma(Reff_VMEC_calculated, element, color, polydata=False):
-            plasma_coordinates, pc = make_observed_plasma_volume(
-                Reff_VMEC_calculated, element
-            )
-            if polydata:
+        if self.polydata:
+            for pc in self.point_clouds:
                 fig.add_mesh(
-                    pv.PolyData(pc), point_size=8, render_points_as_spheres=True
-                )  # , opacity = 0.8)
-            else:
-                points = self._make_hull(plasma_coordinates)
-                fig.add_mesh(points, color=color, opacity=0.89)
-                fig.add_mesh(
-                    plasma_coordinates,
+                    pv.PolyData(pc),
                     point_size=8,
                     render_points_as_spheres=True,
-                    color=color,
                 )
-
+        else:
+            for observed_plasma_volume in self.observed_plasmas:
+                points = self._make_hull(self.plasma_coordinates)
+                fig.add_mesh(
+                    observed_plasma_volume,
+                    point_size=8,
+                    render_points_as_spheres=True,
+                    color=np.random.rand(
+                        3,
+                    ),
+                )
         fig.show()
 
 
 if __name__ == "__main__":
     elements = ["B", "C", "N", "O"]
-    vis = Visualization(elements)
+    vis = Visualization(elements, polydata=False)
