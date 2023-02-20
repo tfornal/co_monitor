@@ -19,14 +19,30 @@ from radiation_shield import RadiationShield
 
 
 class PlasmaVolume:
-    def __init__(self, element):
+    """Class to create a plasma volume from observed plasma coordinates and Reff coordinates."""
+
+    def __init__(self, element: str):
+        """
+        Parameters
+        ----------
+        element : str
+            Element name used for generating the observed plasma volume. Accepts B, C, N and O elements.
+        """
         self.element = element
         self.observed_cuboid_coords = self._get_plasma_coordinates()
         self.Reff_VMEC_calculated = self._get_Reff_coordinates()
         self.observed_plasma_volume = self._assign_indexes()
         self.point_cloud = self._create_point_cloud()
 
-    def _get_Reff_coordinates(self):
+    def _get_Reff_coordinates(self) -> np.ndarray:
+        """
+        Load Reff coordinates from file.
+
+        Returns
+        -------
+        Reff_VMEC_calculated : np.ndarray
+            Array of Reff coordinates in mm.
+        """
         Reff = (
             Path(__file__).parent.parent
             / "_Input_files"
@@ -40,7 +56,15 @@ class PlasmaVolume:
         )  # convert from [m] to [mm]
         return Reff_VMEC_calculated
 
-    def _get_plasma_coordinates(self):
+    def _get_plasma_coordinates(self) -> np.ndarray:
+        """
+        Load observed plasma coordinates calculated by simulation module.
+
+        Returns
+        -------
+        np.ndarray
+            Array of observed plasma volume coordinates in mm.
+        """
         calculated_plasma_coordinates = (
             Path(__file__).parent.parent.resolve()
             / "_Input_files"
@@ -55,7 +79,15 @@ class PlasmaVolume:
         )
         return observed_cuboid_coords
 
-    def _assign_indexes(self):
+    def _assign_indexes(self) -> np.ndarray:
+        """
+        Assign indices of Reff coordinates to observed plasma coordinates.
+
+        Returns
+        -------
+        observed_cuboid_coords : np.ndarray
+            Array of plasma volume coordinates with Reff values.
+        """
         indexes = self.observed_cuboid_coords[:, 0].astype(int)
         Reff_VMEC_calculated_with_idx = np.zeros((len(self.Reff_VMEC_calculated), 5))
         Reff_VMEC_calculated_with_idx[:, 0] = np.arange(len(self.Reff_VMEC_calculated))
@@ -68,9 +100,25 @@ class PlasmaVolume:
 
         return observed_plasma_volume
 
-    def _create_point_cloud(self):
+    def _create_point_cloud(self) -> pv.PolyData:
+        """
+        Creates a point cloud using the plasma coordinates and Reff values from an observed plasma volume.
+
+        Parameters
+        ----------
+        observed_plasma_volume : np.ndarray
+            The observed plasma volume, with plasma coordinates in the first columns and Reff values in the last column.
+
+        Returns
+        -------
+        point_cloud : pv.PolyData
+            A point cloud object with plasma coordinates and Reff values.
+        """
+        # Extract plasma coordinates and Reff values
         plasma_coordinates = self.observed_plasma_volume[:, 1:-1]
         reff = self.observed_plasma_volume[:, -1]
+
+        # Create PyVista point cloud object and add Reff as point data
         point_cloud = pv.PolyData(plasma_coordinates)
         point_cloud["Reff [m]"] = reff
 
@@ -78,54 +126,62 @@ class PlasmaVolume:
 
 
 class W7X:
+    """
+    Initializes reprezentation of W7X plasmas - axis and shape of the last closed flux surface.
+
+    Parameters
+    ----------
+    phi_range : int, optional
+    The number of angles to use for generating plasma surfaces, by default 360.
+    """
+
     def __init__(self, phi_range=360):
         self.phi_range = phi_range
-        self.plasma_axis = self.make_axis()
-        self.plasma_surfaces = self.get_plasma_surface()
+        self.plasma_axis = self._make_axis()
+        self.plasma_surfaces = self._get_plasma_surface()
 
     def _polar2cart(self, r, theta, phi):
-        x = r * math.sin(theta) * math.cos(phi)
-        y = r * math.sin(theta) * math.sin(phi)
-        z = r * math.cos(theta)
+        """
+        Converts polar to Cartesian coordinates.
+
+        Parameters
+        ----------
+        r : float
+            The radial distance.
+        theta : float
+            The polar angle.
+        phi : float
+            The azimuthal angle.
+
+        Returns
+        -------
+        tuple : x, y, z
+            The corresponding Cartesian coordinates.
+        """
+        x = r * np.sin(theta) * np.cos(phi)
+        y = r * np.sin(theta) * np.sin(phi)
+        z = r * np.cos(theta)
         return x, y, z
 
-    def calculate_plasma_surfaces(self, phi, surface_number):
-        plasma_surfaces = []
-        W7X_surface = (
-            Path(__file__).parent.parent.resolve()
-            / "_Input_files"
-            / "__Visualization"
-            / "W7-X_plasma_shape"
-            / f"angle{phi}.json"
-        )
-        with open(W7X_surface, "r") as json_file:
-            data = json.load(json_file)
-            surfaces = data["surfaces"][surface_number]
-            for i in range(len(surfaces["x1"])):
-                R = surfaces["x1"][i]
-                z = surfaces["x3"][i]
-                r = np.sqrt(R**2 + z**2)
-                theta = np.arccos(z / r)
-                coord = self._polar2cart(r, theta, math.radians(phi))
-                plasma_surfaces.append(coord)
-        plasma_surfaces = np.array(plasma_surfaces).reshape(-1, 3) * 1000
+    def _get_plasma_surface(
+        self, layer_of_plasma_surface=-1
+    ) -> np.ndarray:  ### -1 = last surface
+        """
+        Returns the data representing last closed magnetif flux surface of the W7-X plasma for all angles.
 
-        return plasma_surfaces
+        Parameters
+        ----------
+        layer_of_plasma_surface : int, optional
+            The index of the plasma surface to retrieve, by default -1 (i.e., the last surface).
 
-    def make_axis(self):
-        plasma_axis = []
-        for phi in range(self.phi_range):
-            local_axis_point = self.calculate_plasma_surfaces(phi, 0)[0]
-            plasma_axis.append(local_axis_point)
-        plasma_axis = np.array(plasma_axis).reshape(-1, 3)
-        print("Axis generated!")
-
-        return plasma_axis
-
-    def get_plasma_surface(self, layer_of_plasma_surface=-1):  ### -1 = last surface
+        Returns
+        -------
+        np.ndarray
+            The plasma surface data for all angles.
+        """
         all_plasma_surfaces = []
         for phi in range(self.phi_range):
-            local_plasma_surface = self.calculate_plasma_surfaces(
+            local_plasma_surface = self._calculate_plasma_surface(
                 phi, layer_of_plasma_surface
             )
             all_plasma_surfaces.append(local_plasma_surface)
@@ -133,6 +189,62 @@ class W7X:
         print("Plasma surface generated!")
 
         return all_plasma_surfaces
+
+    def _make_axis(self) -> np.ndarray:
+        """
+        Returns the plasma axis data for all angles.
+
+        Returns
+        -------
+        np.ndarray
+            The plasma axis data for all angles.
+        """
+        plasma_axis = []
+        for phi in range(self.phi_range):
+            local_axis_point = self._calculate_plasma_surface(phi, 0)[0]
+            plasma_axis.append(local_axis_point)
+        plasma_axis = np.array(plasma_axis).reshape(-1, 3)
+        print("Axis generated!")
+
+        return plasma_axis
+
+    def _calculate_plasma_surface(self, phi, surface_number) -> np.ndarray:
+        """
+        Calculates the plasma surface for a given angle and surface number.
+
+        Parameters
+        ----------
+        phi : int
+            The angle for which to calculate the plasma surface.
+        surface_number : int
+            The index of the plasma surface to retrieve.
+
+        Returns
+        -------
+        np.ndarray
+            The plasma surface data.
+        """
+        plasma_surface = []
+        w7x_surface = (
+            Path(__file__).parent.parent.resolve()
+            / "_Input_files"
+            / "__Visualization"
+            / "W7-X_plasma_shape"
+            / f"angle{phi}.json"
+        )
+        with open(w7x_surface, "r") as json_file:
+            data = json.load(json_file)
+            surfaces = data["surfaces"][surface_number]
+            for i in range(len(surfaces["x1"])):
+                R = surfaces["x1"][i]
+                z = surfaces["x3"][i]
+                r = np.sqrt(R**2 + z**2)
+                theta = np.arccos(z / r)
+                coord = self._polar2cart(r, theta, np.radians(phi))
+                plasma_surface.append(coord)
+        plasma_surface = np.array(plasma_surface).reshape(-1, 3) * 1000
+
+        return plasma_surface
 
 
 class Visualization:
@@ -152,12 +264,14 @@ class Visualization:
         self.plotter()
 
     def _init_W7X(self):
+        """Constructor of W7-X plasma shape."""
         w7x = W7X()
         self.plasma_axis = w7x.plasma_axis
         self.plasma_surfaces = w7x.plasma_surfaces
         self.phi_range = w7x.plasma_surfaces
 
     def _init_cuboid(self):
+        """Constructor of outer cuboid mesh."""
         cub = CuboidMesh(
             distance_between_points=100, cuboid_dimensions=[1800, 800, 2000]
         )
@@ -165,6 +279,7 @@ class Visualization:
         print("Cuboid generated!")
 
     def _init_plasma_volume(self):
+        """Constructor of observed plasma volume."""
         self.observed_plasmas = []
         self.point_clouds = []
 
@@ -175,10 +290,12 @@ class Visualization:
             self.observed_plasmas.append(observed_plasma_volume)
 
     def _init_port(self):
+        """Constructor of W7-X port."""
         pt = Port()
         self.port_hull = pt.port_hull
 
     def _init_radiation_shield(self):
+        """Constructor of prodective stray radiation shields."""
         self.radiation_shields = []
         protection_shields = {
             "upper chamber": ["1st shield", "2nd shield"],
@@ -190,7 +307,18 @@ class Visualization:
                 rs = RadiationShield(chamber, shield_nr)
                 self.radiation_shields.append(rs)
 
-    def _init_collimator(self, closing_side="top closing side", slits_number=10):
+    def _init_collimator(
+        self, closing_side: str = "top closing side", slits_number: int = 10
+    ):
+        """Initialize collimator objects for each observation channel.
+
+        Parameters
+        ----------
+        closing_side : str, optional
+            The closing side of the collimator. Defaults to "top closing side".
+        slits_number : int, optional
+            The number of slits in the collimator. Defaults to 10.
+        """
         self.collimators = []
         for element in self.elements_list:
             col = Collimator(element, closing_side, slits_number)
@@ -203,6 +331,16 @@ class Visualization:
                 self.collimators.append(col.make_collimator(colimator_spatial[slit]))
 
     def _init_dispersive_element(self, crystal_height=20, crystal_length=80):
+        """
+        Initializes the dispersive elements for the respectuve observation channel (B, C, N or O).
+
+        Parameters
+        ----------
+        crystal_height : float, optional
+            The height of the crystal in millimeters. Default is 20.
+        crystal_length : float, optional
+            The length of the crystal in millimeters. Default is 80.
+        """
         self.dispersive_elements = []
         for element in self.elements_list:
             de = DispersiveElement(element, crystal_height, crystal_length)
@@ -210,12 +348,28 @@ class Visualization:
             self.dispersive_elements.append(crystal_surface)
 
     def _init_detector(self):
+        """Constructor of detectors for the respective observation channel
+        (B, C, N or O)."""
         self.detectors = []
         for element in self.elements_list:
             det = Detector(element)
             self.detectors.append(det.poly_det)
 
     def _make_hull(self, points):
+        """
+        Method to make the convex hull of a set of input points.
+
+        Parameters
+        ----------
+        points : ndarray
+            The points to compute the convex hull of points.
+
+        Returns
+        -------
+        poly : pv.PolyData
+            Hull as a PolyData object, representing the surface of
+            the convex hull.
+        """
         hull = ConvexHull(points)
         faces = np.column_stack(
             (3 * np.ones((len(hull.simplices), 1), dtype=int), hull.simplices)
@@ -225,6 +379,7 @@ class Visualization:
         return poly
 
     def plotter(self):
+        """Plots all the initialized objects."""
         fig = pv.Plotter()
         fig.set_background("black")
 
