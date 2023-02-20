@@ -471,7 +471,7 @@ class Emissivity:
 
 if __name__ == "__main__":
 
-    lyman_alpha_lines = ["C"]  # , "B", "C", "N"]
+    lyman_alpha_lines = ["C"]
     Element = namedtuple("Element", "ion_state wavelength impurity_concentration")
 
     lyman_alpha_line = {

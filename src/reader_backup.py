@@ -55,12 +55,14 @@ class Emissivity:
             Represents the transition types. Possibly "EXCIT", "RECOM" and "CHEXC".
         """
 
-        self.plasma_profiles = plasma_profiles#.rename(index={0: "Reff", 1: "T_e", 2: "n_e"})
+        self.plasma_profiles = (
+            plasma_profiles  # .rename(index={0: "Reff", 1: "T_e", 2: "n_e"})
+        )
         # self.plasma_profiles.columns = ["Reff [m]","T_e [eV]", "n_e [m-3]"]
         # df.columns = ["Reff [m]", "T_e [eV]", "n_e [m-3]"]
         print(self.plasma_profiles)
         breakpoint()
-        
+
         self.reff_magnetic_config = reff_magnetic_config
         self.reff_coordinates = self.load_Reff()
         self.observed_plasma_volume = self.load_observed_plasma(element)
@@ -83,7 +85,7 @@ class Emissivity:
             self.impurity_concentration
         )
         self.total_emissivity = self.calculate_total_emissivity()
-        
+
     def _get_pec_data(self):
         lista = []
         for transition in self.transitions:
@@ -224,7 +226,9 @@ class Emissivity:
             indexes.append(idx)
 
         selected_plasma_parameters = plasma_params.iloc[indexes]
-        selected_plasma_parameters = selected_plasma_parameters[["n_e [m-3]", "T_e [eV]"]]
+        selected_plasma_parameters = selected_plasma_parameters[
+            ["n_e [m-3]", "T_e [eV]"]
+        ]
 
         selected_plasma_parameters.reset_index(drop=True, inplace=True)
         self.reff_coordinates_with_radiation_fractions.reset_index(
@@ -283,7 +287,11 @@ class Emissivity:
         """
         all_min_indexes = []
         for i, plasma_point_temp in self.ne_te_profiles.iterrows():
-            index = (plasma_point_temp["T_e [eV]"] - self.frac_ab["T_e [eV]"]).abs().idxmin()
+            index = (
+                (plasma_point_temp["T_e [eV]"] - self.frac_ab["T_e [eV]"])
+                .abs()
+                .idxmin()
+            )
             all_min_indexes.append(index)
 
         return all_min_indexes
@@ -317,7 +325,9 @@ class Emissivity:
         for idx, trans in enumerate(self.transitions):
             pec = []
             for i, row in df_prof_frac_ab_pec.iterrows():
-                ne_idx = (np.abs(row["n_e [m-3]"] - self.pec_data[idx, :, 0, 0])).argmin()
+                ne_idx = (
+                    np.abs(row["n_e [m-3]"] - self.pec_data[idx, :, 0, 0])
+                ).argmin()
                 te_idx = (
                     np.abs(row["T_e [eV]"] - self.pec_data[idx, ne_idx, :, 1])
                 ).argmin()
@@ -465,7 +475,7 @@ class Emissivity:
 
 if __name__ == "__main__":
 
-    lyman_alpha_lines = ["O"]  # , "B", "C", "N"]
+    lyman_alpha_lines = ["O"]
     Element = namedtuple("Element", "ion_state wavelength impurity_fraction")
 
     lyman_alpha_line = {
@@ -481,7 +491,7 @@ if __name__ == "__main__":
     # Select kinetic profiles
     kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
     # kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
-    
+
     reff_magnetic_config = "Reff_coordinates-10_mm"
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]
