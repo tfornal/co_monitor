@@ -19,11 +19,7 @@ from kinetic_profiles import TwoGaussSumProfile, ExperimentalProfile
 
 
 class EmissivitySimulator:
-    def __init__(
-        self, n_e, T_e, reff_magnetic_config, elements, transitions, kinetic_profiles
-    ):
-        self.n_e = n_e
-        self.T_e = T_e
+    def __init__(self, reff_magnetic_config, elements, transitions, kinetic_profiles):
         self.reff_magnetic_config = reff_magnetic_config
         self.elements = elements
         self.transitions = transitions
@@ -48,7 +44,6 @@ class EmissivitySimulator:
 
         """
         profile = TwoGaussSumProfile(self.n_e, self.T_e).profile_df
-        print(type(profile))
         return profile
 
     def experimental_prof(self) -> pd.DataFrame:
@@ -77,16 +72,14 @@ class EmissivitySimulator:
         for element in self.elements:
             line = lyman_alpha_line[element]
             ce = Emissivity(
-                self.reff_magnetic_config,
-                self.kinetic_profiles,
                 element,
                 line.ion_state,
                 line.wavelength,
                 line.impurity_fraction,
                 self.transitions,
+                self.reff_magnetic_config,
+                self.kinetic_profiles,
             )
-            # ce.savefile()
-            ce.plot(savefig=False)
 
 
 if __name__ == "__main__":
@@ -97,9 +90,7 @@ if __name__ == "__main__":
     transitions = ["EXCIT", "RECOM"]
 
     # Select kinetic profiles
-    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profile_df
+    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
     # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profile_df
 
-    EmissivitySimulator(
-        n_e, T_e, reff_magnetic_config, elements, transitions, kinetic_profiles
-    )
+    EmissivitySimulator(reff_magnetic_config, elements, transitions, kinetic_profiles)
