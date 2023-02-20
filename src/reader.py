@@ -60,7 +60,6 @@ class Emissivity:
         self.transitions = transitions
         self.impurity_concentration = impurity_concentration  # [%]
         self.reff_magnetic_config = reff_magnetic_config
-        print(self.reff_magnetic_config)
         self.kinetic_profiles = kinetic_profiles
 
         self.reff_coordinates = self._get_Reff()
