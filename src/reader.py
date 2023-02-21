@@ -144,9 +144,7 @@ class Emissivity:
             / "Geometry"
             / "Observed_plasma_volume"
             / f"{self.element}"
-            / f"{self.element}_plasma_coordinates-10_mm_spacing-height_30-length_20-slit_100.dat"  #### testowo
-            # / "top"
-            # / f"{self.element}_plasma_coordinates-10_mm_spacing-height_40-length_30-slit_100.csv"
+            / f"{self.element}_plasma_coordinates-10_mm_spacing-height_30-length_20-slit_100.dat"
         )
         observed_plasma_volume = pd.read_csv(observed_plasma, sep=";")
         return observed_plasma_volume
