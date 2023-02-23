@@ -308,9 +308,8 @@ class Emissivity:
         -------
         df_prof_frac_ab_pec : DATAFRAME
             Dataframe with all infomation required to calculate the radiance intensity.
-
         """
-        # TODO przepisac do xarray, poprawic
+        # TODO -> to xarray
         df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
         for idx, trans in enumerate(self.transitions):
             pec = []
@@ -497,5 +496,4 @@ if __name__ == "__main__":
             reff_magnetic_config,
             kinetic_profiles,
         )
-        # ce.savefile()
         ce.plot(savefig=False)
