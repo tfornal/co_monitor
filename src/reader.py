@@ -210,10 +210,20 @@ class Emissivity:
 
         reff_boundary = cutoff_Reff_above_max_boundary()
 
-        indexes = []
-        for Reff in self.reff_coordinates_with_radiation_fractions["Reff [m]"]:
-            idx = (self.kinetic_profiles["Reff [m]"] - Reff).abs().idxmin()
-            indexes.append(idx)
+        #########========================================
+        reff_arr = np.asarray(
+            self.reff_coordinates_with_radiation_fractions["Reff [m]"]
+        )
+
+        kin_prof_arr = np.asarray(self.kinetic_profiles["Reff [m]"])
+
+        def find_nearest(value):
+            idx = (np.abs(kin_prof_arr - value)).argmin()
+            return idx
+
+        indexes = list(map(find_nearest, reff_arr))
+
+        #########========================================
 
         selected_plasma_parameters = self.kinetic_profiles.iloc[indexes]
         selected_plasma_parameters = selected_plasma_parameters[
@@ -235,7 +245,6 @@ class Emissivity:
         plasma_with_parameters = plasma_with_parameters[
             ~(plasma_with_parameters["Reff [m]"] >= reff_boundary)
         ].reset_index(drop=True)
-
         return plasma_with_parameters, reff_boundary
 
     def read_fractional_abundance(self):
