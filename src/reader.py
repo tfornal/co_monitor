@@ -67,6 +67,7 @@ class Emissivity:
         self.reff_coordinates_with_radiation_fractions = (
             self.read_plasma_coordinates_with_radiation_fractions()
         )
+
         self.transitions = transitions
         self.pec_data = self._get_pec_data()
 
@@ -79,6 +80,8 @@ class Emissivity:
             self.impurity_concentration
         )
         self.total_emissivity = self.calculate_total_emissivity()
+        if plot:
+            self.plot()
 
     def _get_pec_data(self):
         lista = []
@@ -285,7 +288,7 @@ class Emissivity:
         Iterates over the values out of two Te lists and returns a list of indexes
         representing the closest Te values.
         """
-        #########========================================TODO - correct form
+        #########========================================TODO - correct form -> map a function with 2 args
         array = np.asarray(self.frac_ab["T_e [eV]"])
 
         def find_nearest(value):
@@ -314,6 +317,7 @@ class Emissivity:
         return df_prof_frac_ab
 
     def read_pec(self):
+        # TODO -> to xarray
         """
         Runs routines to read the PEC files
 
@@ -322,23 +326,7 @@ class Emissivity:
         df_prof_frac_ab_pec : DATAFRAME
             Dataframe with all infomation required to calculate the radiance intensity.
         """
-        start = time.time()
-        # TODO -> to xarray
-        # #########========================================
-        # # df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
-        # # self.df_prof_frac_ab_pec
-        # for idx, trans in enumerate(self.transitions):
-        #     pec = []
-        #     for i, row in self.df_prof_frac_ab_pec.iterrows():
-        #         ne_idx = (
-        #             np.abs(row["n_e [m-3]"] - self.pec_data[idx, :, 0, 0])
-        #         ).argmin()
-        #         te_idx = (
-        #             np.abs(row["T_e [eV]"] - self.pec_data[idx, ne_idx, :, 1])
-        #         ).argmin()
-        #         pec.append(self.pec_data[idx, ne_idx, te_idx, 2])
-        #     self.df_prof_frac_ab_pec[f"pec_{trans}"] = pec
-        # #########========================================
+
         def find_nearest(value):
             idx = (np.abs(array - value)).argmin()
             return idx
@@ -357,7 +345,6 @@ class Emissivity:
 
             value = np.asarray(self.df_prof_frac_ab_pec["T_e [eV]"])
             array = np.asarray(self.pec_data[idx, 0, :, 1])
-            start = time.time()
 
             def find_nearest(value):
                 te_idx = (np.abs(array - value)).argmin()
@@ -527,8 +514,8 @@ if __name__ == "__main__":
     T_e = [1870, 0, 0.155, 210, 0.38, 0.07]
 
     # Select kinetic profiles
-    # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
-    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
+    kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
+    # kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
 
     reff_magnetic_config = "Reff_coordinates-10_mm"
     for element in lyman_alpha_lines:
