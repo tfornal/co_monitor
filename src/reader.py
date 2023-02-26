@@ -64,9 +64,7 @@ class Emissivity:
 
         self.reff_coordinates = self._get_Reff()
         self.observed_plasma_volume = self.load_observed_plasma()
-        self.reff_coordinates_with_radiation_fractions = (
-            self.read_plasma_coordinates_with_radiation_fractions()
-        )
+        self.plas_coords_with_rad_frac = self.get_plas_coords_with_rad_frac(plot=False)
 
         self.transitions = transitions
         self.pec_data = self._get_pec_data()
@@ -85,9 +83,10 @@ class Emissivity:
 
     def _get_pec_data(self):
         lista = []
+        interp_step = 2000
         for transition in self.transitions:
             self.interpolated_pec = PEC(
-                "C", 33.7, transition, interp_step=2000, plot=False
+                self.element, self.wavelength, transition, interp_step
             ).interpolated_pec
             lista.append(self.interpolated_pec)
 
@@ -152,12 +151,11 @@ class Emissivity:
         observed_plasma_volume = pd.read_csv(observed_plasma, sep=";")
         return observed_plasma_volume
 
-    def read_plasma_coordinates_with_radiation_fractions(self):
+    def get_plas_coords_with_rad_frac(self, plot=False):
         """
         Load file with plasma coordinates and calculated Reff value.
         """
         df = self.observed_plasma_volume
-
         idx_list = df["idx_sel_plas_points"].tolist()
         plasma_points_po_indeksowaniu = self.reff_coordinates.iloc[idx_list]
         Reff = plasma_points_po_indeksowaniu["Reff [m]"]
@@ -186,7 +184,8 @@ class Emissivity:
             fig.add_mesh(pv.PolyData(pc), point_size=8, render_points_as_spheres=True)
             fig.show()
 
-        plotter()
+        if plot:
+            plotter()
 
         return df
 
@@ -202,9 +201,7 @@ class Emissivity:
         """
 
         def cutoff_Reff_above_max_boundary():
-            max_mapped_reff = self.reff_coordinates_with_radiation_fractions[
-                "Reff [m]"
-            ].max()
+            max_mapped_reff = self.plas_coords_with_rad_frac["Reff [m]"].max()
             max_profiles_reff = self.kinetic_profiles["Reff [m]"].max()
             reff_boundary = min(max_mapped_reff, max_profiles_reff)
             print(f"\nMax reff from mapped vmec: {max_mapped_reff}")
@@ -214,9 +211,7 @@ class Emissivity:
         reff_boundary = cutoff_Reff_above_max_boundary()
 
         #########========================================
-        reff_arr = np.asarray(
-            self.reff_coordinates_with_radiation_fractions["Reff [m]"]
-        )
+        reff_arr = np.asarray(self.plas_coords_with_rad_frac["Reff [m]"])
 
         kin_prof_arr = np.asarray(self.kinetic_profiles["Reff [m]"])
 
@@ -234,12 +229,10 @@ class Emissivity:
         ]
 
         selected_plasma_parameters.reset_index(drop=True, inplace=True)
-        self.reff_coordinates_with_radiation_fractions.reset_index(
-            drop=True, inplace=True
-        )
+        self.plas_coords_with_rad_frac.reset_index(drop=True, inplace=True)
         plasma_with_parameters = pd.concat(
             [
-                self.reff_coordinates_with_radiation_fractions,
+                self.plas_coords_with_rad_frac,
                 selected_plasma_parameters,
             ],
             axis=1,
@@ -500,7 +493,7 @@ class Emissivity:
 
 if __name__ == "__main__":
 
-    lyman_alpha_lines = ["C"]
+    lyman_alpha_lines = ["C", "B", "O", "N"]
     Element = namedtuple("Element", "ion_state wavelength impurity_concentration")
 
     lyman_alpha_line = {
@@ -510,14 +503,14 @@ if __name__ == "__main__":
         "O": Element("Z7", 19.0, 0.02),
     }
     transitions = ["EXCIT", "RECOM"]
+    reff_magnetic_config = "Reff_coordinates-10_mm"
     n_e = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
     T_e = [1870, 0, 0.155, 210, 0.38, 0.07]
 
     # Select kinetic profiles
-    kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
-    # kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
+    # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
+    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
 
-    reff_magnetic_config = "Reff_coordinates-10_mm"
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]
         ce = Emissivity(
@@ -529,4 +522,4 @@ if __name__ == "__main__":
             reff_magnetic_config,
             kinetic_profiles,
         )
-        ce.plot(savefig=False)
+        # ce.plot(savefig=False)
