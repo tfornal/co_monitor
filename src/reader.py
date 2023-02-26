@@ -251,6 +251,7 @@ class Emissivity:
         """
         Assigns fractional abundance to each Reff value.
         """
+
         fa = FractionalAbundance(self.element, self.ionization_state)
         frac_ab = fa.df_interpolated_frac_ab
         emission_types = list(self.transitions)
@@ -284,21 +285,24 @@ class Emissivity:
         Iterates over the values out of two Te lists and returns a list of indexes
         representing the closest Te values.
         """
-        all_min_indexes = []
-        for i, plasma_point_temp in self.ne_te_profiles.iterrows():
-            index = (
-                (plasma_point_temp["T_e [eV]"] - self.frac_ab["T_e [eV]"])
-                .abs()
-                .idxmin()
-            )
-            all_min_indexes.append(index)
+        #########========================================TODO - correct form
+        array = np.asarray(self.frac_ab["T_e [eV]"])
 
+        def find_nearest(value):
+            idx = (np.abs(array - value)).argmin()
+            return idx
+
+        value = np.asarray(self.ne_te_profiles["T_e [eV]"])
+
+        all_min_indexes = list(map(find_nearest, value))
+        #########========================================
         return all_min_indexes
 
     def assign_temp_accodring_to_indexes(self):
         """
         Returns dataframe represented by assigned indexes.
         """
+
         all_min_indexes = self.find_index_of_closest_temperature()
         frac_ab = self.frac_ab.iloc[all_min_indexes]
         frac_ab = frac_ab.drop(columns=["T_e [eV]"])
@@ -318,21 +322,54 @@ class Emissivity:
         df_prof_frac_ab_pec : DATAFRAME
             Dataframe with all infomation required to calculate the radiance intensity.
         """
+        start = time.time()
         # TODO -> to xarray
-        df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
+        # #########========================================
+        # # df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
+        # # self.df_prof_frac_ab_pec
+        # for idx, trans in enumerate(self.transitions):
+        #     pec = []
+        #     for i, row in self.df_prof_frac_ab_pec.iterrows():
+        #         ne_idx = (
+        #             np.abs(row["n_e [m-3]"] - self.pec_data[idx, :, 0, 0])
+        #         ).argmin()
+        #         te_idx = (
+        #             np.abs(row["T_e [eV]"] - self.pec_data[idx, ne_idx, :, 1])
+        #         ).argmin()
+        #         pec.append(self.pec_data[idx, ne_idx, te_idx, 2])
+        #     self.df_prof_frac_ab_pec[f"pec_{trans}"] = pec
+        # #########========================================
+        def find_nearest(value):
+            idx = (np.abs(array - value)).argmin()
+            return idx
+
         for idx, trans in enumerate(self.transitions):
             pec = []
-            for i, row in df_prof_frac_ab_pec.iterrows():
-                ne_idx = (
-                    np.abs(row["n_e [m-3]"] - self.pec_data[idx, :, 0, 0])
-                ).argmin()
-                te_idx = (
-                    np.abs(row["T_e [eV]"] - self.pec_data[idx, ne_idx, :, 1])
-                ).argmin()
-                pec.append(self.pec_data[idx, ne_idx, te_idx, 2])
-            df_prof_frac_ab_pec[f"pec_{trans}"] = pec
 
-        return df_prof_frac_ab_pec
+            value = np.asarray(self.df_prof_frac_ab_pec["n_e [m-3]"])
+            array = np.asarray(self.pec_data[idx, :, 0, 0])
+
+            def find_nearest(value):
+                ne_idx = (np.abs(array - value)).argmin()
+                return ne_idx
+
+            ne_idx = list(map(find_nearest, value))
+
+            value = np.asarray(self.df_prof_frac_ab_pec["T_e [eV]"])
+            array = np.asarray(self.pec_data[idx, 0, :, 1])
+            start = time.time()
+
+            def find_nearest(value):
+                te_idx = (np.abs(array - value)).argmin()
+                return te_idx
+
+            te_idx = list(map(find_nearest, value))
+
+            self.df_prof_frac_ab_pec[f"pec_{trans}"] = self.pec_data[
+                idx, ne_idx, te_idx, 2
+            ]
+
+        return self.df_prof_frac_ab_pec
 
     def calculate_intensity(self, impurity_concentration):
         """
