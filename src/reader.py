@@ -286,13 +286,11 @@ class Emissivity:
         representing the closest Te values.
         """
         #########========================================TODO - correct form -> map a function with 2 args
-        def _find_nearest(value):
-            idx = (np.abs(array - value)).argmin()
-            return idx
 
         array = np.asarray(self.frac_ab["T_e [eV]"])
         value = np.asarray(self.ne_te_profiles["T_e [eV]"])
-        all_min_indexes = list(map(_find_nearest, value))
+        ############# correct
+        all_min_indexes = list(map(lambda x: self._find_nearest(x, array), value))
         #########========================================
         return all_min_indexes
 
