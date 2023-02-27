@@ -71,6 +71,7 @@ class Emissivity:
 
         self.ne_te_profiles, self.reff_boundary = self.read_ne_te()
         self.frac_ab = self.read_fractional_abundance()
+
         self.df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
 
         self.df_prof_frac_ab_pec = self.read_pec()
@@ -247,7 +248,6 @@ class Emissivity:
         """
         Assigns fractional abundance to each Reff value.
         """
-
         fa = FractionalAbundance(self.element, self.ionization_state)
         frac_ab = fa.df_interpolated_frac_ab
         emission_types = list(self.transitions)
@@ -276,21 +276,23 @@ class Emissivity:
 
         return frac_ab
 
+    def _find_nearest(self, array, value):
+        idx = (np.abs(array - value)).argmin()
+        return idx
+
     def find_index_of_closest_temperature(self):
         """
         Iterates over the values out of two Te lists and returns a list of indexes
         representing the closest Te values.
         """
         #########========================================TODO - correct form -> map a function with 2 args
-        array = np.asarray(self.frac_ab["T_e [eV]"])
-
-        def find_nearest(value):
+        def _find_nearest(value):
             idx = (np.abs(array - value)).argmin()
             return idx
 
+        array = np.asarray(self.frac_ab["T_e [eV]"])
         value = np.asarray(self.ne_te_profiles["T_e [eV]"])
-
-        all_min_indexes = list(map(find_nearest, value))
+        all_min_indexes = list(map(_find_nearest, value))
         #########========================================
         return all_min_indexes
 
@@ -319,8 +321,8 @@ class Emissivity:
         df_prof_frac_ab_pec : DATAFRAME
             Dataframe with all infomation required to calculate the radiance intensity.
         """
-
-        def find_nearest(value):
+        ### TODO correct
+        def _find_nearest(value):
             idx = (np.abs(array - value)).argmin()
             return idx
 
@@ -330,20 +332,12 @@ class Emissivity:
             value = np.asarray(self.df_prof_frac_ab_pec["n_e [m-3]"])
             array = np.asarray(self.pec_data[idx, :, 0, 0])
 
-            def find_nearest(value):
-                ne_idx = (np.abs(array - value)).argmin()
-                return ne_idx
-
-            ne_idx = list(map(find_nearest, value))
+            ne_idx = list(map(_find_nearest, value))
 
             value = np.asarray(self.df_prof_frac_ab_pec["T_e [eV]"])
             array = np.asarray(self.pec_data[idx, 0, :, 1])
 
-            def find_nearest(value):
-                te_idx = (np.abs(array - value)).argmin()
-                return te_idx
-
-            te_idx = list(map(find_nearest, value))
+            te_idx = list(map(_find_nearest, value))
 
             self.df_prof_frac_ab_pec[f"pec_{trans}"] = self.pec_data[
                 idx, ne_idx, te_idx, 2
@@ -474,8 +468,9 @@ class Emissivity:
         plt.ylabel("Emissivity [ph/cm3/s]")
         plt.axvline(self.reff_boundary, ls="--", color="black")
 
-        def _save_fig():
-            if savefig == True:
+        if savefig:
+
+            def _save_fig():
                 directory = Path.cwd() / "_Results" / "figures"
                 if not Path.is_dir(directory):
                     Path(directory).mkdir(parents=True, exist_ok=True)
@@ -485,15 +480,12 @@ class Emissivity:
                         f"Emissivity ({self.element} - {self.ionization_state})",
                     )
                 )
-            else:
-                pass
 
         plt.show()
 
 
 if __name__ == "__main__":
-
-    lyman_alpha_lines = ["C", "B", "O", "N"]
+    lyman_alpha_lines = ["B"]  # , "C", "N", "O"]
     Element = namedtuple("Element", "ion_state wavelength impurity_concentration")
 
     lyman_alpha_line = {
@@ -522,4 +514,4 @@ if __name__ == "__main__":
             reff_magnetic_config,
             kinetic_profiles,
         )
-        # ce.plot(savefig=False)
+        ce.plot(savefig=False)
