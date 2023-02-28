@@ -112,7 +112,7 @@ class Emissivity:
         """
 
         Reff_path = (
-            Path(__file__).parent.resolve()
+            Path(__file__).parent.parent.resolve()
             / "_Input_files"
             / "Geometry"
             / "Reff"
@@ -141,8 +141,9 @@ class Emissivity:
         pd.DataFrame
             A DataFrame containing the observed plasma volume for each spectroscopic channel.
         """
+        print(Path(__file__).parent.parent.resolve())
         observed_plasma = (
-            Path(__file__).parent.resolve()
+            Path(__file__).parent.parent.resolve()
             / "_Input_files"
             / "Geometry"
             / "Observed_plasma_volume"

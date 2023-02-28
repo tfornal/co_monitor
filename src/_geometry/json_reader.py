@@ -14,7 +14,7 @@ def read_json_file() -> dict:
         Dictionary representation of the data in the JSON file.
     """
     file_path = (
-        Path(__file__).parent.parent.resolve()
+        Path(__file__).parent.parent.parent.resolve()
         / "_Input_files"
         / "Geometry"
         / "coordinates.json"

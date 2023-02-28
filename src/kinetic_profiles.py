@@ -180,7 +180,7 @@ class ExperimentalProfile(Profile):
             ".../_Input_files/Profiles/Experimental/file_name.txt" directory;
         """
         file_path = (
-            Path(__file__).parent.resolve()
+            Path(__file__).parent.parent.resolve()
             / "_Input_files"
             / "Kinetic_profiles"
             / "Experimental"

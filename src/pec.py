@@ -51,7 +51,10 @@ class PEC:
             Path to the PEC data file.
         """
         pec_path = (
-            Path(__file__).parent.resolve() / "_Input_files" / "PEC" / self.element
+            Path(__file__).parent.parent.resolve()
+            / "_Input_files"
+            / "PEC"
+            / self.element
         )
         file_path = next(Path(pec_path).glob("*.dat"))
         return file_path

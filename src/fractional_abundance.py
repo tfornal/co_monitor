@@ -46,7 +46,7 @@ class FractionalAbundance:
             The loaded file data as a pandas dataframe.
         """
         fractional_abundance = (
-            Path(__file__).parent.resolve()
+            Path(__file__).parent.parent.resolve()
             / "_Input_files"
             / "Fractional_abundance"
             / f"fractional_abundance_{self.element}.dat"
