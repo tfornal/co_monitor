@@ -16,6 +16,7 @@ from kinetic_profiles import (
     ExperimentalProfile,
 )
 from pec import PEC
+from typing import List
 
 
 class Emissivity:
@@ -269,7 +270,7 @@ class Emissivity:
             selected_fractional_abundances.append(df)
             fa_column_names.append("Fully stripped")
 
-        selected_fractional_abundances = np.array(selected_fractional_abundances).T
+        selected_fractional_abundances = np.asarray(selected_fractional_abundances).T
         Te = frac_ab["T"]
         frac_ab = pd.DataFrame(selected_fractional_abundances)
         frac_ab.insert(0, "T_e [eV]", Te)
@@ -277,22 +278,41 @@ class Emissivity:
 
         return frac_ab
 
-    def _find_nearest(self, array, value):
+    def _find_nearest(self, array, value) -> int:
+        """Finds the index of the closest value in a given array to a given value.
+
+        Parameters
+        ----------
+        array : np.array
+            The array to search.
+        value : float
+            The value to search for.
+
+        Returns
+        ----------
+        idx : int
+            The index of the closest value in the array to the given value.
+        """
         idx = (np.abs(array - value)).argmin()
         return idx
 
-    def find_index_of_closest_temperature(self):
+    def find_closest_temp_idx(self) -> List[int]:
         """
-        Iterates over the values out of two Te lists and returns a list of indexes
-        representing the closest Te values.
-        """
-        #########========================================TODO - correct form -> map a function with 2 args
+        Finds the index of the closest temperature value in a given array for each value in another array.
 
+        Returns
+        ----------
+        all_min_indexes : list
+            A list containing the index of the closest temperature value in the `frac_ab` array
+            for each value in the `ne_te_profiles` array.
+        """
+        # convert the "T_e [eV]" column of the "frac_ab" dataframe to a numpy array
         array = np.asarray(self.frac_ab["T_e [eV]"])
+        # convert the "T_e [eV]" column of the "ne_te_profiles" dataframe to a numpy array
         value = np.asarray(self.ne_te_profiles["T_e [eV]"])
-        ############# correct
+        # find the index of the closest value in the "array" array for each value in the "value" array,
+        # and return a list of all the index values
         all_min_indexes = list(map(lambda x: self._find_nearest(x, array), value))
-        #########========================================
         return all_min_indexes
 
     def assign_temp_accodring_to_indexes(self):
@@ -300,7 +320,7 @@ class Emissivity:
         Returns dataframe represented by assigned indexes.
         """
 
-        all_min_indexes = self.find_index_of_closest_temperature()
+        all_min_indexes = self.find_closest_temp_idx()
         frac_ab = self.frac_ab.iloc[all_min_indexes]
         frac_ab = frac_ab.drop(columns=["T_e [eV]"])
         frac_ab.reset_index(drop=True, inplace=True)  # reset indexes
@@ -311,33 +331,26 @@ class Emissivity:
         return df_prof_frac_ab
 
     def read_pec(self):
-        # TODO -> to xarray
-        """
-        Runs routines to read the PEC files
+        """Reads the PEC data for each transition in the object's "transitions" attribute,
+        and updates the object's "df_prof_frac_ab_pec" dataframe with the PEC data for each transition.
 
         Returns
         -------
-        df_prof_frac_ab_pec : DATAFRAME
-            Dataframe with all infomation required to calculate the radiance intensity.
+        df_prof_frac_ab_pec : pd.DataFrame
+            The updated "df_prof_frac_ab_pec" dataframe.
         """
-        ### TODO correct
-        def _find_nearest(value):
-            idx = (np.abs(array - value)).argmin()
-            return idx
-
         for idx, trans in enumerate(self.transitions):
-            pec = []
-
-            value = np.asarray(self.df_prof_frac_ab_pec["n_e [m-3]"])
+            # find the indices of the nearest values in the "array" arrays for each value in the "value" arrays,
+            # and store the indices in "ne_idx" and "te_idx" lists
             array = np.asarray(self.pec_data[idx, :, 0, 0])
+            value = np.asarray(self.df_prof_frac_ab_pec["n_e [m-3]"])
+            ne_idx = list(map(lambda x: self._find_nearest(x, array), value))
 
-            ne_idx = list(map(_find_nearest, value))
-
-            value = np.asarray(self.df_prof_frac_ab_pec["T_e [eV]"])
             array = np.asarray(self.pec_data[idx, 0, :, 1])
+            value = np.asarray(self.df_prof_frac_ab_pec["T_e [eV]"])
+            te_idx = list(map(lambda x: self._find_nearest(x, array), value))
 
-            te_idx = list(map(_find_nearest, value))
-
+            # update the "df_prof_frac_ab_pec" dataframe with the PEC data for the current transition
             self.df_prof_frac_ab_pec[f"pec_{trans}"] = self.pec_data[
                 idx, ne_idx, te_idx, 2
             ]
