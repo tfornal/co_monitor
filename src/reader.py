@@ -142,7 +142,6 @@ class Emissivity:
         pd.DataFrame
             A DataFrame containing the observed plasma volume for each spectroscopic channel.
         """
-        print(Path(__file__).parent.parent.resolve())
         observed_plasma = (
             Path(__file__).parent.parent.resolve()
             / "_Input_files"
@@ -359,11 +358,9 @@ class Emissivity:
 
     def calculate_intensity(self, impurity_concentration):
         """
-        Runs routines to read the PEC files
-
         Returns
         -------
-        df_prof_frac_ab_pec : DATAFRAME
+        df_prof_frac_ab_pec : pd.DataFrame
             Dataframe with containing calculated intensity and sum of intensities
             named TOTAL_Intensity if more transition types were choosen.
 
