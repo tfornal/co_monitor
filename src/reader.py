@@ -71,7 +71,7 @@ class Emissivity:
         self.pec_data = self._get_pec_data()
 
         self.ne_te_profiles, self.reff_boundary = self.read_ne_te()
-        self.frac_ab = self.read_fractional_abundance()
+        self.df_sel_frac_ab = self.get_frac_ab()
 
         self.df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
 
@@ -245,37 +245,23 @@ class Emissivity:
         ].reset_index(drop=True)
         return plasma_with_parameters, reff_boundary
 
-    def read_fractional_abundance(self):
+    def get_frac_ab(self):
         """
         Assigns fractional abundance to each Reff value.
         """
         fa = FractionalAbundance(self.element, self.ionization_state)
         frac_ab = fa.df_interpolated_frac_ab
-        emission_types = list(self.transitions)
-        fa_column_names = ["T_e [eV]"]
 
-        selected_fractional_abundances = []
-        if len(emission_types) >= 1 and "RECOM" not in emission_types:
-            df = frac_ab[self.ionization_state]
-            selected_fractional_abundances.append(df)
-            fa_column_names.append(self.ionization_state)
+        sel_frac_ab = []
+        sel_frac_ab.append(frac_ab.iloc[:, 0])
+        sel_frac_ab.append(frac_ab[self.ionization_state])
+        sel_frac_ab.append(frac_ab.iloc[:, -1])
+        col_names = ["T_e [eV]", f"{self.ionization_state}", "Fully stripped"]
 
-        elif len(emission_types) >= 1 and "RECOM" in emission_types:
-            df = frac_ab[self.ionization_state]
-            selected_fractional_abundances.append(df)
-            fa_column_names.append(self.ionization_state)
-
-            df = frac_ab.iloc[:, -1]
-            selected_fractional_abundances.append(df)
-            fa_column_names.append("Fully stripped")
-
-        selected_fractional_abundances = np.asarray(selected_fractional_abundances).T
-        Te = frac_ab["T"]
-        frac_ab = pd.DataFrame(selected_fractional_abundances)
-        frac_ab.insert(0, "T_e [eV]", Te)
-        frac_ab.columns = fa_column_names
-
-        return frac_ab
+        sel_frac_ab = np.asarray(sel_frac_ab).T
+        df_sel_frac_ab = pd.DataFrame(sel_frac_ab)
+        df_sel_frac_ab.columns = col_names
+        return df_sel_frac_ab
 
     def _find_nearest(self, array, value) -> int:
         """Finds the index of the closest value in a given array to a given value.
@@ -306,7 +292,7 @@ class Emissivity:
             for each value in the `ne_te_profiles` array.
         """
         # convert the "T_e [eV]" column of the "frac_ab" dataframe to a numpy array
-        array = np.asarray(self.frac_ab["T_e [eV]"])
+        array = np.asarray(self.df_sel_frac_ab["T_e [eV]"])
         # convert the "T_e [eV]" column of the "ne_te_profiles" dataframe to a numpy array
         value = np.asarray(self.ne_te_profiles["T_e [eV]"])
         # find the index of the closest value in the "array" array for each value in the "value" array,
@@ -320,7 +306,7 @@ class Emissivity:
         """
 
         all_min_indexes = self.find_closest_temp_idx()
-        frac_ab = self.frac_ab.iloc[all_min_indexes]
+        frac_ab = self.df_sel_frac_ab.iloc[all_min_indexes]
         frac_ab = frac_ab.drop(columns=["T_e [eV]"])
         frac_ab.reset_index(drop=True, inplace=True)  # reset indexes
         df_prof_frac_ab = pd.concat(
@@ -493,7 +479,7 @@ class Emissivity:
         plt.show()
 
 
-if __name__ == "__main__":
+def main():
     lyman_alpha_lines = ["B"]  # , "C", "N", "O"]
     Element = namedtuple("Element", "ion_state wavelength impurity_concentration")
 
@@ -524,3 +510,7 @@ if __name__ == "__main__":
             kinetic_profiles,
         )
         ce.plot(savefig=False)
+
+
+if __name__ == "__main__":
+    main()
