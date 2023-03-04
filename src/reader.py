@@ -59,7 +59,7 @@ class Emissivity:
         self.ionization_state = ion_state
         self.wavelength = wavelength
         self.transitions = transitions
-        self.impurity_concentration = impurity_concentration  # [%]
+        self.impurity_concentration = self._convert_imp_frac(impurity_concentration)
         self.reff_magnetic_config = reff_magnetic_config
         self.kinetic_profiles = kinetic_profiles
 
@@ -76,9 +76,7 @@ class Emissivity:
         self.df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
 
         self.df_prof_frac_ab_pec = self.read_pec()
-        self.df_prof_frac_ab_pec_emissivity = self.calculate_intensity(
-            self.impurity_concentration
-        )
+        self.df_prof_frac_ab_pec_emissivity = self.calculate_intensity()
         self.total_emissivity = self.calculate_total_emissivity()
         if plot:
             self.plot()
@@ -127,6 +125,10 @@ class Emissivity:
         )
 
         return reff_coordinates
+
+    def _convert_imp_frac(self, impurity_fraction):
+        """Converts percentage fraction of impurity to float value."""
+        return impurity_fraction / 100
 
     def load_observed_plasma(self) -> pd.DataFrame:
         """
@@ -342,41 +344,31 @@ class Emissivity:
 
         return self.df_prof_frac_ab_pec
 
-    def calculate_intensity(self, impurity_concentration):
+    def calculate_intensity(self):
         """
         Returns
         -------
         df_prof_frac_ab_pec : pd.DataFrame
             Dataframe with containing calculated intensity and sum of intensities
             named TOTAL_Intensity if more transition types were choosen.
-
         """
-
         pec_cols = [col for col in self.df_prof_frac_ab_pec.columns if "pec" in col]
         ne = self.df_prof_frac_ab_pec["n_e [m-3]"]
 
-        ### TODO !!!!!!!!!!!!!!
-        ### wyprowadzic to na gore funkcji!!!!!
-
-        if type(impurity_concentration) in [int, float]:
-            impurity_concentration = self.impurity_concentration / 100
-        elif impurity_concentration in ["cxrs-peaked", "cxrs-flat", "cxrs-linear"]:
-            impurity_concentration = self.df_prof_frac_ab_pec["impurity_concentration"]
-
         for pec in pec_cols:
-            if pec == "pec_RECOM":
-                self.df_prof_frac_ab_pec[f"Emissivity_{pec[4:]}"] = (
+            if "RECOM" in pec:
+                self.df_prof_frac_ab_pec[f"Emissivity_RECOM"] = (
                     self.df_prof_frac_ab_pec["Fully stripped"]
                     * self.df_prof_frac_ab_pec[f"{pec}"]
                     * ne**2
-                    * impurity_concentration
+                    * self.impurity_concentration
                 )
             else:
                 self.df_prof_frac_ab_pec[f"Emissivity_{pec[4:]}"] = (
                     self.df_prof_frac_ab_pec[self.ionization_state]
                     * self.df_prof_frac_ab_pec[f"{pec}"]
                     * ne**2
-                    * impurity_concentration
+                    * self.impurity_concentration
                 )
         intensity_cols = [
             col for col in self.df_prof_frac_ab_pec.columns if "Emissivity" in col
@@ -394,24 +386,20 @@ class Emissivity:
         Saves an output dataframe containing all the calculated information in
         the given directory. Creates 'results' / 'numerical_results' path if not exists.
         """
-        emissivity_excit = (
-            self.df_prof_frac_ab_pec["Emissivity_EXCIT"]
-            * self.df_prof_frac_ab_pec["total_intensity_fraction"]
-        ).sum()
-
-        emissivity_recom = (
-            self.df_prof_frac_ab_pec["Emissivity_RECOM"]
-            * self.df_prof_frac_ab_pec["total_intensity_fraction"]
-        ).sum()
-
-        print("\nEXCIT is:", emissivity_excit)
-        print("RECOM is:", emissivity_recom)
-
+        emissivities = {
+            trans: (
+                self.df_prof_frac_ab_pec[f"Emissivity_{trans}"]
+                * self.df_prof_frac_ab_pec["total_intensity_fraction"]
+            ).sum()
+            for trans in self.transitions
+        }
         total_emissivity = (
             self.df_prof_frac_ab_pec["Emissivity_TOTAL"]
             * self.df_prof_frac_ab_pec["total_intensity_fraction"]
         ).sum()
-        total_emissivity = "{:.2e}".format(total_emissivity)
+        total_emissivity = f"{total_emissivity:.2e}"
+        for key, value in emissivities.items():
+            print(f"{key} is: {value:.2e}")
         print(f"TOTAL is: {total_emissivity}")
 
         return total_emissivity
@@ -484,10 +472,10 @@ def main():
     Element = namedtuple("Element", "ion_state wavelength impurity_concentration")
 
     lyman_alpha_line = {
-        "B": Element("Z4", 48.6, 0.02),
-        "C": Element("Z5", 33.7, 0.02),
-        "N": Element("Z6", 24.8, 0.02),
-        "O": Element("Z7", 19.0, 0.02),
+        "B": Element("Z4", 48.6, 2),
+        "C": Element("Z5", 33.7, 2),
+        "N": Element("Z6", 24.8, 2),
+        "O": Element("Z7", 19.0, 2),
     }
     transitions = ["EXCIT", "RECOM"]
     reff_magnetic_config = "Reff_coordinates-10_mm"
