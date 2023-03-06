@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from rotation_matrix import rotation_matrix
+from mesh_calculation import CuboidMesh
 
 
 def test_rotation_matrix_90_degrees_around_x_axis():

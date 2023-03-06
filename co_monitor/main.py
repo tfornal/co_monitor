@@ -2,17 +2,22 @@ __author__ = "T. Fornal"
 __email__ = "tomasz.fornal6@gmail.com"
 
 """
-Script runs  the plasma emissivity calculation. It requires to
+Script runs the geometry and/or plasma emissivity calculation. It requires to
 choose the profile type (calculated or experimental), select
-lines of interest and emission type (EXCIT, RECOM, CHEXC).
-All input files are stored in the "_Input_files" directory.
+lines of interest and emission type (EXCIT, RECOM).
+All input files are stored in the "input_files" directory.
 """
+
 
 from collections import namedtuple
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import sys
+
+sys.path.append("co_monitor/geometry/")
+sys.path.append("co_monitor/emissivity/")
 
 from emissivity.reader import Emissivity
 from emissivity.kinetic_profiles import TwoGaussSumProfile, ExperimentalProfile
@@ -71,5 +76,5 @@ def main_geometry(element):
 if __name__ == "__main__":
     elements_list = ["B", "C", "N", "O"]
     for element in elements_list:
-        # geom = main_geometry(element)
+        geom = main_geometry(element)
         emiss = main_emissivity(element, plot=True)
