@@ -19,12 +19,12 @@ from opt_einsum import contract
 import pyvista as pv
 from scipy.spatial import Delaunay
 
-from collimator import Collimator
-from detector import Detector
-from decorators import timer
-from dispersive_element import DispersiveElement
-from mesh_calculation import CuboidMesh
-from port import Port
+from geometry.collimator import Collimator
+from geometry.detector import Detector
+from geometry.decorators import timer
+from geometry.dispersive_element import DispersiveElement
+from geometry.mesh_calculation import CuboidMesh
+from geometry.port import Port
 
 
 @timer

@@ -2,7 +2,7 @@ import numpy as np
 import pyvista as pv
 from scipy.spatial import ConvexHull
 
-from json_reader import read_json_file
+from geometry.json_reader import read_json_file
 
 
 class Detector:

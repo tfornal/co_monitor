@@ -4,19 +4,19 @@ __email__ = "tomasz.fornal6@gmail.com"
 from collections import namedtuple
 from pathlib import Path, PurePath
 import time
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyvista as pv
 
-from fractional_abundance import FractionalAbundance
-from kinetic_profiles import (
+from emissivity.fractional_abundance import FractionalAbundance
+from emissivity.kinetic_profiles import (
     TwoGaussSumProfile,
     ExperimentalProfile,
 )
-from pec import PEC
-from typing import List
+from emissivity.pec import PEC
 
 
 class Emissivity:
