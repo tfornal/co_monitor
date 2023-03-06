@@ -14,8 +14,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from reader import Emissivity
-from kinetic_profiles import TwoGaussSumProfile, ExperimentalProfile
+from emissivity.reader import Emissivity
+from emissivity.kinetic_profiles import TwoGaussSumProfile, ExperimentalProfile
 
 
 def main():
@@ -51,3 +51,28 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# def geometry():
+#     """Executes the simulation code in order to calculate
+#     plasma volume observed by each spectroscopic channel.
+#     Requires to input list of elements (B, C, N or O)"""
+
+#     from simulation import Simulation
+
+#     elements_list = ["C"]  # , "B" , "N", "O"]
+#     settings = dict(
+#         slits_number=10,
+#         distance_between_points=20,  # the lower value, the higher mesh precision - the longer computation
+#         crystal_height_step=15,
+#         crystal_length_step=10,
+#         savetxt=False,
+#         plot=True,
+#     )
+
+
+# if __name__ == "__main__":
+#     geometry()
+#     for element in elements_list:
+#         geom = geometry()
+#         simul = Simulation(element, **settings)
