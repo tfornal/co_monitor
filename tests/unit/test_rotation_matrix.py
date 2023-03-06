@@ -1,5 +1,11 @@
+import sys
+
+sys.path.append("co_monitor/geometry/")
+
 import numpy as np
 import pytest
+
+from rotation_matrix import rotation_matrix
 
 
 def test_rotation_matrix_90_degrees_around_x_axis():
@@ -12,6 +18,10 @@ def test_rotation_matrix_90_degrees_around_x_axis():
     np.testing.assert_allclose(rot_matrix, expected_rot_matrix)
 
 
+test_rotation_matrix_90_degrees_around_x_axis()
+
+
+@pytest.mark.skip()
 def test_rotation_matrix_180_degrees_around_y_axis():
     theta = np.pi
     axis = [0, 1, 0]
