@@ -8,7 +8,6 @@ lines of interest and emission type (EXCIT, RECOM).
 All input files are stored in the "input_files" directory.
 """
 
-
 from collections import namedtuple
 from pathlib import Path
 
