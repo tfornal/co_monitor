@@ -1,12 +1,14 @@
-Changelog
-=========
+# Changelog
 
-------------------------------------------------------
+All notable changes to this project will be documented in this file.
 
-1.0
----
+## [Unreleased]
+- implementation of radial impurity profiles
 
-Changes:
-~~~~~~~~
 
-- Initial version.
+## [1.0.0] - 2023-03-08
+
+### Fixed
+
+- Relative import of modules from parallel directories and direct execution of scripts. 
+
