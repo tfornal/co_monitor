@@ -11,12 +11,12 @@ import numpy as np
 import pandas as pd
 import pyvista as pv
 
-from fractional_abundance import FractionalAbundance
-from kinetic_profiles import (
+from .fractional_abundance import FractionalAbundance
+from .kinetic_profiles import (
     TwoGaussSumProfile,
     ExperimentalProfile,
 )
-from pec import PEC
+from .pec import PEC
 
 
 class Emissivity:

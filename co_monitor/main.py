@@ -13,10 +13,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import sys
-
-sys.path.append("co_monitor/geometry/")
-sys.path.append("co_monitor/emissivity/")
 
 from emissivity.reader import Emissivity
 from emissivity.kinetic_profiles import TwoGaussSumProfile, ExperimentalProfile
@@ -76,4 +72,4 @@ if __name__ == "__main__":
     elements_list = ["B", "C", "N", "O"]
     for element in elements_list:
         geom = main_geometry(element)
-        emiss = main_emissivity(element, plot=True)
+        # emiss = main_emissivity(element, plot=True)
