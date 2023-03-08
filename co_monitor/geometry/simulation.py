@@ -628,17 +628,3 @@ class Simulation:
             index=False,
         )
         print("\nFile successfully saved!")
-
-
-if __name__ == "__main__":
-    elements_list = ["C", "B", "N", "O"]
-    testing_settings = dict(
-        slits_number=10,
-        distance_between_points=50,
-        crystal_height_step=20,
-        crystal_length_step=20,
-        savetxt=False,
-        plot=False,
-    )
-    for element in elements_list:
-        simul = Simulation(element, **testing_settings)

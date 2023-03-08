@@ -33,7 +33,6 @@ class CuboidMesh:
             250,
         ],  ### this size covers the whole plasma volume observed by the system
         plot: bool = False,
-        savetxt: bool = False,
     ):
         """Constructor of Plasma Mesh class.
 
@@ -58,8 +57,6 @@ class CuboidMesh:
         self.outer_cube_mesh = self.mesh_outer_cube()
         if plot:
             self.visualization()
-        if savetxt:
-            self.savetxt_cuboid_coordinates()
 
     def get_coordinate(self) -> np.ndarray:
         """
@@ -211,20 +208,8 @@ class CuboidMesh:
         )
         fig.show()
 
-    def savetxt_cuboid_coordinates(self):
-        """
-        Save plasma coordinates to the txt file.
-        """
-        np.savetxt(
-            "plasma_coordinates.txt",
-            self.outer_cube_mesh,
-            fmt="%.4e",
-            header=f"Coordinates X[m], Y[m], Z[m];\nSingle block size: {self.distance_between_points} mm",
-        )
-        print("Coordinates successfully saved!")
-
 
 if __name__ == "__main__":
     distance_between_points = 10
     cuboid_dimensions = [1350, 800, 50]
-    CuboidMesh(distance_between_points, cuboid_dimensions, plot=True, savetxt=True)
+    CuboidMesh(distance_between_points, cuboid_dimensions, plot=True)
