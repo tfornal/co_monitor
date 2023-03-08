@@ -1,8 +1,12 @@
 import numpy as np
 import pyvista as pv
 
-from .json_reader import read_json_file
-from .rotation_matrix import rotation_matrix
+try:
+    from .json_reader import read_json_file
+    from .rotation_matrix import rotation_matrix
+except ImportError:
+    from json_reader import read_json_file
+    from rotation_matrix import rotation_matrix
 
 
 class DispersiveElement:
@@ -182,7 +186,7 @@ if __name__ == "__main__":
         disp_elem = ["B", "O", "N", "C"]
         for element in disp_elem:
             disp = DispersiveElement(element, 20, 80)
-            crys = disp.make_curved_crystal()
+            crys = disp._make_curved_crystal()
             fig.add_mesh(
                 np.array([disp.A, disp.B, disp.C, disp.D]),
                 color="red",

@@ -2,8 +2,12 @@ import numpy as np
 import pyvista as pv
 from scipy.spatial import ConvexHull
 
-from .json_reader import read_json_file
-from .rotation_matrix import rotation_matrix
+try:
+    from .json_reader import read_json_file
+    from .rotation_matrix import rotation_matrix
+except ImportError:
+    from json_reader import read_json_file
+    from rotation_matrix import rotation_matrix
 
 
 class RadiationShield:
