@@ -52,7 +52,7 @@ def main_emissivity(element, plot=False):
         ce.plot()
 
 
-def main_geometry(element):
+def main_geometry(element, savetxt=False, plot=True):
     """Executes the simulation code in order to calculate
     plasma volume observed by each spectroscopic channel.
     Requires to input list of elements (B, C, N or O)"""
@@ -60,10 +60,10 @@ def main_geometry(element):
     settings = dict(
         slits_number=10,
         distance_between_points=40,  # the lower value, the higher mesh precision - the longer computation
-        crystal_height_step=35,
-        crystal_length_step=30,
-        savetxt=False,
-        plot=True,
+        crystal_height_step=15,  # the higher value, the higher mesh precision
+        crystal_length_step=10,  # the higher value, the higher mesh precision
+        savetxt=savetxt,
+        plot=plot,
     )
     simul = Simulation(element, **settings)
 
@@ -71,5 +71,5 @@ def main_geometry(element):
 if __name__ == "__main__":
     elements_list = ["B", "C", "N", "O"]
     for element in elements_list:
-        geom = main_geometry(element)
-        # emiss = main_emissivity(element, plot=True)
+        main_geometry(element, savetxt=False, plot=True)
+        main_emissivity(element, plot=True)
