@@ -1,12 +1,8 @@
-import sys
-
-sys.path.append("co_monitor/geometry/")
-
 import numpy as np
 import pytest
 
-from rotation_matrix import rotation_matrix
-from mesh_calculation import CuboidMesh
+from co_monitor.geometry.rotation_matrix import rotation_matrix
+from co_monitor.geometry.mesh_calculation import CuboidMesh
 
 
 def test_rotation_matrix_90_degrees_around_x_axis():
@@ -17,9 +13,6 @@ def test_rotation_matrix_90_degrees_around_x_axis():
     expected_rot_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
     np.testing.assert_allclose(rot_matrix, expected_rot_matrix)
-
-
-test_rotation_matrix_90_degrees_around_x_axis()
 
 
 @pytest.mark.skip()
