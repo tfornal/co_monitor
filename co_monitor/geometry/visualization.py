@@ -10,12 +10,12 @@ import pandas as pd
 import pyvista as pv
 from scipy.spatial import ConvexHull
 
-from collimator import Collimator
-from detector import Detector
-from dispersive_element import DispersiveElement
-from mesh_calculation import CuboidMesh
-from port import Port
-from radiation_shield import RadiationShield
+from co_monitor.geometry.collimator import Collimator
+from co_monitor.geometry.detector import Detector
+from co_monitor.geometry.dispersive_element import DispersiveElement
+from co_monitor.geometry.mesh_calculation import CuboidMesh
+from co_monitor.geometry.port import Port
+from co_monitor.geometry.radiation_shield import RadiationShield
 
 
 class PlasmaVolume:

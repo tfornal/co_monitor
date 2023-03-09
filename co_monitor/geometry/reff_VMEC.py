@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from .mesh_calculation import CuboidMesh
+from co_monitor.geometry.mesh_calculation import CuboidMesh
 
 
 class ReffVMEC:

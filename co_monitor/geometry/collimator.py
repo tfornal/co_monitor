@@ -4,10 +4,7 @@ import numpy as np
 import pyvista as pv
 from scipy.spatial import ConvexHull
 
-try:
-    from .json_reader import read_json_file
-except ImportError:
-    from json_reader import read_json_file
+from co_monitor.geometry.json_reader import read_json_file
 
 
 class Collimator:

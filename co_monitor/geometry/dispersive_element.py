@@ -1,8 +1,8 @@
 import numpy as np
 import pyvista as pv
 
-from .json_reader import read_json_file
-from .rotation_matrix import rotation_matrix
+from co_monitor.geometry.json_reader import read_json_file
+from co_monitor.geometry.rotation_matrix import rotation_matrix
 
 
 class DispersiveElement:

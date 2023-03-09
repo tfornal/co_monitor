@@ -14,9 +14,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from emissivity.reader import Emissivity
-from emissivity.kinetic_profiles import TwoGaussSumProfile, ExperimentalProfile
-from geometry.simulation import Simulation
+from co_monitor.emissivity.reader import Emissivity
+from co_monitor.emissivity.kinetic_profiles import (
+    TwoGaussSumProfile,
+    ExperimentalProfile,
+)
+from co_monitor.geometry.simulation import Simulation
 
 
 def main_emissivity(element, plot=False):
