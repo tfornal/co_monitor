@@ -65,6 +65,7 @@ def main_geometry(element, savetxt=False, plot=True):
         savetxt=savetxt,
         plot=plot,
     )
+
     simul = Simulation(element, **settings)
 
 
