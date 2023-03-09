@@ -52,7 +52,6 @@ class Detector:
             for vertex in self.loaded_file["detector"]["element"][element]["vertex"]
         ]
         det_coordinates = np.vstack(det_coordinates)
-        assert det_coordinates.shape == (4, 3), "Wrong number of vertices!"
         return det_coordinates
 
     def get_orientation_vector(self, element: str) -> np.ndarray:
