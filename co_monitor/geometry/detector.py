@@ -148,5 +148,3 @@ if __name__ == "__main__":
 
     # plot_all_detectors()
     det = Detector("B", plot=True)
-    # x = Detector.read_json_file()
-    # print(x)
