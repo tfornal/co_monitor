@@ -253,12 +253,13 @@ class Emissivity:
         df_sel_frac_ab.columns = col_names
         return df_sel_frac_ab
 
-    def _find_nearest(self, array, value) -> int:
+    @staticmethod
+    def _find_nearest(array, value) -> int:
         """Finds the index of the closest value in a given array to a given value.
 
         Parameters
         ----------
-        array : np.array
+        array : list, np.array
             The array to search.
         value : float
             The value to search for.
@@ -268,7 +269,7 @@ class Emissivity:
         idx : int
             The index of the closest value in the array to the given value.
         """
-        idx = (np.abs(array - value)).argmin()
+        idx = (np.abs(np.array(array) - value)).argmin()
         return idx
 
     def find_closest_temp_idx(self) -> List[int]:
