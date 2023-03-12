@@ -33,3 +33,21 @@ def test_rotation_matrix_90_degrees_around_x_axis():
     rot_matrix = rotation_matrix(theta, axis)
     expected_rot_matrix = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
     assert np.allclose(rot_matrix, expected_rot_matrix)
+
+
+def test_rotation_matrix_if_wrong_axis():
+    with pytest.raises(ValueError):
+        theta = np.pi / 2
+        axis = [1, 0]
+        rot_matrix = rotation_matrix(theta, axis)
+        expected_rot_matrix = np.array([[1, 0, 0], [0, 1, -1], [0, 1, 0]])
+        assert np.allclose(rot_matrix, expected_rot_matrix)
+
+
+def test_rotation_matrix_if_theta_not_nr():
+    with pytest.raises(TypeError):
+        theta = "2"
+        axis = [1, 0, 0]
+        rot_matrix = rotation_matrix(theta, axis)
+        expected_rot_matrix = np.array([[1, 0, 0], [0, 1, -1], [0, 1, 0]])
+        assert np.allclose(rot_matrix, expected_rot_matrix)
