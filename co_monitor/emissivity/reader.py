@@ -67,14 +67,10 @@ class Emissivity:
         self.observed_plasma_volume = self.load_observed_plasma()
         self.plas_coords_with_rad_frac = self.get_plas_coords_with_rad_frac(plot=False)
 
-        self.transitions = transitions
         self.pec_data = self._get_pec_data()
-
         self.ne_te_profiles, self.reff_boundary = self.read_ne_te()
         self.df_sel_frac_ab = self.get_frac_ab()
-
         self.df_prof_frac_ab_pec = self.assign_temp_accodring_to_indexes()
-
         self.df_prof_frac_ab_pec = self.read_pec()
         self.df_prof_frac_ab_pec_emissivity = self.calculate_intensity()
         self.total_emissivity = self.calculate_total_emissivity()
@@ -204,7 +200,7 @@ class Emissivity:
             A DataFrame containing the observed plasma volume for each spectroscopic channel.
         """
 
-        def cutoff_Reff_above_max_boundary():
+        def get_cutoff_reff():
             max_mapped_reff = self.plas_coords_with_rad_frac["Reff [m]"].max()
             max_profiles_reff = self.kinetic_profiles["Reff [m]"].max()
             reff_boundary = min(max_mapped_reff, max_profiles_reff)
@@ -212,20 +208,12 @@ class Emissivity:
             print(f"\nMax reff from profiles: {reff_boundary}")
             return reff_boundary
 
-        reff_boundary = cutoff_Reff_above_max_boundary()
+        reff_boundary = get_cutoff_reff()
 
-        #########========================================
         reff_arr = np.asarray(self.plas_coords_with_rad_frac["Reff [m]"])
-
         kin_prof_arr = np.asarray(self.kinetic_profiles["Reff [m]"])
 
-        def find_nearest(value):
-            idx = (np.abs(kin_prof_arr - value)).argmin()
-            return idx
-
-        indexes = list(map(find_nearest, reff_arr))
-
-        #########========================================
+        indexes = list(map(lambda x: self._find_nearest(x, kin_prof_arr), reff_arr))
 
         selected_plasma_parameters = self.kinetic_profiles.iloc[indexes]
         selected_plasma_parameters = selected_plasma_parameters[
