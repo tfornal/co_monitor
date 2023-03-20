@@ -604,7 +604,7 @@ class Simulation:
             point_cloud = pv.PolyData(plasma_coordinates)
             point_cloud["Intensity"] = intensity
             fig.add_mesh(
-                pv.PolyData(point_cloud), point_size=8, render_points_as_spheres=True
+                pv.PolyData(point_cloud), point_size=10, render_points_as_spheres=True
             )
             fig.show()
 
