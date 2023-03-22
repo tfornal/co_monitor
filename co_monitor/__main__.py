@@ -11,7 +11,7 @@ All input files are stored in the "input_files" directory.
 from collections import namedtuple
 from pathlib import Path
 
-import numpy as np
+# import numpy as np
 import pandas as pd
 
 from co_monitor.emissivity.reader import Emissivity
