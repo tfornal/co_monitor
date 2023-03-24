@@ -15,10 +15,7 @@ from pathlib import Path
 import pandas as pd
 
 from co_monitor.emissivity.reader import Emissivity
-from co_monitor.emissivity.kinetic_profiles import (
-    TwoGaussSumProfile,
-    ExperimentalProfile,
-)
+import co_monitor.emissivity.kinetic_profiles as em
 from co_monitor.geometry.simulation import Simulation
 
 
@@ -37,7 +34,7 @@ def main_emissivity(element, plot=False):
     # Select kinetic profiles
     n_e = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
     T_e = [1870, 0, 0.155, 210, 0.38, 0.07]
-    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
+    kinetic_profiles = em.TwoGaussSumProfile(n_e, T_e).profiles_df
     # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profile_df
 
     # for element in elements:
@@ -75,5 +72,5 @@ def main_geometry(element, savetxt=False, plot=True):
 if __name__ == "__main__":
     elements_list = ["C"]  # , "O", "B", "N"]
     for element in elements_list:
-        main_geometry(element, savetxt=False, plot=True)
-        # main_emissivity(element, plot=True)
+        # main_geometry(element, savetxt=False, plot=True)
+        main_emissivity(element, plot=True)
