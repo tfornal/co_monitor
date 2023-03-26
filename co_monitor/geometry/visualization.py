@@ -355,20 +355,9 @@ class Visualization:
             det = Detector(element)
             self.detectors.append(det.poly_det)
 
-    def _make_hull(self, points):
+    def _make_hull(self, points: np.ndarray) -> pv.PolyData:
         """
-        Method to make the convex hull of a set of input points.
-
-        Parameters
-        ----------
-        points : ndarray
-            The points to compute the convex hull of points.
-
-        Returns
-        -------
-        poly : pv.PolyData
-            Hull as a PolyData object, representing the surface of
-            the convex hull.
+        Method to make the convex hull (as PolyData) out of a set of input points.
         """
         hull = ConvexHull(points)
         faces = np.column_stack(
