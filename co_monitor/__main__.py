@@ -72,5 +72,5 @@ def main_geometry(element, savetxt=False, plot=True):
 if __name__ == "__main__":
     elements_list = ["C"]  # , "O", "B", "N"]
     for element in elements_list:
-        # main_geometry(element, savetxt=False, plot=True)
+        main_geometry(element, savetxt=False, plot=True)
         main_emissivity(element, plot=True)

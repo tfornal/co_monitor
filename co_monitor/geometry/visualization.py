@@ -460,4 +460,4 @@ class Visualization:
 
 if __name__ == "__main__":
     elements = ["B", "C", "N", "O"]
-    vis = Visualization(elements, polydata=False)
+    vis = Visualization(elements, polydata=True)
