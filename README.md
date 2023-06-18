@@ -2,12 +2,14 @@
 
 # The C/O monitor code for signal's simulations
 
-## --- The code is currently under intensive development ---
+## --- The code is currently under intensive development. ---
+## --- V.alpha ---
 
-The code requires Python v.> 3.9.
+The code requires Python vrstion> 3.9.
 The code was created to perform various calculations of potential C/O monitor signals and validate experimental data of the Lyman-alpha lines measurement of hydrogen like ions of B, C, N and O. The code calculates only the line intensities of the given transitions but does not calculate the background radiation (at least not for now). It includes all the obstacles such as W7-X Port, ECRH shields, collimators, curvatures of dispersive elements and position od detectors. 
+To run requires to install all related packages given in the requirements.txt file.
+Moreover
 
-TBC
 
 
 ## The code consists of three main sections:
@@ -35,3 +37,32 @@ Based on the geometry file calculated with the use of Module 1 - the code calcul
 It also provieds information with radial emissivity distribution for two transition types - excitation and recombination. CX processes are planned to be included in the future.
 
 TBC
+
+## Installation and setup
+Program does not rely on other external packages than those available in public repositories.
+The only limitation applies to "reff_VMEC.py" script, since it requires access to the internal webservices API from W7-X.
+
+It is strongly recommended to use virtual environment (venv) when using the code.
+To create venv use the set of commands presented below:
+```
+python -m venv <.venv_name>
+```
+
+Then activate virtual environment:
+```
+source /.venv_name/bin/activate
+```
+
+Once venv is prepared it is time to install related packages:
+To install all of them (including the main CO monitor package) just run:
+```
+pip install .[all]
+```
+
+If you want to install CO monitor package only, then use command:
+
+```
+python pip install -e /path/to/package
+```
+
+
