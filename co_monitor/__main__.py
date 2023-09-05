@@ -59,7 +59,7 @@ def main_geometry(element, savetxt=False, plot=True):
 
     settings = dict(
         slits_number=10,
-        distance_between_points=25,  # the lower value, the higher mesh precision - the longer computation
+        distance_between_points=15,  # the lower value, the higher mesh precision - the longer computation
         crystal_height_step=10,  # the higher value, the higher mesh precision
         crystal_length_step=10,  # the higher value, the higher mesh precision
         savetxt=savetxt,
@@ -73,4 +73,4 @@ if __name__ == "__main__":
     elements_list = ["C"]  # , "O", "B", "N"]
     for element in elements_list:
         main_geometry(element, savetxt=False, plot=True)
-        main_emissivity(element, plot=True)
+        # main_emissivity(element, plot=True)

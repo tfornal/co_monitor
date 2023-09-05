@@ -13,7 +13,15 @@ from scipy import interpolate
 class PEC:
     """A class for reading, storing and interpolating Photon Emissivity Coefficients (PEC) data."""
 
-    def __init__(self, element, wavelength, transition, interp_step=2000, plot=False):
+    def __init__(
+        self,
+        element,
+        wavelength,
+        ionization_state,
+        transition,
+        interp_step=2000,
+        plot=False,
+    ):
         """
         Parameters
         ----------
@@ -32,8 +40,10 @@ class PEC:
         """
         self.element = element
         self.wavelength = wavelength
+        self.ionization_state = ionization_state
         self.transition = transition
         self.interp_step = interp_step
+
         self.file_path = self._get_file_path()
         self.head_idx, self.ne_nodes_nr, self.te_nodes_nr = self._get_header_info()
         self.pec_data_array, self.ne_nodes, self.te_nodes = self._read_data()
@@ -56,19 +66,32 @@ class PEC:
             / "PEC"
             / self.element
         )
-        file_path = next(Path(pec_path).glob("*.dat"))
+        # if self.ionization_state =
+        # Create a Path object for the directory
+        directory = Path(pec_path)
+
+        # List all files in the directory
+        # file_list = [
+        #     file.name
+        #     for file in directory.glob("*")
+        #     if file.is_file() and self.ionization_state in file.name
+        # ]
+        ion = str(self.element).lower() + str(self.ionization_state)
+        file_path = [
+            file
+            for file in directory.glob("*")
+            if file.is_file()
+            and str(self.element).lower() + str(self.ionization_state) in file.name
+        ][0]
+        # file_path = next(Path(pec_path).glob("*.dat"))
+
         return file_path
 
     def _get_header_info(self):
         """
         Extract header information from the data file.
 
-        Returns
-        -------
-        head_idx : int
-            The starting index of the data in the file.
-        ne_nodes_nr : int
-            The number of electron density nodes.
+        Returnsfile_list
         te_nodes_nr : int
             The number of electron temperature nodes.
         """
@@ -85,6 +108,7 @@ class PEC:
                     break
             except ValueError:  # End of the data. Comments section later on.
                 break
+
         ne_nodes_nr, te_nodes_nr = map(int, (head[2], head[3]))
         return head_idx, ne_nodes_nr, te_nodes_nr
 
@@ -170,10 +194,20 @@ class PEC:
         plt.show()
 
 
-lyman_alpha_lines = {"B": 48.6, "C": 33.7, "N": 24.8, "O": 19.0}
-
+# lyman_alpha_lines = {"B": 48.6, "C": 33.7, "N": 24.8, "O": 19.0}
+lyman_alpha_lines = {"O": 18.6}
+ionization_state = 6
+# lyman_alpha_lines = {"O": 19.0}
+# ionization_state = 7
 if __name__ == "__main__":
     transitions_list = ["EXCIT", "RECOM"]
     for element, wavelength in lyman_alpha_lines.items():
         for transition in transitions_list:
-            PEC(element, wavelength, transition, interp_step=50, plot=True)
+            PEC(
+                element,
+                wavelength,
+                ionization_state,
+                transition,
+                interp_step=50,
+                plot=True,
+            )

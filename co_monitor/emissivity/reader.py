@@ -74,6 +74,7 @@ class Emissivity:
         self.df_prof_frac_ab_pec = self.read_pec()
         self.df_prof_frac_ab_pec_emissivity = self.calculate_intensity()
         self.total_emissivity = self.calculate_total_emissivity()
+        self.savefile()
         if plot:
             self.plot()
 
@@ -82,7 +83,11 @@ class Emissivity:
         interp_step = 2000
         for transition in self.transitions:
             self.interpolated_pec = PEC(
-                self.element, self.wavelength, transition, interp_step
+                self.element,
+                self.wavelength,
+                self.ionization_state[-1],
+                transition,
+                interp_step,
             ).interpolated_pec
             lista.append(self.interpolated_pec)
 
@@ -398,7 +403,11 @@ class Emissivity:
         Saves an output dataframe containing all the calculated information in
         the given directory. Creates 'results' / 'numerical_results' path if not exists.
         """
-        directory = Path(__file__).parent.resolve() / "_Results" / "numerical_results"
+        directory = (
+            Path(__file__).parent.parent.parent.resolve()
+            / "results"
+            / "numerical_results"
+        )
         if not Path.is_dir(directory):
             Path(directory).mkdir(parents=True, exist_ok=True)
         np.savetxt(
@@ -441,23 +450,22 @@ class Emissivity:
         plt.axvline(self.reff_boundary, ls="--", color="black")
 
         if savefig:
-
-            def _save_fig():
-                directory = Path.cwd() / "_Results" / "figures"
-                if not Path.is_dir(directory):
-                    Path(directory).mkdir(parents=True, exist_ok=True)
-                plt.savefig(
-                    PurePath(
-                        directory,
-                        f"Emissivity ({self.element} - {self.ionization_state})",
-                    )
+            directory = Path.cwd() / "results" / "figures"
+            if not Path.is_dir(directory):
+                Path(directory).mkdir(parents=True, exist_ok=True)
+            plt.savefig(
+                PurePath(
+                    directory,
+                    f"Emissivity ({self.element} - {self.ionization_state})",
                 )
+            )
+            print("Figure saved!")
 
         plt.show()
 
 
 def main():
-    lyman_alpha_lines = ["B"]  # , "C", "N", "O"]
+    lyman_alpha_lines = ["O"]  # , "C", "N", "O"]
     Element = namedtuple("Element", "ion_state wavelength impurity_concentration")
 
     lyman_alpha_line = {
@@ -465,15 +473,16 @@ def main():
         "C": Element("Z5", 33.7, 2),
         "N": Element("Z6", 24.8, 2),
         "O": Element("Z7", 19.0, 2),
+        # "O": Element("Z6", 18.6, 2),
     }
     transitions = ["EXCIT", "RECOM"]
     reff_magnetic_config = "Reff_coordinates-10_mm"
-    n_e = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
-    T_e = [1870, 0, 0.155, 210, 0.38, 0.07]
+    n_e = [4e13, 0, 0.37, 9.8e12, 0.5, 0.11]
+    T_e = [570, 0, 0.155, 210, 0.38, 0.07]
 
     # Select kinetic profiles
     # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
-    kinetic_profiles = TwoGaussSumProfile(n_e, T_e).profiles_df
+    kinetic_profiles = TwoGaussSumProfile(n_e, T_e, plot=True).profiles_df
 
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]
@@ -486,7 +495,7 @@ def main():
             reff_magnetic_config,
             kinetic_profiles,
         )
-        ce.plot(savefig=False)
+        ce.plot(savefig=True)
 
 
 if __name__ == "__main__":
