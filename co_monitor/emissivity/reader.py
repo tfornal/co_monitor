@@ -29,6 +29,7 @@ class Emissivity:
         transitions,
         reff_magnetic_config,
         kinetic_profiles,
+        time,
         plot=False,
     ):
         """
@@ -62,6 +63,7 @@ class Emissivity:
         self.impurity_concentration = self._convert_imp_frac(impurity_concentration)
         self.reff_magnetic_config = reff_magnetic_config
         self.kinetic_profiles = kinetic_profiles
+        self.time = time
 
         self.reff_coordinates = self._get_Reff()
         self.observed_plasma_volume = self.load_observed_plasma()
@@ -413,7 +415,7 @@ class Emissivity:
         np.savetxt(
             PurePath(
                 directory,
-                f"Emissivity ({self.element} - {self.ionization_state} - file).dat",
+                f"Emissivity ({self.element}_{self.ionization_state}_{self.time}).dat",
             ),
             self.df_prof_frac_ab_pec,
             header=f"{self.df_prof_frac_ab_pec.columns} \n Total emissivity: {self.total_emissivity}",
@@ -461,7 +463,7 @@ class Emissivity:
             )
             print("Figure saved!")
 
-        plt.show()
+        # plt.show()
 
 
 def main():
@@ -477,8 +479,8 @@ def main():
     }
     transitions = ["EXCIT", "RECOM"]
     reff_magnetic_config = "Reff_coordinates-10_mm"
-    n_e = [4e13, 0, 0.37, 9.8e12, 0.5, 0.11]
-    T_e = [570, 0, 0.155, 210, 0.38, 0.07]
+    n_e = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
+    T_e = [500, 0, 0.175, 30, 0.38, 0.07]
 
     # Select kinetic profiles
     # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
