@@ -170,8 +170,7 @@ T_e1 = [500, 0, 0.175, 30, 0.38, 0.07]
 T_e2 = [10000, 0, 0.175, 1500, 0.38, 0.07]
 import numpy as np
 
-T_e = np.linspace(T_e1, T_e2, 2)
-print(T_e)
+T_e = np.linspace(T_e1, T_e2, 11)
 for idx, i in enumerate(T_e):
     kinetic_profiles = TwoGaussSumProfile(n_e, i, plot=True).profiles_df
     time = idx

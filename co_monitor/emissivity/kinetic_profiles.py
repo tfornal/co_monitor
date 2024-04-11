@@ -145,7 +145,7 @@ class TestExperimentalProfile(Profile):
         separates given range of Reff into 100 pieces)
     """
 
-    def __init__(self, file_name, max_Reff=0.539, interp_step=10000, plot=True):
+    def __init__(self, file_name, time, max_Reff=0.539, interp_step=10000, plot=False):
         """
         Parameters
         ----------
@@ -160,11 +160,12 @@ class TestExperimentalProfile(Profile):
         """
         super().__init__()
         self.file_name = file_name
+        self.time = time
         self.max_Reff = max_Reff  # [m]
         self.interp_step = interp_step
 
         self.file_path = self._get_file_path()
-        # self.profiles_df = self._get_data_from_file()
+        self.profiles_df = self._get_data_from_file()
         self.profiles_df = self._interpolate()
         if plot:
             self.plot()
@@ -179,20 +180,19 @@ class TestExperimentalProfile(Profile):
             ".../_Input_files/Profiles/Experimental/file_name.txt" directory;
         """
         file_path_ne = (
-            Path(__file__).parent.parent.parent.resolve()
+            Path.cwd()
             / "input_files"
             / "kinetic_profiles"
             / "experimental_new"
             / f"{self.file_name}-n_e.csv"
         )
         file_path_Te = (
-            Path(__file__).parent.parent.parent.resolve()
+            Path.cwd()
             / "input_files"
             / "kinetic_profiles"
             / "experimental_new"
             / f"{self.file_name}-T_e.csv"
         )
-
         return file_path_ne, file_path_Te
 
     def _get_data_from_file(self):
@@ -207,16 +207,25 @@ class TestExperimentalProfile(Profile):
             Separated n_e section of the read file with given n_e index range.
         """
         reff = []
-        time = "8.0105"
+        # time = "8.0105"
 
+        # def get_all_time_frames():
+        #     for file in self.file_path:
+        #         df = pd.read_csv(file, sep="\t")
+        #         col_names = [col for col in df.columns if "rho" not in col]
+        #         return col_names
+
+        # get_all_time_frames()
+        # breakpoint()
         for file in self.file_path:
             df = pd.read_csv(file, sep="\t")
+            # col_names = [col for col in df.columns if "rho" not in col]
             rho = df["rho"]
             reff = rho * 0.539
             if "n_e" in str(file):
-                ne_section = df[time]
+                ne_section = df[self.time]
             elif "T_e" in str(file):
-                te_section = df[time]
+                te_section = df[self.time]
         data = (rho, ne_section)
         df2 = pd.DataFrame()
         df2["Reff [m]"] = reff
@@ -316,13 +325,12 @@ class ExperimentalProfile(Profile):
             ".../_Input_files/Profiles/Experimental/file_name.txt" directory;
         """
         file_path = (
-            Path(__file__).parent.parent.parent.resolve()
+            Path.cwd()
             / "input_files"
             / "kinetic_profiles"
             / "experimental"
             / f"{self.file_name}.txt"
         )
-
         return file_path
 
     def _get_index_ranges(self):
@@ -459,6 +467,7 @@ class ExperimentalProfile(Profile):
 if __name__ == "__main__":
     ne = [7e13, 0, 0.37, 9.8e12, 0.5, 0.11]
     Te = [1870, 0, 0.155, 210, 0.38, 0.07]
-    tgsp = TwoGaussSumProfile(ne, Te, plot=True)
+    # tgsp = TwoGaussSumProfile(ne, Te, plot=True)
 
     ep = ExperimentalProfile("report_20181011_012@5_5000_v_1", plot=True)
+    # TestExperimentalProfile("20230215.058").profiles_df

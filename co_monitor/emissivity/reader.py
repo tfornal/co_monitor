@@ -29,7 +29,7 @@ class Emissivity:
         transitions,
         reff_magnetic_config,
         kinetic_profiles,
-        time,
+        time="Test",
         plot=False,
     ):
         """
@@ -114,7 +114,7 @@ class Emissivity:
         """
 
         Reff_path = (
-            Path(__file__).parent.parent.parent.resolve()
+            Path.cwd()
             / "input_files"
             / "geometry"
             / "reff"
@@ -148,7 +148,7 @@ class Emissivity:
             A DataFrame containing the observed plasma volume for each spectroscopic channel.
         """
         observed_plasma = (
-            Path(__file__).parent.parent.parent.resolve()
+            Path.cwd()
             / "input_files"
             / "geometry"
             / "observed_plasma_volume"
@@ -405,11 +405,7 @@ class Emissivity:
         Saves an output dataframe containing all the calculated information in
         the given directory. Creates 'results' / 'numerical_results' path if not exists.
         """
-        directory = (
-            Path(__file__).parent.parent.parent.resolve()
-            / "results"
-            / "numerical_results"
-        )
+        directory = Path.cwd() / "results" / "numerical_results"
         if not Path.is_dir(directory):
             Path(directory).mkdir(parents=True, exist_ok=True)
         np.savetxt(
@@ -484,7 +480,7 @@ def main():
 
     # Select kinetic profiles
     # kinetic_profiles = ExperimentalProfile("report_20181011_012@5_5000_v_1").profiles_df
-    kinetic_profiles = TwoGaussSumProfile(n_e, T_e, plot=True).profiles_df
+    kinetic_profiles = TwoGaussSumProfile(n_e, T_e, plot=False).profiles_df
 
     for element in lyman_alpha_lines:
         line = lyman_alpha_line[element]

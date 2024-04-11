@@ -46,10 +46,10 @@ class FractionalAbundance:
             The loaded file data as a pandas dataframe.
         """
         fractional_abundance = (
-            Path(__file__).parent.parent.parent.resolve()
+            Path.cwd()
             / "input_files"
             / "fractional_abundance"
-            / f"fractional_abundance_{self.element}.dat"
+            / f"fractional_abundance_{self.element}.txt"
         )
         Path(__file__).parent.resolve()
         loaded_file_df = pd.read_csv(fractional_abundance, delimiter=" ")
@@ -115,14 +115,15 @@ class FractionalAbundance:
             Fa = self.df_interpolated_frac_ab[column]
             plt.plot(Te, Fa)
 
-        plt.xlim(0, 220)
+        plt.xlim(5, 50)
         plt.xlabel("Te [eV]")
         plt.ylabel("Fractional Abundance [%]")
         plt.title(f"Fractional abundance of {self.element} ({self.ionization_state})")
         plt.tight_layout()
 
         plt.show()
+        # plt.savefig("frac_ab_lukasza.png", dpi=300)
 
 
 if __name__ == "__main__":
-    fa = FractionalAbundance("O", "Z7", plot=True)
+    fa = FractionalAbundance("O", "Z7", plot=False)

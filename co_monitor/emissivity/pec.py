@@ -60,12 +60,7 @@ class PEC:
         file_path : pathlib.Path
             Path to the PEC data file.
         """
-        pec_path = (
-            Path(__file__).parent.parent.parent.resolve()
-            / "input_files"
-            / "PEC"
-            / self.element
-        )
+        pec_path = Path.cwd() / "input_files" / "PEC" / self.element
         # if self.ionization_state =
         # Create a Path object for the directory
         directory = Path(pec_path)
@@ -84,7 +79,6 @@ class PEC:
             and str(self.element).lower() + str(self.ionization_state) in file.name
         ][0]
         # file_path = next(Path(pec_path).glob("*.dat"))
-
         return file_path
 
     def _get_header_info(self):
@@ -100,8 +94,21 @@ class PEC:
         for idx, line in enumerate(self.data):
             try:
                 line_items = line.split()
-                if (float(line_items[0]) == self.wavelength) and (
-                    self.transition in line_items
+
+                if (
+                    (float(line_items[0]) == self.wavelength)
+                    and (self.transition in line_items)
+                    # ################################# TYLKO DLA O6+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    # and (line_items[-1] == "4")
+                    # and (self.transition == "EXCIT")
+                    # ################################# TYLKO DLA O6+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                ) or (
+                    (float(line_items[0]) == self.wavelength)
+                    and (self.transition in line_items)
+                    # ################################# TYLKO DLA O6+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    # and (line_items[-1] == "104")
+                    # and (self.transition == "RECOM")
+                    # ################################# TYLKO DLA O6+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 ):
                     head = line_items
                     head_idx = idx + 1
@@ -177,7 +184,6 @@ class PEC:
             (ne_new_arr.T.ravel(), te_new_arr.T.ravel(), pec_new_arr.T.ravel()), axis=0
         ).T
         interpolated_pec = interpolated_pec.reshape(-1, len(te_new), 3)
-
         return interpolated_pec
 
     def plot_pec_data(self):
@@ -187,18 +193,24 @@ class PEC:
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
         ax.plot_wireframe(X, Y, Z, rstride=1)
-        plt.title(f"PEC - {transition}")
-        ax.set_xlabel("Ne [1/cm3]")
-        ax.set_ylabel("Te [eV]")
-        ax.set_zlabel("PEC")
+        plt.title(
+            f"PEC - {transition} - {self.element}{self.ionization_state}-{self.wavelength}A"
+        )
+        # ax.set_xlabel("Ne [1/cm3]")
+        # ax.set_ylabel("Te [eV]")
+        # ax.set_zlabel("PEC")
+        # plt.savefig(
+        #     f"{self.element}{self.ionization_state}{self.transition}_{self.file_path.stem}.png",
+        #     dpi=300,
+        # )
         plt.show()
 
 
 # lyman_alpha_lines = {"B": 48.6, "C": 33.7, "N": 24.8, "O": 19.0}
-lyman_alpha_lines = {"O": 18.6}
-ionization_state = 6
-# lyman_alpha_lines = {"O": 19.0}
-# ionization_state = 7
+# lyman_alpha_lines = {"O": 18.6}
+# ionization_state = 6
+lyman_alpha_lines = {"O": 19.0}
+ionization_state = 7
 if __name__ == "__main__":
     transitions_list = ["EXCIT", "RECOM"]
     for element, wavelength in lyman_alpha_lines.items():
